@@ -37,6 +37,7 @@ fun main() = application {
             onClick = { x, y ->
                 with(density) {
                     println("$x $y")
+                    // Todo: check if we need the * 2 only on macOS
                     windowState.position = WindowPosition(x.toDp() * 2 - windowState.size.width / 2, 45.dp)
                 }
                 isVisible = true
