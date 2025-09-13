@@ -30,7 +30,6 @@ import java.awt.event.WindowFocusListener
 import kotlin.time.Duration.Companion.seconds
 
 fun main() = application {
-    var count by remember { mutableStateOf(0) }
     var isOpen by remember { mutableStateOf(true) }
     var isVisible by remember { mutableStateOf(false) }
     val windowState = rememberWindowState(
@@ -76,12 +75,7 @@ fun main() = application {
                     window.removeWindowFocusListener(listener)
                 }
             }
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(text = "Value: $count")
-            }
+            App(token = System.getenv("youniqxGitlabPackageRegistryToken"))
         }
     }
 }

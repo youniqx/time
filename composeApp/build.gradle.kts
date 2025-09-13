@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.apollo)
 }
 
 kotlin {
@@ -50,6 +51,7 @@ kotlin {
             implementation(compose.components.uiToolingPreview)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.apollo.runtime)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -101,5 +103,11 @@ compose.desktop {
             packageName = "com.youniqx.time"
             packageVersion = "1.0.0"
         }
+    }
+}
+
+apollo {
+    service("gitlab") {
+        packageName.set("com.youniqx.time.gitlab.models")
     }
 }

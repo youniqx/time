@@ -1,0 +1,19 @@
+query CurrentSprintQuery {
+  group(fullPath: "youniqx/mia") {
+    issues(iterationWildcardId: CURRENT, iterationCadenceId: "gid://gitlab/Iterations::Cadence/9") {
+      nodes {
+        id
+        title
+        webUrl
+        state
+        assignees {
+          nodes {
+            avatarUrl
+            name
+            username
+          }
+        }
+      }
+    }
+  }
+}
