@@ -29,6 +29,9 @@ import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
 import kotlin.time.Duration.Companion.seconds
 
+fun test() {
+}
+
 fun main() = application {
     var isOpen by remember { mutableStateOf(true) }
     var isVisible by remember { mutableStateOf(false) }
@@ -57,6 +60,11 @@ fun main() = application {
             alwaysOnTop = true,
             icon = TrayIcon, // Todo
         ) {
+            LaunchedEffect(true) {
+                window.rootPane.putClientProperty("apple.awt.fullWindowContent", true)
+                window.rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
+                window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
+            }
             LaunchedEffect(isVisible) {
                 if (isVisible) Desktop.getDesktop().requestForeground(true)
             }
