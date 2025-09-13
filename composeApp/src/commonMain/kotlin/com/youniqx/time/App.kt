@@ -35,10 +35,11 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.api.ApolloResponse
 import com.youniqx.time.gitlab.models.CurrentSprintQuery
+import com.youniqx.time.gitlab.models.type.IssueState
 import com.youniqx.time.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import kotlin.random.Random
 
 val WindowInsets.Companion.systemBarsForVisualComponents: WindowInsets
     // + custom inset for the transparent macos system bar; todo: move
@@ -53,6 +54,12 @@ operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingVa
     bottom = this.calculateBottomPadding() + other.calculateBottomPadding(),
 )
 
+val loremIpsum = """
+    Aut aut minima quidem occaecati ea consequuntur est. Iure velit minus enim id sit explicabo nulla dolorem. Alias officiis quia et exercitationem.
+    Doloribus adipisci fugit molestias illum. Quos assumenda minus et consequatur officia reprehenderit. Atque quia est et. Minima aut labore nostrum. Omnis voluptates occaecati molestias assumenda. Dolorum quia at soluta sequi vero saepe.
+    Non distinctio qui placeat dolores ab voluptatum ea. Et corporis veniam labore quia in ut velit qui. Laudantium quo repudiandae quam quae saepe esse voluptatum consequuntur. Qui numquam optio commodi.
+""".trimIndent()
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
@@ -61,16 +68,33 @@ fun App(token: String = "") {
     var darkTheme by remember { mutableStateOf(systemInDarkTheme) }
     var useHighContrastColors by remember { mutableStateOf(false) }
     AppTheme(darkTheme = darkTheme, useHighContrastColors = useHighContrastColors) {
-        var response: ApolloResponse<CurrentSprintQuery.Data>? by remember { mutableStateOf(null) }
+        var issues: List<CurrentSprintQuery.Node>? by remember { mutableStateOf(null) }
         val isPreview = LocalInspectionMode.current
         LaunchedEffect(true) {
-            if (isPreview) return@LaunchedEffect
+            if (isPreview) {
+                issues = buildList {
+                    repeat(20) {
+                        val start = Random.nextInt(loremIpsum.lastIndex - 100)
+                        add(CurrentSprintQuery.Node(
+                            id = it.toString(),
+                            title = loremIpsum.substring(start, start + Random.nextInt(20, 100)),
+                            webUrl = "",
+                            state = IssueState.opened,
+                            assignees = null
+                        ))
+                    }
+                }
+                return@LaunchedEffect
+            }
             // Create a client
             val apolloClient = ApolloClient.Builder()
                 .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
                 .addHttpHeader("Authorization", "Bearer $token")
                 .build()
-            response = apolloClient.query(CurrentSprintQuery()).execute()
+            val response = apolloClient.query(CurrentSprintQuery()).execute()
+            issues = response.data?.group?.issues?.nodes.orEmpty().filterNotNull().sortedBy {
+                it.state
+            }
         }
         Scaffold(
             floatingActionButton = {
@@ -97,10 +121,7 @@ fun App(token: String = "") {
                         },
                 contentPadding = insets + PaddingValues(20.dp),
             ) {
-                val issues = response?.data?.group?.issues?.nodes.orEmpty().filterNotNull().sortedBy {
-                    it.state
-                }
-                itemsIndexed(issues) { index, issue ->
+                itemsIndexed(issues.orEmpty()) { index, issue ->
                     if (index != 0) HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     Issue(issue)
                 }
