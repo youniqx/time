@@ -41,10 +41,6 @@ import com.youniqx.time.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.random.Random
 
-val WindowInsets.Companion.systemBarsForVisualComponents: WindowInsets
-    // + custom inset for the transparent macos system bar; todo: move
-    @Composable get() = systemBars.union(displayCutout).add(WindowInsets(top = 16.dp))
-
 operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingValues(
     start = this.calculateStartPadding(LayoutDirection.Ltr) +
             other.calculateStartPadding(LayoutDirection.Ltr),
