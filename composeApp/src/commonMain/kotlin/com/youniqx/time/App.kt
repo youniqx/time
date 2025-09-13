@@ -68,7 +68,8 @@ fun App(token: String = "") {
             if (isPreview) return@LaunchedEffect
             // Create a client
             val apolloClient = ApolloClient.Builder()
-                .serverUrl("https://gitlab.ci.youniqx.com/api/graphql?private_token=$token")
+                .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
+                .addHttpHeader("Authorization", "Bearer $token")
                 .build()
             response = apolloClient.query(CurrentSprintQuery()).execute()
         }
