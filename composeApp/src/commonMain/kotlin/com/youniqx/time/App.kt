@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -27,6 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
@@ -69,6 +71,7 @@ fun App(token: String = "") {
     AppTheme(darkTheme = darkTheme, useHighContrastColors = useHighContrastColors) {
         var issues: List<Issues.Node>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
+        var loading: Boolean by remember { mutableStateOf(false) }
         val focusRequester = remember { FocusRequester() }
         val isPreview = LocalInspectionMode.current
         LaunchedEffect(search) {
@@ -88,6 +91,7 @@ fun App(token: String = "") {
                 }
                 return@LaunchedEffect
             }
+            loading = true
             if (search.isNotEmpty()) delay(300)
             val apolloClient = ApolloClient.Builder()
                 .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
@@ -110,6 +114,7 @@ fun App(token: String = "") {
                     addAll(it.searchIid?.issues?.issues?.nodes.orEmpty())
                 }.filterNotNull().distinctBy { it.id }
             }
+            loading = false
         }
         Scaffold(
             floatingActionButton = {
@@ -145,7 +150,7 @@ fun App(token: String = "") {
                             .focusRequester(focusRequester)
                             .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)
                     )
-                    LaunchedEffect(true) {
+                    LaunchedEffect(darkTheme, useHighContrastColors) {
                         focusRequester.requestFocus()
                     }
                 }
@@ -162,6 +167,11 @@ fun App(token: String = "") {
                 }) { index, issue ->
                     if (index != 0) HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     Issue(issue)
+                }
+                if (loading) item {
+                    Box(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }
