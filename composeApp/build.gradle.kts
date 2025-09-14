@@ -1,7 +1,9 @@
+@file:OptIn(ApolloExperimental::class)
+
+import com.apollographql.apollo.annotations.ApolloExperimental
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -110,5 +112,6 @@ compose.desktop {
 apollo {
     service("gitlab") {
         packageName.set("com.youniqx.time.gitlab.models")
+        generateInputBuilders.set(true)
     }
 }

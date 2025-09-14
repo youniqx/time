@@ -7,20 +7,18 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.MutableWindowInsets
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,14 +28,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.apollographql.apollo.ApolloClient
-import com.youniqx.time.gitlab.models.CurrentSprintQuery
+import com.youniqx.time.gitlab.models.IssuesQuery
+import com.youniqx.time.gitlab.models.fragment.Issues
 import com.youniqx.time.gitlab.models.type.IssueState
 import com.youniqx.time.theme.AppTheme
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.random.Random
 
@@ -64,32 +67,48 @@ fun App(token: String = "") {
     var darkTheme by remember { mutableStateOf(systemInDarkTheme) }
     var useHighContrastColors by remember { mutableStateOf(false) }
     AppTheme(darkTheme = darkTheme, useHighContrastColors = useHighContrastColors) {
-        var issues: List<CurrentSprintQuery.Node>? by remember { mutableStateOf(null) }
+        var issues: List<Issues.Node>? by remember { mutableStateOf(null) }
+        var search: String by remember { mutableStateOf("") }
+        val focusRequester = remember { FocusRequester() }
         val isPreview = LocalInspectionMode.current
-        LaunchedEffect(true) {
+        LaunchedEffect(search) {
             if (isPreview) {
                 issues = buildList {
                     repeat(20) {
                         val start = Random.nextInt(loremIpsum.lastIndex - 100)
-                        add(CurrentSprintQuery.Node(
+                        add(Issues.Node(
                             id = it.toString(),
                             title = loremIpsum.substring(start, start + Random.nextInt(20, 100)),
                             webUrl = "",
                             state = IssueState.opened,
+                            labels = null,
                             assignees = null
                         ))
                     }
                 }
                 return@LaunchedEffect
             }
-            // Create a client
+            if (search.isNotEmpty()) delay(300)
             val apolloClient = ApolloClient.Builder()
                 .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
                 .addHttpHeader("Authorization", "Bearer $token")
                 .build()
-            val response = apolloClient.query(CurrentSprintQuery()).execute()
-            issues = response.data?.group?.issues?.nodes.orEmpty().filterNotNull().sortedBy {
-                it.state
+            val query = IssuesQuery.Builder()
+                .pinnedIids(listOf("2780"))
+                .search(search)
+                .doSearch(search.isNotBlank())
+                .build()
+            val response = apolloClient.query(query).execute()
+            if (response.data != null) with(response.data!!) {
+                sprint?.issues?.issues?.nodes.orEmpty()
+            }
+            response.data?.let {
+                issues = buildList {
+                    addAll(it.sprint?.issues?.issues?.nodes.orEmpty())
+                    addAll(it.pinned?.issues?.issues?.nodes.orEmpty())
+                    addAll(it.search?.issues?.issues?.nodes.orEmpty())
+                    addAll(it.searchIid?.issues?.issues?.nodes.orEmpty())
+                }.filterNotNull().distinctBy { it.id }
             }
         }
         Scaffold(
@@ -117,7 +136,30 @@ fun App(token: String = "") {
                         },
                 contentPadding = insets + PaddingValues(20.dp),
             ) {
-                itemsIndexed(issues.orEmpty()) { index, issue ->
+                item {
+                    OutlinedTextField(
+                        value = search,
+                        onValueChange = { search = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(focusRequester)
+                            .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)
+                    )
+                    LaunchedEffect(true) {
+                        focusRequester.requestFocus()
+                    }
+                }
+                itemsIndexed(issues.orEmpty().filter {
+                    it.title.contains(search, ignoreCase = true) ||
+                            it.id.contains(search, ignoreCase = true) ||
+                            it.assignees?.nodes.orEmpty().filterNotNull().any {
+                                it.name.contains(search, ignoreCase = true) ||
+                                        it.username.contains(search, ignoreCase = true)
+                            } ||
+                            it.labels?.nodes.orEmpty().filterNotNull().any {
+                                it.title.contains(search, ignoreCase = true)
+                            }
+                }) { index, issue ->
                     if (index != 0) HorizontalDivider(Modifier.padding(vertical = 8.dp))
                     Issue(issue)
                 }
@@ -127,7 +169,7 @@ fun App(token: String = "") {
 }
 
 @Composable
-fun Issue(issue: CurrentSprintQuery.Node) {
+fun Issue(issue: Issues.Node) {
     val uriHandler = LocalUriHandler.current
 
     Box(
