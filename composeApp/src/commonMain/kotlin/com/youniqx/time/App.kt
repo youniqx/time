@@ -31,8 +31,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.LayoutDirection
@@ -64,7 +75,7 @@ val loremIpsum = """
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
-fun App(token: String = "") {
+fun App(token: String = "", focusRequester: FocusRequester = remember { FocusRequester() }) {
     val systemInDarkTheme = isSystemInDarkTheme()
     var darkTheme by remember { mutableStateOf(systemInDarkTheme) }
     var useHighContrastColors by remember { mutableStateOf(false) }
@@ -72,7 +83,6 @@ fun App(token: String = "") {
         var issues: List<Issues.Node>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var loading: Boolean by remember { mutableStateOf(false) }
-        val focusRequester = remember { FocusRequester() }
         val isPreview = LocalInspectionMode.current
         LaunchedEffect(search) {
             if (isPreview) {
@@ -142,10 +152,26 @@ fun App(token: String = "") {
                 contentPadding = insets + PaddingValues(20.dp),
             ) {
                 item {
+                    val focusManager = LocalFocusManager.current
                     OutlinedTextField(
                         value = search,
                         onValueChange = { search = it },
                         modifier = Modifier
+                            .onPreviewKeyEvent {
+                                if (
+                                    !it.isMetaPressed &&
+                                    !it.isAltPressed &&
+                                    !it.isCtrlPressed &&
+                                    !it.isShiftPressed &&
+                                    it.key == Key.Tab &&
+                                    it.type == KeyEventType.KeyDown
+                                    ) {
+                                    focusManager.moveFocus(FocusDirection.Next)
+                                    true
+                                } else {
+                                    false
+                                }
+                            }
                             .fillMaxWidth()
                             .focusRequester(focusRequester)
                             .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)

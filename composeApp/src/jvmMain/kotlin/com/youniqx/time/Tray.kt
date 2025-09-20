@@ -21,7 +21,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCompositionContext
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.painter.Painter
@@ -31,17 +30,12 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.MenuScope
 import androidx.compose.ui.window.setContent
-import java.awt.PopupMenu
-import java.awt.SystemTray
-import java.awt.TrayIcon
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.receiveAsFlow
 import java.awt.ComponentOrientation
 import java.awt.GraphicsConfiguration
 import java.awt.GraphicsEnvironment
+import java.awt.PopupMenu
+import java.awt.SystemTray
+import java.awt.TrayIcon
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import java.util.Locale
@@ -171,11 +165,9 @@ fun ApplicationScope.Tray(
             isImageAutoSize = true
             addMouseListener(object : MouseListener {
                 override fun mouseClicked(p0: MouseEvent?) {
-                    println("mouseClicked")
                 }
 
                 override fun mousePressed(p0: MouseEvent?) {
-                    println("mousePressed")
                 }
 
                 override fun mouseReleased(p0: MouseEvent?) {
@@ -183,11 +175,9 @@ fun ApplicationScope.Tray(
                 }
 
                 override fun mouseEntered(p0: MouseEvent?) {
-                    println("mouseEntered")
                 }
 
                 override fun mouseExited(p0: MouseEvent?) {
-                    println("mouseExited")
                 }
 
             })

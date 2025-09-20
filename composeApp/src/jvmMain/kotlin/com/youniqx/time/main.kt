@@ -6,10 +6,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isAltPressed
+import androidx.compose.ui.input.key.isCtrlPressed
+import androidx.compose.ui.input.key.isMetaPressed
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -36,16 +44,29 @@ fun main() = application {
             icon = TrayIcon,
             onClick = { x, y ->
                 with(density) {
-                    println("$x $y")
                     // Todo: check if we need the * 2 only on macOS
                     windowState.position = WindowPosition(x.toDp() * 2 - windowState.size.width / 2, 45.dp)
                 }
-                isVisible = true
+                isVisible = !isVisible
             }
         )
+        val focusRequester = remember { FocusRequester() }
         Window(
             onCloseRequest = {
                 isOpen = false
+            },
+            onPreviewKeyEvent = {
+                if (
+                    !it.isMetaPressed &&
+                    !it.isAltPressed &&
+                    !it.isCtrlPressed &&
+                    !it.isShiftPressed &&
+                    it.type == KeyEventType.KeyDown &&
+                    !it.utf16CodePoint.toChar().isISOControl()
+                    ) {
+                    focusRequester.requestFocus()
+                }
+                false
             },
             state = windowState,
             visible = isVisible,
@@ -75,7 +96,7 @@ fun main() = application {
                     window.removeWindowFocusListener(listener)
                 }
             }
-            App(token = System.getenv("youniqxGitlabPackageRegistryToken"))
+            App(token = System.getenv("youniqxGitlabPackageRegistryToken"), focusRequester = focusRequester)
         }
     }
 }
