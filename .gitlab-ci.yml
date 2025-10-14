@@ -1,0 +1,15 @@
+pages:
+  tags: [linux-unprivileged]
+  stage: release
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.11.12
+  script:
+    - gradle composeApp:wasmJsBrowserDistribution
+    - mkdir -p public && cp -R ./composeApp/build/dist/wasmJs/productionExecutable/* ./public
+  artifacts:
+    paths:
+      # The folder that contains the files to be exposed at the Page URL
+      - public
+  rules:
+    # This ensures that only pushes to the default branch will trigger
+    # a pages deploy
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
