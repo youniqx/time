@@ -1,6 +1,6 @@
 pages:
   tags: [linux-unprivileged]
-  stage: release
+  stage: deploy
   image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.11.12
   script:
     - gradle composeApp:wasmJsBrowserDistribution
