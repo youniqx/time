@@ -1,7 +1,4 @@
 {
   "default": true,
-  "MD013": false,
-  "ignoreFiles": [
-    "README.md"
-  ]
+  "MD013": false
 }
