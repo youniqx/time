@@ -1,3 +1,10 @@
+---
+include:
+  - project: 'youniqx/infrastructure/ci-commons'
+    ref: v1.87.21
+    file: 'global.yaml'
+  - component: $CI_SERVER_FQDN/youniqx/mia/ci-templates/disable-ltex@main
+
 pages:
   tags: [linux-unprivileged]
   stage: deploy
