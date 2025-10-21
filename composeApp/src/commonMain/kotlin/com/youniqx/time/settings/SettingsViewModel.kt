@@ -21,7 +21,7 @@ data class UiState(
 private enum class SettingKey {
     Token,
     DarkTheme,
-    HighContrast;
+    HighContrastColors;
 }
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -34,7 +34,7 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
     init {
         settings.getStringFlow(SettingKey.Token.name, token).save { copy(token = it) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).save { copy(darkTheme = it) }
-        settings.getBooleanFlow(SettingKey.HighContrast.name, false).save { copy(highContrastColors = it) }
+        settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).save { copy(highContrastColors = it) }
     }
 
     fun toggleDarkTheme() {
@@ -43,9 +43,9 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
         }
     }
 
-    fun toggleHighContrast() {
+    fun toggleHighContrastColors() {
         viewModelScope.launch {
-            settings.putBoolean(SettingKey.HighContrast.name, !uiState.value.highContrastColors)
+            settings.putBoolean(SettingKey.HighContrastColors.name, !uiState.value.highContrastColors)
         }
     }
 

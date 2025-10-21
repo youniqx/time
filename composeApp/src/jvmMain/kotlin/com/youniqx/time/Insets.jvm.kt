@@ -6,4 +6,4 @@ import androidx.compose.ui.unit.dp
 
 actual val WindowInsets.Companion.additionalInsets: WindowInsets
     // + custom inset for the transparent macos system bar
-    @Composable get() = if (isMacOs) WindowInsets(top = 16.dp) else WindowInsets(0)
+    @Composable get() = if (isMacOs) WindowInsets(top = 28.dp) else WindowInsets(0)

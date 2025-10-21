@@ -1,11 +1,14 @@
 package com.youniqx.time
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.MutableWindowInsets
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -13,16 +16,27 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,6 +70,7 @@ import com.apollographql.apollo.ApolloClient
 import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.fragment.Issues
 import com.youniqx.time.gitlab.models.type.IssueState
+import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
 import kotlinx.coroutines.delay
@@ -133,16 +148,35 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             }
             loading = false
         }
+        var showSettings by remember { mutableStateOf(settingsUiState.token.isBlank()) }
         Scaffold(
             floatingActionButton = {
-                ThemeToggle(
-                    darkTheme = settingsUiState.darkTheme,
-                    useHighContrast = settingsUiState.highContrastColors,
-                    toggleDarkTheme = settingsViewModel::toggleDarkTheme,
-                    toggleHighContrast = settingsViewModel::toggleHighContrast
-                )
+                CompositionLocalProvider(
+                    LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+                ) {
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isHovered by interactionSource.collectIsHoveredAsState()
+                    FloatingActionButton(
+                        onClick = {
+                            showSettings = !showSettings
+                        },
+                        interactionSource = interactionSource,
+                    ) {
+                        val icon =
+                            if (showSettings) {
+                                if (isHovered) Icons.Filled.Home else Icons.Outlined.Home
+                            } else {
+                                if (isHovered) Icons.Filled.Settings else Icons.Outlined.Settings
+                            }
+                        Icon(imageVector = icon, contentDescription = null)
+                    }
+                }
             }
         ) {
+            if (showSettings) {
+                Settings(settingsViewModel)
+                return@Scaffold
+            }
             // https://kotlinlang.slack.com/archives/CJLTWPH7S/p1731631796638429?thread_ts=1731631796.638429
             val consumedWindowInsets = remember { MutableWindowInsets() }
             val insets =
@@ -156,7 +190,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                         .onConsumedWindowInsetsChanged {
                             consumedWindowInsets.insets = it
                         },
-                contentPadding = insets + PaddingValues(20.dp),
+                contentPadding = insets,
             ) {
                 item {
                     val focusManager = LocalFocusManager.current
@@ -181,6 +215,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             }
                             .fillMaxWidth()
                             .focusRequester(focusRequester)
+                            .padding(horizontal = 12.dp)
                             .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)
                     )
                     LaunchedEffect(settingsUiState.darkTheme, settingsUiState.highContrastColors) {
@@ -198,7 +233,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                 it.title.contains(search, ignoreCase = true)
                             }
                 }) { index, issue ->
-                    if (index != 0) HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                    if (index != 0) HorizontalDivider(thickness = 0.5.dp)
                     Issue(issue)
                 }
                 if (loading) item {
@@ -215,11 +250,14 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
 fun Issue(issue: Issues.Node) {
     val uriHandler = LocalUriHandler.current
 
-    Box(
+    Row(
         modifier = Modifier
             .clickable { uriHandler.openUri(issue.webUrl) }
-            .padding(8.dp)
-            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .padding(vertical = 8.dp)
+            .heightIn(min = 48.dp)
+            .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(issue.title)
     }
