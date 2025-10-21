@@ -48,10 +48,15 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.apollographql.apollo.ApolloClient
 import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.fragment.Issues
 import com.youniqx.time.gitlab.models.type.IssueState
+import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -77,9 +82,11 @@ val loremIpsum = """
 @Preview
 fun App(token: String = "", focusRequester: FocusRequester = remember { FocusRequester() }) {
     val systemInDarkTheme = isSystemInDarkTheme()
-    var darkTheme by remember { mutableStateOf(systemInDarkTheme) }
-    var useHighContrastColors by remember { mutableStateOf(false) }
-    AppTheme(darkTheme = darkTheme, useHighContrastColors = useHighContrastColors) {
+    val settingsViewModel = viewModel<SettingsViewModel>(
+        factory = viewModelFactory { initializer { SettingsViewModel(token, systemInDarkTheme) } }
+    )
+    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {
         var issues: List<Issues.Node>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var loading: Boolean by remember { mutableStateOf(false) }
@@ -105,7 +112,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             if (search.isNotEmpty()) delay(300)
             val apolloClient = ApolloClient.Builder()
                 .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
-                .addHttpHeader("Authorization", "Bearer $token")
+                .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
                 .build()
             val query = IssuesQuery.Builder()
                 .pinnedIids(listOf("2780"))
@@ -129,10 +136,10 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
         Scaffold(
             floatingActionButton = {
                 ThemeToggle(
-                    darkTheme = darkTheme,
-                    useHighContrast = useHighContrastColors,
-                    toggleDarkTheme = { darkTheme = !darkTheme },
-                    toggleHighContrast = { useHighContrastColors = !useHighContrastColors }
+                    darkTheme = settingsUiState.darkTheme,
+                    useHighContrast = settingsUiState.highContrastColors,
+                    toggleDarkTheme = settingsViewModel::toggleDarkTheme,
+                    toggleHighContrast = settingsViewModel::toggleHighContrast
                 )
             }
         ) {
@@ -176,7 +183,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             .focusRequester(focusRequester)
                             .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)
                     )
-                    LaunchedEffect(darkTheme, useHighContrastColors) {
+                    LaunchedEffect(settingsUiState.darkTheme, settingsUiState.highContrastColors) {
                         focusRequester.requestFocus()
                     }
                 }

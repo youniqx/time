@@ -57,6 +57,9 @@ kotlin {
             implementation(libs.apollo.runtime)
             implementation(libs.settings.noarg)
             implementation(libs.settings.coroutines)
+            implementation(libs.settings.makeObservable)
+            implementation(libs.kotlinx.coroutines.core)
+
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
