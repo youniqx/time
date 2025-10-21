@@ -55,6 +55,8 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.apollo.runtime)
+            implementation(libs.settings.noarg)
+            implementation(libs.settings.coroutines)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
