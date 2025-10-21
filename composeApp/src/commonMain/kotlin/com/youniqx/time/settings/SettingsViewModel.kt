@@ -16,18 +16,30 @@ data class UiState(
     val token: String,
     val darkTheme: Boolean,
     val highContrastColors: Boolean,
+    val showLabelsByDefault: Boolean,
+    val useLabelColors: Boolean,
 )
 
 private enum class SettingKey {
     Token,
     DarkTheme,
-    HighContrastColors;
+    HighContrastColors,
+    ShowLabelsByDefault,
+    UseLabelColors,
 }
 
 @OptIn(ExperimentalSettingsApi::class)
 class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel() {
     private val _uiState =
-        MutableStateFlow(UiState(token = token, darkTheme = systemInDarkTheme, highContrastColors = false))
+        MutableStateFlow(
+            UiState(
+                token = token,
+                darkTheme = systemInDarkTheme,
+                highContrastColors = false,
+                showLabelsByDefault = false,
+                useLabelColors = false,
+            )
+        )
     val uiState = _uiState.asStateFlow()
     private val settings = Settings().makeObservable().toFlowSettings()
 
@@ -35,6 +47,8 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
         settings.getStringFlow(SettingKey.Token.name, token).save { copy(token = it) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).save { copy(darkTheme = it) }
         settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).save { copy(highContrastColors = it) }
+        settings.getBooleanFlow(SettingKey.ShowLabelsByDefault.name, false).save { copy(showLabelsByDefault = it) }
+        settings.getBooleanFlow(SettingKey.UseLabelColors.name, false).save { copy(useLabelColors = it) }
     }
 
     fun toggleDarkTheme() {
@@ -46,6 +60,18 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
     fun toggleHighContrastColors() {
         viewModelScope.launch {
             settings.putBoolean(SettingKey.HighContrastColors.name, !uiState.value.highContrastColors)
+        }
+    }
+
+    fun toggleShowLabelsByDefault() {
+        viewModelScope.launch {
+            settings.putBoolean(SettingKey.ShowLabelsByDefault.name, !uiState.value.showLabelsByDefault)
+        }
+    }
+
+    fun toggleUseLabelColors() {
+        viewModelScope.launch {
+            settings.putBoolean(SettingKey.UseLabelColors.name, !uiState.value.useLabelColors)
         }
     }
 

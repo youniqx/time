@@ -43,6 +43,10 @@ fun Settings(viewModel: SettingsViewModel) {
         toggleDarkTheme = viewModel::toggleDarkTheme,
         highContrastColors = uiState.highContrastColors,
         toggleHighContrastColors = viewModel::toggleHighContrastColors,
+        showLabelsByDefault = uiState.showLabelsByDefault,
+        toggleShowLabelsByDefault = viewModel::toggleShowLabelsByDefault,
+        useLabelColors = uiState.useLabelColors,
+        toggleUseLabelColors = viewModel::toggleUseLabelColors,
         token = uiState.token,
         onTokenChange = viewModel::setToken,
     )
@@ -54,8 +58,12 @@ fun SettingsScreen(
     toggleDarkTheme: () -> Unit,
     highContrastColors: Boolean,
     toggleHighContrastColors: () -> Unit,
+    showLabelsByDefault: Boolean,
+    toggleShowLabelsByDefault: () -> Unit,
+    useLabelColors: Boolean,
+    toggleUseLabelColors: () -> Unit,
     token: String,
-    onTokenChange: (String) -> Unit
+    onTokenChange: (String) -> Unit,
 ) {
     Column(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)) {
         val lightInteractionSource = remember { MutableInteractionSource() }
@@ -116,6 +124,30 @@ fun SettingsScreen(
             Text("Use high contrast colors")
             Switch(checked = highContrastColors, onCheckedChange = { toggleHighContrastColors() })
         }
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(
+                onClickLabel = if (showLabelsByDefault) "Hide labels by default" else "Show labels by default",
+                role = Role.Switch,
+                onClick = toggleShowLabelsByDefault
+            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Show labels by default")
+            Switch(checked = showLabelsByDefault, onCheckedChange = { toggleShowLabelsByDefault() })
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(
+                onClickLabel = if (useLabelColors) "Don't color labels" else "Use label colors",
+                role = Role.Switch,
+                onClick = toggleUseLabelColors
+            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Use label colors")
+            Switch(checked = useLabelColors, onCheckedChange = { toggleUseLabelColors() })
+        }
         OutlinedTextField(
             value = token,
             onValueChange = onTokenChange,
@@ -139,8 +171,12 @@ fun SettingsPreview() {
             toggleDarkTheme = {},
             highContrastColors = false,
             toggleHighContrastColors = {},
+            showLabelsByDefault = true,
+            toggleShowLabelsByDefault = {},
+            useLabelColors = true,
+            toggleUseLabelColors = {},
             token = "𐂂",
-            onTokenChange = {}
+            onTokenChange = {},
         )
     }
 }

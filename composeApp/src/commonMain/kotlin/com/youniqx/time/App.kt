@@ -4,8 +4,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.MutableWindowInsets
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -34,6 +37,8 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -48,6 +53,8 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
@@ -206,7 +213,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                     !it.isShiftPressed &&
                                     it.key == Key.Tab &&
                                     it.type == KeyEventType.KeyDown
-                                    ) {
+                                ) {
                                     focusManager.moveFocus(FocusDirection.Next)
                                     true
                                 } else {
@@ -234,7 +241,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             }
                 }) { index, issue ->
                     if (index != 0) HorizontalDivider(thickness = 0.5.dp)
-                    Issue(issue)
+                    Issue(issue, settingsUiState.showLabelsByDefault, settingsUiState.useLabelColors)
                 }
                 if (loading) item {
                     Box(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) {
@@ -247,18 +254,82 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
 }
 
 @Composable
-fun Issue(issue: Issues.Node) {
+fun Issue(issue: Issues.Node, showLabelsByDefault: Boolean, useLabelColors: Boolean) {
     val uriHandler = LocalUriHandler.current
-
-    Row(
+    Column(
         modifier = Modifier
             .clickable { uriHandler.openUri(issue.webUrl) }
+            .heightIn(min = 48.dp)
             .padding(horizontal = 12.dp)
             .padding(vertical = 8.dp)
-            .heightIn(min = 48.dp)
-            .fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(issue.title)
+        val labels = if (showLabelsByDefault) issue.labels?.nodes else null
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = if (labels.isNullOrEmpty()) 48.dp else 0.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(issue.title)
+        }
+        labels?.let {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy((-4).dp, Alignment.CenterVertically)
+            ) {
+                it.filterNotNull().onEach { label ->
+                    val default = SuggestionChipDefaults.suggestionChipColors()
+                        .copy(
+                            disabledContainerColor = MaterialTheme.colorScheme.surface,
+                            disabledLabelColor = LocalContentColor.current,
+                        )
+                    val colors = if (useLabelColors) remember(label.color) {
+                        val color = try {
+                            Color(label.color.toColorInt()).copy(alpha = 0.75f)
+                        } catch (_: Exception) {
+                            default.disabledContainerColor
+                        }
+                        default.copy(
+                            disabledContainerColor = color,
+                            disabledLabelColor = color.contrastingTextColor()
+                        )
+                    } else {
+                        default
+                    }
+                    SuggestionChip(
+                        onClick = { },
+                        enabled = false,
+                        colors = colors,
+                        label = {
+                            Text(label.title.replace("::", " ⏐ "))
+                        }
+                    )
+                }
+            }
+        }
     }
+}
+
+fun String.toColorInt(): Int {
+    if (this[0] == '#') {
+        var color = substring(1).toLong(16)
+        if (length == 7) {
+            color = color or 0x00000000ff000000L
+        } else if (length != 9) {
+            throw IllegalArgumentException("Unknown color")
+        }
+        return color.toInt()
+    }
+    throw IllegalArgumentException("Unknown color")
+}
+
+/**
+ * Returns either Black or White as a high-contrast text color
+ * for this background color.
+ *
+ * @param threshold The luminance value to check against.
+ * WCAG suggests a threshold of 0.179 for true sRGB.
+ * You can adjust this value to fine-tune the results.
+ * @return `Color.Black` if the background is light, or `Color.White` if it's dark.
+ */
+fun Color.contrastingTextColor(threshold: Double = 0.25): Color {
+    return if (luminance() > threshold) Color.Black else Color.White
 }
