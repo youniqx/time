@@ -1,0 +1,16 @@
+mutation TimelogCreateMutation(
+  $input: TimelogCreateInput!
+) {
+  timelogCreate(
+    input: $input
+  ) {
+    clientMutationId
+    errors
+    timelog {
+      id
+      spentAt
+      summary
+      timeSpent
+    }
+  }
+}

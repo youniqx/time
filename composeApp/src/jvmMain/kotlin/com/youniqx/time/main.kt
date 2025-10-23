@@ -28,6 +28,7 @@ import androidx.compose.ui.window.rememberWindowState
 import java.awt.Desktop
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
+import java.lang.Exception
 
 val isMacOs = System.getProperty("os.name") == "Mac OS X"
 

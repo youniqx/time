@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.youniqx.time
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -25,27 +28,42 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,11 +80,15 @@ import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -75,14 +97,24 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.apollographql.apollo.ApolloClient
 import com.youniqx.time.gitlab.models.IssuesQuery
+import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.Issues
 import com.youniqx.time.gitlab.models.type.IssueState
+import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.random.Random
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.ExperimentalTime
 
 operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingValues(
     start = this.calculateStartPadding(LayoutDirection.Ltr) +
@@ -113,6 +145,12 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
         var search: String by remember { mutableStateOf("") }
         var loading: Boolean by remember { mutableStateOf(false) }
         val isPreview = LocalInspectionMode.current
+        val apolloClient = remember(settingsUiState.token) {
+            ApolloClient.Builder()
+                .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
+                .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
+                .build()
+        }
         LaunchedEffect(search) {
             if (isPreview) {
                 issues = buildList {
@@ -132,10 +170,6 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             }
             loading = true
             if (search.isNotEmpty()) delay(300)
-            val apolloClient = ApolloClient.Builder()
-                .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
-                .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
-                .build()
             val query = IssuesQuery.Builder()
                 .pinnedIids(listOf("2780"))
                 .search(search)
@@ -190,7 +224,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 WindowInsets.systemBarsForVisualComponents
                     .exclude(consumedWindowInsets)
                     .asPaddingValues()
-
+            val openIssues = remember { mutableStateListOf<String>() }
             LazyColumn(
                 modifier =
                     Modifier
@@ -221,7 +255,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                 }
                             }
                             .fillMaxWidth()
-                            .focusRequester(focusRequester)
+                            .then(if (openIssues.isEmpty()) Modifier.focusRequester(focusRequester) else Modifier)
                             .padding(horizontal = 12.dp)
                             .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)
                     )
@@ -239,9 +273,23 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             it.labels?.nodes.orEmpty().filterNotNull().any {
                                 it.title.contains(search, ignoreCase = true)
                             }
-                }) { index, issue ->
+                }, key = { _, issue -> issue.id }) { index, issue ->
                     if (index != 0) HorizontalDivider(thickness = 0.5.dp)
-                    Issue(issue, settingsUiState.showLabelsByDefault, settingsUiState.useLabelColors)
+                    val open = issue.id in openIssues
+                    Issue(
+                        issue,
+                        settingsUiState.showLabelsByDefault,
+                        settingsUiState.useLabelColors,
+                        open = open,
+                        onClick = {
+                            if (open) {
+                                openIssues.remove(issue.id)
+                            } else {
+                                openIssues.add(issue.id)
+                            }
+                        },
+                        apolloClient
+                    )
                 }
                 if (loading) item {
                     Box(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) {
@@ -253,12 +301,23 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
     }
 }
 
+@OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable
-fun Issue(issue: Issues.Node, showLabelsByDefault: Boolean, useLabelColors: Boolean) {
+fun Issue(
+    issue: Issues.Node,
+    showLabelsByDefault: Boolean,
+    useLabelColors: Boolean,
+    open: Boolean,
+    onClick: () -> Unit,
+    apolloClient: ApolloClient
+) {
     val uriHandler = LocalUriHandler.current
     Column(
         modifier = Modifier
-            .clickable { uriHandler.openUri(issue.webUrl) }
+            .clickable(
+                onClickLabel = if (open) "Collapse issue and reset current timer" else "Work on issue",
+                role = Role.Switch
+            ) { onClick() }
             .heightIn(min = 48.dp)
             .padding(horizontal = 12.dp)
             .padding(vertical = 8.dp)
@@ -271,37 +330,140 @@ fun Issue(issue: Issues.Node, showLabelsByDefault: Boolean, useLabelColors: Bool
             Text(issue.title)
         }
         labels?.let {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy((-4).dp, Alignment.CenterVertically)
-            ) {
-                it.filterNotNull().onEach { label ->
-                    val default = SuggestionChipDefaults.suggestionChipColors()
-                        .copy(
-                            disabledContainerColor = MaterialTheme.colorScheme.surface,
-                            disabledLabelColor = LocalContentColor.current,
-                        )
-                    val colors = if (useLabelColors) remember(label.color) {
-                        val color = try {
-                            Color(label.color.toColorInt()).copy(alpha = 0.75f)
-                        } catch (_: Exception) {
-                            default.disabledContainerColor
+            AnimatedVisibility(visible = labels.isNotEmpty()) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy((-4).dp, Alignment.CenterVertically)
+                ) {
+                    it.filterNotNull().onEach { label ->
+                        val default = SuggestionChipDefaults.suggestionChipColors()
+                            .copy(
+                                disabledContainerColor = MaterialTheme.colorScheme.surface,
+                                disabledLabelColor = LocalContentColor.current,
+                            )
+                        val colors = if (useLabelColors) remember(label.color) {
+                            val color = try {
+                                Color(label.color.toColorInt()).copy(alpha = 0.75f)
+                            } catch (_: Exception) {
+                                default.disabledContainerColor
+                            }
+                            default.copy(
+                                disabledContainerColor = color,
+                                disabledLabelColor = color.contrastingTextColor()
+                            )
+                        } else {
+                            default
                         }
-                        default.copy(
-                            disabledContainerColor = color,
-                            disabledLabelColor = color.contrastingTextColor()
+                        SuggestionChip(
+                            onClick = { },
+                            enabled = false,
+                            colors = colors,
+                            label = {
+                                Text(label.title.replace("::", " ⏐ "))
+                            }
                         )
-                    } else {
-                        default
                     }
-                    SuggestionChip(
-                        onClick = { },
-                        enabled = false,
-                        colors = colors,
-                        label = {
-                            Text(label.title.replace("::", " ⏐ "))
+                }
+            }
+        }
+        AnimatedVisibility(visible = open) {
+            var timeOfOpen by remember { mutableStateOf(Clock.System.now()) }
+            var timeSinceOpen by remember { mutableStateOf(Duration.ZERO) }
+            var customTimeSpent by remember { mutableStateOf<String?>(null) }
+            var summary by remember { mutableStateOf("") }
+            val focusRequester = remember { FocusRequester() }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth()
+                        .focusRequester(focusRequester)
+                        .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612,
+                    value = summary,
+                    label = { Text("What have I achieved? (optional)") },
+                    onValueChange = { summary = it },
+                )
+                val timeSinceOpenString = when {
+                    timeSinceOpen < 1.minutes -> "0h 0m"
+                    timeSinceOpen < 1.hours -> "0h $timeSinceOpen"
+                    else -> "$timeSinceOpen"
+                }
+                OutlinedTextField(
+                    modifier = Modifier.fillMaxWidth()
+                        .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612
+                    value = customTimeSpent ?: timeSinceOpenString,
+                    onValueChange = { customTimeSpent = it },
+                    label = { Text("Time spent")},
+                    placeholder = { Text("Example: 1h 30m") },
+                    trailingIcon = {
+                        when {
+                            customTimeSpent != null -> SimpleTooltip("Reset to running timer\n($timeSinceOpenString)") {
+                                IconButton(
+                                    modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                                    onClick = { customTimeSpent = null }
+                                ) {
+                                    Icon(
+                                        Icons.Default.History,
+                                        contentDescription = "Reset to running timer"
+                                    )
+                                }
+                            }
+                            timeSinceOpen >= 1.minutes -> SimpleTooltip("Restart time spent timer") {
+                                IconButton(
+                                    modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                                    onClick = { timeOfOpen = Clock.System.now() }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Clear,
+                                        contentDescription = "Restart time spent timer"
+                                    )
+                                }
+                            }
                         }
-                    )
+                    },
+                    isError = customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
+                )
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    SimpleTooltip("Pin issue\n(Not implemented yet)") {
+                        IconToggleButton(checked = false, onCheckedChange = {  }) {
+                            Icon(
+                                imageVector = Icons.Outlined.PushPin,
+                                contentDescription = "Pin issue\n(Not implemented yet)"
+                            )
+                        }
+                    }
+                    SimpleTooltip("Open issue") {
+                        IconButton(onClick = { uriHandler.openUri(issue.webUrl) }) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open issue")
+                        }
+                    }
+                    SimpleTooltip("Commit time tracking") {
+                        val coroutineScope = rememberCoroutineScope()
+                        FilledTonalIconButton(modifier = Modifier.padding(start = 4.dp), onClick = {
+                            coroutineScope.launch {
+                                apolloClient.mutation(
+                                    TimelogCreateMutation(
+                                        input =
+                                            TimelogCreateInput.Builder()
+                                                .issuableId(issue.id)
+                                                .summary(summary)
+                                                .timeSpent(customTimeSpent ?: timeSinceOpen.toString())
+                                                .build()
+                                    )
+                                ).execute()
+                                onClick()
+                            }
+                        }) {
+                            Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "Commit time tracking")
+                        }
+                    }
+                }
+            }
+            LaunchedEffect(open, timeOfOpen) {
+                if (!open) return@LaunchedEffect
+                focusRequester.requestFocus()
+                while (true) {
+                    if (!isActive) return@LaunchedEffect
+                    timeSinceOpen = (Clock.System.now() - timeOfOpen).inWholeMinutes.minutes
+                    delay(1.seconds)
                 }
             }
         }
@@ -333,3 +495,13 @@ fun String.toColorInt(): Int {
 fun Color.contrastingTextColor(threshold: Double = 0.25): Color {
     return if (luminance() > threshold) Color.Black else Color.White
 }
+
+@Composable
+fun SimpleTooltip(text: String, content: @Composable () -> Unit) = TooltipBox(
+    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+    tooltip = {
+        PlainTooltip { Text(text) }
+    },
+    state = rememberTooltipState(),
+    content = content
+)
