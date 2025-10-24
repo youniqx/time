@@ -3,7 +3,6 @@
 package com.youniqx.time
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -28,6 +27,7 @@ import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Send
@@ -103,7 +103,6 @@ import com.youniqx.time.gitlab.models.type.IssueState
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
-import com.youniqx.time.settings.UiState
 import com.youniqx.time.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -226,16 +225,25 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                     .exclude(consumedWindowInsets)
                     .asPaddingValues()
             var openIssue by remember { mutableStateOf<String?>(null) }
+            val lazyListState = rememberLazyListState()
             LazyColumn(
                 modifier =
                     Modifier
                         .onConsumedWindowInsetsChanged {
                             consumedWindowInsets.insets = it
                         },
+                state = lazyListState,
                 contentPadding = insets,
             ) {
                 stickyHeader {
-                    Search(openIssue, search, focusRequester, settingsUiState, onSearchChange = { search = it })
+                    Search(
+                        search = search,
+                        onSearchChange = { search = it },
+                        show = search.isNotEmpty() && !lazyListState.canScrollBackward,
+                        focusRequester = if (openIssue == null) focusRequester else null,
+                    )
+                    // Fake item to ignore focus requests if a issue is open
+                    Box(modifier = Modifier.focusRequester(focusRequester))
                 }
                 itemsIndexed(issues.orEmpty().filter {
                     it.title.contains(search, ignoreCase = true) ||
@@ -273,11 +281,10 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
 
 @Composable
 fun Search(
-    openIssue: String?,
     search: String,
-    focusRequester: FocusRequester,
-    settingsUiState: UiState,
     onSearchChange: (String) -> Unit,
+    show: Boolean,
+    focusRequester: FocusRequester?
 ) {
     val focusManager = LocalFocusManager.current
     OutlinedTextField(
@@ -300,13 +307,12 @@ fun Search(
                 }
             }
             .fillMaxWidth()
-            .then(if (openIssue == null) Modifier.focusRequester(focusRequester) else Modifier)
-            .background(MaterialTheme.colorScheme.background)
+            .then(focusRequester?.let { Modifier.focusRequester(focusRequester) } ?: Modifier)
             .padding(horizontal = 12.dp)
-            .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)
+            .then(if (show) Modifier else Modifier.height(0.dp).alpha(0f))
     )
-    LaunchedEffect(settingsUiState.darkTheme, settingsUiState.highContrastColors) {
-        focusRequester.requestFocus()
+    LaunchedEffect(true) {
+        focusRequester?.requestFocus()
     }
 }
 
