@@ -3,6 +3,7 @@
 package com.youniqx.time
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -60,7 +61,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -103,6 +103,7 @@ import com.youniqx.time.gitlab.models.type.IssueState
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
+import com.youniqx.time.settings.UiState
 import com.youniqx.time.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -224,7 +225,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 WindowInsets.systemBarsForVisualComponents
                     .exclude(consumedWindowInsets)
                     .asPaddingValues()
-            val openIssues = remember { mutableStateListOf<String>() }
+            var openIssue by remember { mutableStateOf<String?>(null) }
             LazyColumn(
                 modifier =
                     Modifier
@@ -233,35 +234,8 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                         },
                 contentPadding = insets,
             ) {
-                item {
-                    val focusManager = LocalFocusManager.current
-                    OutlinedTextField(
-                        value = search,
-                        onValueChange = { search = it },
-                        modifier = Modifier
-                            .onPreviewKeyEvent {
-                                if (
-                                    !it.isMetaPressed &&
-                                    !it.isAltPressed &&
-                                    !it.isCtrlPressed &&
-                                    !it.isShiftPressed &&
-                                    it.key == Key.Tab &&
-                                    it.type == KeyEventType.KeyDown
-                                ) {
-                                    focusManager.moveFocus(FocusDirection.Next)
-                                    true
-                                } else {
-                                    false
-                                }
-                            }
-                            .fillMaxWidth()
-                            .then(if (openIssues.isEmpty()) Modifier.focusRequester(focusRequester) else Modifier)
-                            .padding(horizontal = 12.dp)
-                            .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)
-                    )
-                    LaunchedEffect(settingsUiState.darkTheme, settingsUiState.highContrastColors) {
-                        focusRequester.requestFocus()
-                    }
+                stickyHeader {
+                    Search(openIssue, search, focusRequester, settingsUiState, onSearchChange = { search = it })
                 }
                 itemsIndexed(issues.orEmpty().filter {
                     it.title.contains(search, ignoreCase = true) ||
@@ -275,18 +249,14 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             }
                 }, key = { _, issue -> issue.id }) { index, issue ->
                     if (index != 0) HorizontalDivider(thickness = 0.5.dp)
-                    val open = issue.id in openIssues
+                    val open = issue.id == openIssue
                     Issue(
                         issue,
                         settingsUiState.showLabelsByDefault,
                         settingsUiState.useLabelColors,
                         open = open,
                         onClick = {
-                            if (open) {
-                                openIssues.remove(issue.id)
-                            } else {
-                                openIssues.add(issue.id)
-                            }
+                            openIssue = if (open) null else issue.id
                         },
                         apolloClient
                     )
@@ -298,6 +268,45 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 }
             }
         }
+    }
+}
+
+@Composable
+fun Search(
+    openIssue: String?,
+    search: String,
+    focusRequester: FocusRequester,
+    settingsUiState: UiState,
+    onSearchChange: (String) -> Unit,
+) {
+    val focusManager = LocalFocusManager.current
+    OutlinedTextField(
+        value = search,
+        onValueChange = onSearchChange,
+        modifier = Modifier
+            .onPreviewKeyEvent {
+                if (
+                    !it.isMetaPressed &&
+                    !it.isAltPressed &&
+                    !it.isCtrlPressed &&
+                    !it.isShiftPressed &&
+                    it.key == Key.Tab &&
+                    it.type == KeyEventType.KeyDown
+                ) {
+                    focusManager.moveFocus(FocusDirection.Next)
+                    true
+                } else {
+                    false
+                }
+            }
+            .fillMaxWidth()
+            .then(if (openIssue == null) Modifier.focusRequester(focusRequester) else Modifier)
+            .background(MaterialTheme.colorScheme.background)
+            .padding(horizontal = 12.dp)
+            .then(if (search.isEmpty()) Modifier.height(0.dp).alpha(0f) else Modifier)
+    )
+    LaunchedEffect(settingsUiState.darkTheme, settingsUiState.highContrastColors) {
+        focusRequester.requestFocus()
     }
 }
 
