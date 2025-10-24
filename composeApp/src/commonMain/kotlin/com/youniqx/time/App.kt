@@ -151,7 +151,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
                 .build()
         }
-        LaunchedEffect(search) {
+        LaunchedEffect(search, apolloClient) {
             if (isPreview) {
                 issues = buildList {
                     repeat(20) {
@@ -309,6 +309,7 @@ fun Search(
             .fillMaxWidth()
             .then(focusRequester?.let { Modifier.focusRequester(focusRequester) } ?: Modifier)
             .padding(horizontal = 12.dp)
+            .padding(top = 4.dp)
             .then(if (show) Modifier else Modifier.height(0.dp).alpha(0f))
     )
     LaunchedEffect(true) {
