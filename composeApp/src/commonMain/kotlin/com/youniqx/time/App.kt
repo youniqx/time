@@ -54,6 +54,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
@@ -513,11 +514,13 @@ fun Color.contrastingTextColor(threshold: Double = 0.25): Color {
 }
 
 @Composable
-fun SimpleTooltip(text: String, content: @Composable () -> Unit) = TooltipBox(
-    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-    tooltip = {
-        PlainTooltip { Text(text) }
-    },
-    state = rememberTooltipState(),
-    content = content
-)
+fun SimpleTooltip(text: String, content: @Composable () -> Unit) {
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        tooltip = {
+            PlainTooltip { Text(text) }
+        },
+        state = rememberTooltipState(),
+        content = content
+    )
+}
