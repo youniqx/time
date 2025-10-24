@@ -36,7 +36,7 @@ import com.youniqx.time.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-fun Settings(viewModel: SettingsViewModel) {
+fun Settings(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
         darkTheme = uiState.darkTheme,
@@ -49,6 +49,7 @@ fun Settings(viewModel: SettingsViewModel) {
         toggleUseLabelColors = viewModel::toggleUseLabelColors,
         token = uiState.token,
         onTokenChange = viewModel::setToken,
+        modifier = modifier
     )
 }
 
@@ -64,8 +65,9 @@ fun SettingsScreen(
     toggleUseLabelColors: () -> Unit,
     token: String,
     onTokenChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Column(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)) {
+    Column(modifier = modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)) {
         val lightInteractionSource = remember { MutableInteractionSource() }
         val lightIsHovered by lightInteractionSource.collectIsHoveredAsState()
         val darkInteractionSource = remember { MutableInteractionSource() }

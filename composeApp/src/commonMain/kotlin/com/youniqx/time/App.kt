@@ -80,7 +80,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.key.Key
@@ -201,6 +203,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
         }
         val navigator = rememberSupportingPaneScaffoldNavigator()
         val coroutineScope = rememberCoroutineScope()
+        var settingsHaveFocus by remember { mutableStateOf(false) }
         Scaffold(
             floatingActionButton = {
                 if (navigator.scaffoldValue.secondary == PaneAdaptedValue.Hidden ||
@@ -237,7 +240,9 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 value = navigator.scaffoldValue,
                 supportingPane = {
                     AnimatedPane {
-                        Settings(settingsViewModel)
+                        Settings(settingsViewModel, modifier = Modifier.onFocusChanged {
+                            settingsHaveFocus = it.hasFocus
+                        })
                     }
                 }, mainPane = {
                     AnimatedPane {
@@ -263,10 +268,13 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                     search = search,
                                     onSearchChange = { search = it },
                                     show = search.isNotEmpty() && !lazyListState.canScrollBackward,
-                                    focusRequester = if (openIssue == null) focusRequester else null,
+                                    modifier = Modifier
+                                        .focusRequester(focusRequester)
+                                        .focusProperties { canFocus = openIssue == null && !settingsHaveFocus }
                                 )
-                                // Fake item to ignore focus requests if a issue is open
-                                Box(modifier = Modifier.focusRequester(focusRequester))
+                                LaunchedEffect(true) {
+                                    focusRequester.requestFocus()
+                                }
                             }
                             itemsIndexed(issues.orEmpty().filter {
                                 it.title.contains(search, ignoreCase = true) ||
@@ -318,6 +326,8 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 }
             )
         }
+        // Fake item to ignore focus requests if a issue is open
+        Box(modifier = Modifier.focusProperties { canFocus = false }.focusRequester(focusRequester))
     }
 }
 
@@ -326,13 +336,13 @@ fun Search(
     search: String,
     onSearchChange: (String) -> Unit,
     show: Boolean,
-    focusRequester: FocusRequester?
+    modifier: Modifier = Modifier,
 ) {
     val focusManager = LocalFocusManager.current
     OutlinedTextField(
         value = search,
         onValueChange = onSearchChange,
-        modifier = Modifier
+        modifier = modifier
             .onPreviewKeyEvent {
                 if (
                     !it.isMetaPressed &&
@@ -349,7 +359,6 @@ fun Search(
                 }
             }
             .fillMaxWidth()
-            .then(focusRequester?.let { Modifier.focusRequester(focusRequester) } ?: Modifier)
             .then(
                 if (show) {
                     Modifier.padding(horizontal = 12.dp).padding(vertical = 4.dp)
@@ -358,9 +367,6 @@ fun Search(
                 }
             )
     )
-    LaunchedEffect(true) {
-        focusRequester?.requestFocus()
-    }
 }
 
 @OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
