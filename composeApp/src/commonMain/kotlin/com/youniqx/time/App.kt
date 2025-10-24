@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 
 package com.youniqx.time
 
@@ -47,6 +47,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
@@ -57,6 +58,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.VerticalDragHandle
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.layout.SupportingPaneScaffold
+import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
+import androidx.compose.material3.adaptive.navigation.rememberSupportingPaneScaffoldNavigator
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -190,22 +199,30 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             }
             loading = false
         }
-        var showSettings by remember { mutableStateOf(settingsUiState.token.isBlank()) }
+        val navigator = rememberSupportingPaneScaffoldNavigator()
+        val coroutineScope = rememberCoroutineScope()
         Scaffold(
             floatingActionButton = {
-                CompositionLocalProvider(
+                if (navigator.scaffoldValue.secondary == PaneAdaptedValue.Hidden ||
+                    navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) CompositionLocalProvider(
                     LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
                 ) {
                     val interactionSource = remember { MutableInteractionSource() }
                     val isHovered by interactionSource.collectIsHoveredAsState()
                     FloatingActionButton(
                         onClick = {
-                            showSettings = !showSettings
+                            coroutineScope.launch {
+                                if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
+                                    navigator.navigateTo(SupportingPaneScaffoldRole.Main)
+                                } else {
+                                    navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
+                                }
+                            }
                         },
                         interactionSource = interactionSource,
                     ) {
                         val icon =
-                            if (showSettings) {
+                            if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
                                 if (isHovered) Icons.Filled.Home else Icons.Outlined.Home
                             } else {
                                 if (isHovered) Icons.Filled.Settings else Icons.Outlined.Settings
@@ -215,67 +232,91 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 }
             }
         ) {
-            if (showSettings) {
-                Settings(settingsViewModel)
-                return@Scaffold
-            }
-            // https://kotlinlang.slack.com/archives/CJLTWPH7S/p1731631796638429?thread_ts=1731631796.638429
-            val consumedWindowInsets = remember { MutableWindowInsets() }
-            val insets =
-                WindowInsets.systemBarsForVisualComponents
-                    .exclude(consumedWindowInsets)
-                    .asPaddingValues()
-            var openIssue by remember { mutableStateOf<String?>(null) }
-            val lazyListState = rememberLazyListState()
-            LazyColumn(
-                modifier =
-                    Modifier
-                        .onConsumedWindowInsetsChanged {
-                            consumedWindowInsets.insets = it
-                        },
-                state = lazyListState,
-                contentPadding = insets,
-            ) {
-                stickyHeader {
-                    Search(
-                        search = search,
-                        onSearchChange = { search = it },
-                        show = search.isNotEmpty() && !lazyListState.canScrollBackward,
-                        focusRequester = if (openIssue == null) focusRequester else null,
-                    )
-                    // Fake item to ignore focus requests if a issue is open
-                    Box(modifier = Modifier.focusRequester(focusRequester))
-                }
-                itemsIndexed(issues.orEmpty().filter {
-                    it.title.contains(search, ignoreCase = true) ||
-                            it.id.contains(search, ignoreCase = true) ||
-                            it.assignees?.nodes.orEmpty().filterNotNull().any {
-                                it.name.contains(search, ignoreCase = true) ||
-                                        it.username.contains(search, ignoreCase = true)
-                            } ||
-                            it.labels?.nodes.orEmpty().filterNotNull().any {
-                                it.title.contains(search, ignoreCase = true)
-                            }
-                }, key = { _, issue -> issue.id }) { index, issue ->
-                    if (index != 0) HorizontalDivider(thickness = 0.5.dp)
-                    val open = issue.id == openIssue
-                    Issue(
-                        issue,
-                        settingsUiState.showLabelsByDefault,
-                        settingsUiState.useLabelColors,
-                        open = open,
-                        onClick = {
-                            openIssue = if (open) null else issue.id
-                        },
-                        apolloClient
-                    )
-                }
-                if (loading) item {
-                    Box(modifier = Modifier.fillMaxWidth().padding(top = 8.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+            SupportingPaneScaffold(
+                directive = navigator.scaffoldDirective,
+                value = navigator.scaffoldValue,
+                supportingPane = {
+                    AnimatedPane {
+                        Settings(settingsViewModel)
                     }
+                }, mainPane = {
+                    AnimatedPane {
+                        // https://kotlinlang.slack.com/archives/CJLTWPH7S/p1731631796638429?thread_ts=1731631796.638429
+                        val consumedWindowInsets = remember { MutableWindowInsets() }
+                        val insets =
+                            WindowInsets.systemBarsForVisualComponents
+                                .exclude(consumedWindowInsets)
+                                .asPaddingValues()
+                        var openIssue by remember { mutableStateOf<String?>(null) }
+                        val lazyListState = rememberLazyListState()
+                        LazyColumn(
+                            modifier =
+                                Modifier
+                                    .onConsumedWindowInsetsChanged {
+                                        consumedWindowInsets.insets = it
+                                    },
+                            state = lazyListState,
+                            contentPadding = insets,
+                        ) {
+                            stickyHeader {
+                                Search(
+                                    search = search,
+                                    onSearchChange = { search = it },
+                                    show = search.isNotEmpty() && !lazyListState.canScrollBackward,
+                                    focusRequester = if (openIssue == null) focusRequester else null,
+                                )
+                                // Fake item to ignore focus requests if a issue is open
+                                Box(modifier = Modifier.focusRequester(focusRequester))
+                            }
+                            itemsIndexed(issues.orEmpty().filter {
+                                it.title.contains(search, ignoreCase = true) ||
+                                        it.id.contains(search, ignoreCase = true) ||
+                                        it.assignees?.nodes.orEmpty().filterNotNull().any {
+                                            it.name.contains(search, ignoreCase = true) ||
+                                                    it.username.contains(search, ignoreCase = true)
+                                        } ||
+                                        it.labels?.nodes.orEmpty().filterNotNull().any {
+                                            it.title.contains(search, ignoreCase = true)
+                                        }
+                            }, key = { _, issue -> issue.id }) { index, issue ->
+                                if (index != 0) HorizontalDivider(thickness = 0.5.dp)
+                                val open = issue.id == openIssue
+                                Issue(
+                                    issue,
+                                    settingsUiState.showLabelsByDefault,
+                                    settingsUiState.useLabelColors,
+                                    open = open,
+                                    onClick = {
+                                        openIssue = if (open) null else issue.id
+                                    },
+                                    apolloClient
+                                )
+                            }
+                            if (loading) item {
+                                Box(
+                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                        }
+                    }
+                },
+                paneExpansionState = rememberPaneExpansionState(navigator.scaffoldValue),
+                paneExpansionDragHandle = { state ->
+                    val interactionSource =
+                        remember { MutableInteractionSource() }
+                    VerticalDragHandle(
+                        modifier =
+                            Modifier.paneExpansionDraggable(
+                                state,
+                                LocalMinimumInteractiveComponentSize.current,
+                                interactionSource
+                            ), interactionSource = interactionSource
+                    )
                 }
-            }
+            )
         }
     }
 }

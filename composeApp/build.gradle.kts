@@ -59,7 +59,9 @@ kotlin {
             implementation(libs.settings.coroutines)
             implementation(libs.settings.makeObservable)
             implementation(libs.kotlinx.coroutines.core)
-
+            implementation(libs.compose.material3.adaptive)
+            implementation(libs.compose.material3.adaptive.layout)
+            implementation(libs.compose.material3.adaptive.navigation)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
