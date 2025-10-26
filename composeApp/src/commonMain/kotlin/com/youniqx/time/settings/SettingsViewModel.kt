@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 
 data class UiState(
     val token: String,
@@ -18,6 +19,7 @@ data class UiState(
     val highContrastColors: Boolean,
     val showLabelsByDefault: Boolean,
     val useLabelColors: Boolean,
+    val pinnedIssues: List<String>,
 )
 
 private enum class SettingKey {
@@ -26,6 +28,7 @@ private enum class SettingKey {
     HighContrastColors,
     ShowLabelsByDefault,
     UseLabelColors,
+    PinnedIssues,
 }
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -38,17 +41,22 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
                 highContrastColors = false,
                 showLabelsByDefault = false,
                 useLabelColors = false,
+                pinnedIssues = emptyList()
             )
         )
     val uiState = _uiState.asStateFlow()
     private val settings = Settings().makeObservable().toFlowSettings()
 
     init {
-        settings.getStringFlow(SettingKey.Token.name, token).save { copy(token = it) }
-        settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).save { copy(darkTheme = it) }
-        settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).save { copy(highContrastColors = it) }
-        settings.getBooleanFlow(SettingKey.ShowLabelsByDefault.name, false).save { copy(showLabelsByDefault = it) }
-        settings.getBooleanFlow(SettingKey.UseLabelColors.name, false).save { copy(useLabelColors = it) }
+        settings.getStringFlow(SettingKey.Token.name, token).loadInto { copy(token = it) }
+        settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).loadInto { copy(darkTheme = it) }
+        settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).loadInto { copy(highContrastColors = it) }
+        settings.getBooleanFlow(SettingKey.ShowLabelsByDefault.name, false).loadInto { copy(showLabelsByDefault = it) }
+        settings.getBooleanFlow(SettingKey.UseLabelColors.name, false).loadInto { copy(useLabelColors = it) }
+        settings.getStringFlow(
+            SettingKey.PinnedIssues.name,
+            Json.encodeToString(emptyList<String>())
+        ).loadInto { copy(pinnedIssues = Json.decodeFromString(it)) }
     }
 
     fun toggleDarkTheme() {
@@ -81,7 +89,19 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
         }
     }
 
-    private inline fun <reified T> Flow<T>.save(crossinline updateUiState: UiState.(T) -> UiState) {
+    fun togglePinIssue(iid: String) {
+        viewModelScope.launch {
+            val pinned = uiState.value.pinnedIssues.toMutableList()
+            if (iid in pinned) {
+                pinned.remove(iid)
+            } else {
+                pinned.add(iid)
+            }
+            settings.putString(SettingKey.PinnedIssues.name, Json.encodeToString(pinned))
+        }
+    }
+
+    private inline fun <reified T> Flow<T>.loadInto(crossinline updateUiState: UiState.(T) -> UiState) {
         viewModelScope.launch {
             collect { setting ->
                 _uiState.update { it.updateUiState(setting) }

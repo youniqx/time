@@ -5,6 +5,7 @@ package com.youniqx.time
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -34,6 +35,7 @@ import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PushPin
@@ -156,6 +158,11 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
         var issues: List<Issues.Node>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var loading: Boolean by remember { mutableStateOf(false) }
+        var openIssue by remember { mutableStateOf<Issues.Node?>(null) }
+        var disableGlobalSearch by remember { mutableStateOf(false) }
+        val disableGlobalSearchIfFocused: Modifier.() -> Modifier = {
+            onFocusChanged { disableGlobalSearch = it.hasFocus }
+        }
         val isPreview = LocalInspectionMode.current
         val apolloClient = remember(settingsUiState.token) {
             ApolloClient.Builder()
@@ -163,14 +170,15 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
                 .build()
         }
-        LaunchedEffect(search, apolloClient) {
+        LaunchedEffect(search, settingsUiState.pinnedIssues, apolloClient) {
             if (isPreview) {
                 issues = buildList {
                     repeat(20) {
                         val start = Random.nextInt(loremIpsum.lastIndex - 100)
                         add(Issues.Node(
                             id = it.toString(),
-                            title = loremIpsum.substring(start, start + Random.nextInt(20, 100)),
+                            iid = it.toString(),
+                            title = loremIpsum.substring(start, start + Random.nextInt(20, 100)).trim(),
                             webUrl = "",
                             state = IssueState.opened,
                             labels = null,
@@ -183,7 +191,8 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             loading = true
             if (search.isNotEmpty()) delay(300)
             val query = IssuesQuery.Builder()
-                .pinnedIids(listOf("2780"))
+                .pinnedIids(settingsUiState.pinnedIssues + (openIssue?.let { listOf(it.iid) } ?: emptyList()))
+                .doPinnedSearch(settingsUiState.pinnedIssues.isNotEmpty())
                 .search(search)
                 .doSearch(search.isNotBlank())
                 .build()
@@ -203,7 +212,6 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
         }
         val navigator = rememberSupportingPaneScaffoldNavigator()
         val coroutineScope = rememberCoroutineScope()
-        var settingsHaveFocus by remember { mutableStateOf(false) }
         Scaffold(
             floatingActionButton = {
                 if (navigator.scaffoldValue.secondary == PaneAdaptedValue.Hidden ||
@@ -240,9 +248,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 value = navigator.scaffoldValue,
                 supportingPane = {
                     AnimatedPane {
-                        Settings(settingsViewModel, modifier = Modifier.onFocusChanged {
-                            settingsHaveFocus = it.hasFocus
-                        })
+                        Settings(settingsViewModel, disableGlobalSearchIfFocused = disableGlobalSearchIfFocused)
                     }
                 }, mainPane = {
                     AnimatedPane {
@@ -252,7 +258,6 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             WindowInsets.systemBarsForVisualComponents
                                 .exclude(consumedWindowInsets)
                                 .asPaddingValues()
-                        var openIssue by remember { mutableStateOf<String?>(null) }
                         val lazyListState = rememberLazyListState()
                         LazyColumn(
                             modifier =
@@ -270,7 +275,8 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                     show = search.isNotEmpty() && !lazyListState.canScrollBackward,
                                     modifier = Modifier
                                         .focusRequester(focusRequester)
-                                        .focusProperties { canFocus = openIssue == null && !settingsHaveFocus }
+                                        .focusProperties { canFocus = !disableGlobalSearch },
+                                    onPress = { disableGlobalSearch = false }
                                 )
                                 LaunchedEffect(true) {
                                     focusRequester.requestFocus()
@@ -279,6 +285,9 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             itemsIndexed(issues.orEmpty().filter {
                                 it.title.contains(search, ignoreCase = true) ||
                                         it.id.contains(search, ignoreCase = true) ||
+                                        it.id == openIssue?.id ||
+                                        it.iid.contains(search, ignoreCase = true) ||
+                                        it.webUrl.contains(search, ignoreCase = true) ||
                                         it.assignees?.nodes.orEmpty().filterNotNull().any {
                                             it.name.contains(search, ignoreCase = true) ||
                                                     it.username.contains(search, ignoreCase = true)
@@ -288,16 +297,19 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                         }
                             }, key = { _, issue -> issue.id }) { index, issue ->
                                 if (index != 0) HorizontalDivider(thickness = 0.5.dp)
-                                val open = issue.id == openIssue
+                                val open = issue.id == openIssue?.id
                                 Issue(
                                     issue,
                                     settingsUiState.showLabelsByDefault,
                                     settingsUiState.useLabelColors,
                                     open = open,
                                     onClick = {
-                                        openIssue = if (open) null else issue.id
+                                        openIssue = if (open) null else issue
                                     },
-                                    apolloClient
+                                    pinned = issue.iid in settingsUiState.pinnedIssues,
+                                    togglePinned = { settingsViewModel.togglePinIssue(issue.iid) },
+                                    apolloClient = apolloClient,
+                                    disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
                                 )
                             }
                             if (loading) item {
@@ -337,8 +349,15 @@ fun Search(
     onSearchChange: (String) -> Unit,
     show: Boolean,
     modifier: Modifier = Modifier,
+    onPress: () -> Unit
 ) {
     val focusManager = LocalFocusManager.current
+    val interactionSource = remember { MutableInteractionSource() }
+    LaunchedEffect(interactionSource) {
+        interactionSource.interactions.collect {
+            if (it is PressInteraction.Press) onPress()
+        }
+    }
     OutlinedTextField(
         value = search,
         onValueChange = onSearchChange,
@@ -365,7 +384,8 @@ fun Search(
                 } else {
                     Modifier.height(0.dp).alpha(0f)
                 }
-            )
+            ),
+        interactionSource = interactionSource
     )
 }
 
@@ -377,7 +397,10 @@ fun Issue(
     useLabelColors: Boolean,
     open: Boolean,
     onClick: () -> Unit,
-    apolloClient: ApolloClient
+    pinned: Boolean,
+    togglePinned: () -> Unit,
+    apolloClient: ApolloClient,
+    disableGlobalSearchIfFocused: Modifier.() -> Modifier
 ) {
     val uriHandler = LocalUriHandler.current
     Column(
@@ -443,6 +466,7 @@ fun Issue(
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth()
+                        .disableGlobalSearchIfFocused()
                         .focusRequester(focusRequester)
                         .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612,
                     value = summary,
@@ -456,6 +480,7 @@ fun Issue(
                 }
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth()
+                        .disableGlobalSearchIfFocused()
                         .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612
                     value = customTimeSpent ?: timeSinceOpenString,
                     onValueChange = { customTimeSpent = it },
@@ -490,11 +515,12 @@ fun Issue(
                     isError = customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    SimpleTooltip("Pin issue\n(Not implemented yet)") {
-                        IconToggleButton(checked = false, onCheckedChange = {  }) {
+                    val text = if (pinned) "Unpin issue" else "Pin issue"
+                    SimpleTooltip(text) {
+                        IconToggleButton(checked = pinned, onCheckedChange = { togglePinned() }) {
                             Icon(
-                                imageVector = Icons.Outlined.PushPin,
-                                contentDescription = "Pin issue\n(Not implemented yet)"
+                                imageVector = if (pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                                contentDescription = text
                             )
                         }
                     }

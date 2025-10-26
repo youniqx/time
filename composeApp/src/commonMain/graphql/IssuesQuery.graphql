@@ -3,6 +3,7 @@ query IssuesQuery(
   $iterationCadenceId: [IterationsCadenceID!] = "gid://gitlab/Iterations::Cadence/9",
   $pinnedIids: [String!] = [],
   $search: String = "",
+  $doPinnedSearch: Boolean! = false,
   $doSearch: Boolean! = false
 ) {
   sprint: group(fullPath: $group) {
@@ -10,7 +11,7 @@ query IssuesQuery(
       ...issues
     }
   }
-  pinned: group(fullPath: $group) {
+  pinned: group(fullPath: $group) @include(if: $doPinnedSearch) {
     issues(iids: $pinnedIids) {
       ...issues
     }
@@ -30,6 +31,7 @@ query IssuesQuery(
 fragment issues on IssueConnection {
   nodes {
     id
+    iid
     title
     webUrl
     state

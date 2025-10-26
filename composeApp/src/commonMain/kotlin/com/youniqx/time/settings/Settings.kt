@@ -36,7 +36,7 @@ import com.youniqx.time.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-fun Settings(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
+fun Settings(viewModel: SettingsViewModel, disableGlobalSearchIfFocused: Modifier.() -> Modifier) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
         darkTheme = uiState.darkTheme,
@@ -49,7 +49,7 @@ fun Settings(viewModel: SettingsViewModel, modifier: Modifier = Modifier) {
         toggleUseLabelColors = viewModel::toggleUseLabelColors,
         token = uiState.token,
         onTokenChange = viewModel::setToken,
-        modifier = modifier
+        disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
     )
 }
 
@@ -65,9 +65,9 @@ fun SettingsScreen(
     toggleUseLabelColors: () -> Unit,
     token: String,
     onTokenChange: (String) -> Unit,
-    modifier: Modifier = Modifier,
+    disableGlobalSearchIfFocused: Modifier.() -> Modifier,
 ) {
-    Column(modifier = modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)) {
+    Column(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)) {
         val lightInteractionSource = remember { MutableInteractionSource() }
         val lightIsHovered by lightInteractionSource.collectIsHoveredAsState()
         val darkInteractionSource = remember { MutableInteractionSource() }
@@ -155,6 +155,7 @@ fun SettingsScreen(
             onValueChange = onTokenChange,
             modifier = Modifier
                 .fillMaxWidth()
+                .disableGlobalSearchIfFocused()
                 .padding(vertical = 8.dp)
                 .padding(horizontal = 12.dp),
             visualTransformation = PasswordVisualTransformation(),
@@ -179,6 +180,7 @@ fun SettingsPreview() {
             toggleUseLabelColors = {},
             token = "𐂂",
             onTokenChange = {},
+            disableGlobalSearchIfFocused = { this }
         )
     }
 }
