@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -27,10 +29,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youniqx.time.SimpleTooltip
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -150,6 +154,7 @@ fun SettingsScreen(
             Text("Use label colors")
             Switch(checked = useLabelColors, onCheckedChange = { toggleUseLabelColors() })
         }
+        val uriHandler = LocalUriHandler.current
         OutlinedTextField(
             value = token,
             onValueChange = onTokenChange,
@@ -160,7 +165,19 @@ fun SettingsScreen(
                 .padding(horizontal = 12.dp),
             visualTransformation = PasswordVisualTransformation(),
             label = { Text("GitLab Token") },
-            supportingText = { Text("Needs API read & write access.") }
+            supportingText = { Text("Needs API read & write access.") },
+            trailingIcon = {
+                SimpleTooltip("Create new GitLab token") {
+                    IconButton(onClick = {
+                        uriHandler.openUri("https://gitlab.ci.youniqx.com/-/user_settings/personal_access_tokens")
+                    }) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                            contentDescription = "Create new GitLab token"
+                        )
+                    }
+                }
+            }
         )
     }
 }
