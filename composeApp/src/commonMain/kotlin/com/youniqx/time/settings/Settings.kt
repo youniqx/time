@@ -16,6 +16,12 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -26,7 +32,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
@@ -34,13 +42,19 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.apollographql.apollo.api.apolloUnsafeCast
 import com.youniqx.time.SimpleTooltip
+import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-fun Settings(viewModel: SettingsViewModel, disableGlobalSearchIfFocused: Modifier.() -> Modifier) {
+fun Settings(
+    viewModel: SettingsViewModel,
+    iterationCadences: List<IterationCadencesQuery.Node>?,
+    disableGlobalSearchIfFocused: Modifier.() -> Modifier
+) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
         darkTheme = uiState.darkTheme,
@@ -55,6 +69,9 @@ fun Settings(viewModel: SettingsViewModel, disableGlobalSearchIfFocused: Modifie
         toggleUseLabelColors = viewModel::toggleUseLabelColors,
         token = uiState.token,
         onTokenChange = viewModel::setToken,
+        iterationCadenceId = uiState.iterationCadenceId,
+        iterationCadences = iterationCadences,
+        onIterationCadenceChange = viewModel::setIterationCadenceId,
         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
     )
 }
@@ -73,6 +90,9 @@ fun SettingsScreen(
     toggleUseLabelColors: () -> Unit,
     token: String,
     onTokenChange: (String) -> Unit,
+    iterationCadenceId: String?,
+    iterationCadences: List<IterationCadencesQuery.Node>?,
+    onIterationCadenceChange: (id: String) -> Unit,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
 ) {
     Column(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)) {
@@ -199,6 +219,59 @@ fun SettingsScreen(
                 }
             }
         )
+        IterationCadenceSelection(
+            iterationCadenceId = iterationCadenceId,
+            iterationCadences = iterationCadences,
+            onIterationCadenceChange = onIterationCadenceChange
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun IterationCadenceSelection(
+    iterationCadenceId: String?,
+    iterationCadences: List<IterationCadencesQuery.Node>?,
+    onIterationCadenceChange: (id: String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        modifier = Modifier
+            .padding(vertical = 8.dp)
+            .padding(horizontal = 12.dp),
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            // The `menuAnchor` modifier must be passed to the text field to handle
+            // expanding/collapsing the menu on click. A read-only text field has
+            // the anchor type `PrimaryNotEditable`.
+            modifier = Modifier.fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+            value = iterationCadences?.firstOrNull { it.id == iterationCadenceId }?.title.orEmpty(),
+            onValueChange = {},
+            readOnly = true,
+            maxLines = 1,
+            label = { Text("Iteration Cadence") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            iterationCadences?.forEach {
+                DropdownMenuItem(
+                    text = { Text(it.title) },
+                    onClick = {
+                        onIterationCadenceChange(it.id.apolloUnsafeCast())
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
+            } ?: CircularProgressIndicator()
+        }
     }
 }
 
@@ -219,7 +292,10 @@ fun SettingsPreview() {
             toggleUseLabelColors = {},
             token = "𐂂",
             onTokenChange = {},
-            disableGlobalSearchIfFocused = { this }
+            iterationCadenceId = null,
+            iterationCadences = null,
+            onIterationCadenceChange = {},
+            disableGlobalSearchIfFocused = { this },
         )
     }
 }

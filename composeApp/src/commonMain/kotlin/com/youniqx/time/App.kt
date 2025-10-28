@@ -115,6 +115,7 @@ import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.api.apolloUnsafeCast
 import com.youniqx.time.gitlab.models.IssuesQuery
+import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
@@ -162,6 +163,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {
         var issues: List<BareWorkItem>? by remember { mutableStateOf(null) }
+        var iterationCadences: List<IterationCadencesQuery.Node>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var loading: Boolean by remember { mutableStateOf(false) }
         var openIssue by remember { mutableStateOf<BareWorkItem?>(null) }
@@ -176,7 +178,17 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
                 .build()
         }
-        LaunchedEffect(search, settingsUiState.pinnedIssues, settingsUiState.groupSprintInEpics, apolloClient) {
+        LaunchedEffect(apolloClient) {
+            val response = apolloClient.query(IterationCadencesQuery()).execute()
+            iterationCadences = response.data?.group?.iterationCadences?.nodes?.filterNotNull().orEmpty()
+        }
+        LaunchedEffect(
+            search,
+            settingsUiState.iterationCadenceId,
+            settingsUiState.pinnedIssues,
+            settingsUiState.groupSprintInEpics,
+            apolloClient
+        ) {
             if (isPreview) {
                 issues = previewIssues
                 return@LaunchedEffect
@@ -184,6 +196,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             loading = true
             if (search.isNotEmpty()) delay(300)
             val query = IssuesQuery.Builder()
+                .iterationCadenceId((settingsUiState.iterationCadenceId?.let { listOf(it) } ?: emptyList()))
                 .pinnedIids(settingsUiState.pinnedIssues + (openIssue?.let { listOf(it.iid) } ?: emptyList()))
                 .doPinnedSearch(settingsUiState.pinnedIssues.isNotEmpty())
                 .search(search)
@@ -231,7 +244,11 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 value = navigator.scaffoldValue,
                 supportingPane = {
                     AnimatedPane {
-                        Settings(settingsViewModel, disableGlobalSearchIfFocused = disableGlobalSearchIfFocused)
+                        Settings(
+                            viewModel = settingsViewModel,
+                            iterationCadences = iterationCadences,
+                            disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
+                        )
                     }
                 }, mainPane = {
                     AnimatedPane {

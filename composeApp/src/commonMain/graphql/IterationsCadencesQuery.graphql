@@ -1,0 +1,10 @@
+query IterationCadencesQuery($group: ID = "youniqx/mia") {
+  group(fullPath: $group) {
+    iterationCadences {
+      nodes {
+        title
+        id
+      }
+    }
+  }
+}

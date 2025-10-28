@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 
 data class UiState(
     val token: String,
+    val iterationCadenceId: String?,
     val darkTheme: Boolean,
     val highContrastColors: Boolean,
     val groupSprintInEpics: Boolean,
@@ -25,6 +26,7 @@ data class UiState(
 
 private enum class SettingKey {
     Token,
+    IterationCadenceId,
     DarkTheme,
     HighContrastColors,
     GroupSprintInEpics,
@@ -39,6 +41,7 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
         MutableStateFlow(
             UiState(
                 token = token,
+                iterationCadenceId = null,
                 darkTheme = systemInDarkTheme,
                 highContrastColors = false,
                 groupSprintInEpics = false,
@@ -52,6 +55,7 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
 
     init {
         settings.getStringFlow(SettingKey.Token.name, token).loadInto { copy(token = it) }
+        settings.getStringOrNullFlow(SettingKey.IterationCadenceId.name).loadInto { copy(iterationCadenceId = it) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).loadInto { copy(darkTheme = it) }
         settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).loadInto { copy(highContrastColors = it) }
         settings.getBooleanFlow(SettingKey.GroupSprintInEpics.name, false).loadInto { copy(groupSprintInEpics = it) }
@@ -96,6 +100,12 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
     fun setToken(token: String) {
         viewModelScope.launch {
             settings.putString(SettingKey.Token.name, token)
+        }
+    }
+
+    fun setIterationCadenceId(id: String) {
+        viewModelScope.launch {
+            settings.putString(SettingKey.IterationCadenceId.name, id)
         }
     }
 
