@@ -6,35 +6,44 @@ query IssuesQuery(
   $doPinnedSearch: Boolean! = false,
   $doSearch: Boolean! = false
 ) {
-  sprint: group(fullPath: $group) {
-    issues(iterationWildcardId: CURRENT, iterationCadenceId: $iterationCadenceId) {
-      ...issues
+  namespace(fullPath: $group) {
+    sprint: workItems(
+      iterationWildcardId: CURRENT
+      iterationCadenceId: $iterationCadenceId
+      includeDescendants: true
+      includeAncestors: true
+    ) {
+      ...workItems
     }
-  }
-  pinned: group(fullPath: $group) @include(if: $doPinnedSearch) {
-    issues(iids: $pinnedIids) {
-      ...issues
+    pinned: workItems(iids: $pinnedIids, includeDescendants: true) @include(if: $doPinnedSearch) {
+      ...workItems
     }
-  }
-  search: group(fullPath: $group) @include(if: $doSearch) {
-    issues(search: $search, sort: UPDATED_DESC) {
-      ...issues
+    search: workItems(search: $search, sort: UPDATED_DESC, includeDescendants: true) @include(if: $doSearch) {
+      ...workItems
     }
-  }
-  searchIid: group(fullPath: $group) @include(if: $doSearch) {
-    issues(iid: $search) {
-      ...issues
+    searchIid: workItems(iid: $search, includeDescendants: true) @include(if: $doSearch) {
+      ...workItems
     }
   }
 }
 
-fragment issues on IssueConnection {
-  nodes {
+fragment bareWorkItem on WorkItem {
+  id
+  iid
+  workItemType {
     id
-    iid
-    title
-    webUrl
-    state
+    name
+  }
+  title
+  webUrl
+  state
+  widgets {
+    ...bareWorkItemWidgets
+  }
+}
+
+fragment bareWorkItemWidgets on WorkItemWidget {
+  ... on WorkItemWidgetLabels {
     labels {
       nodes {
         id
@@ -42,11 +51,26 @@ fragment issues on IssueConnection {
         title
       }
     }
+  }
+  ... on WorkItemWidgetAssignees {
     assignees {
       nodes {
         avatarUrl
         name
         username
+      }
+    }
+  }
+}
+
+fragment workItems on WorkItemConnection {
+  nodes {
+    ...bareWorkItem
+    widgets {
+      ... on WorkItemWidgetHierarchy {
+        parent {
+          ...bareWorkItem
+        }
       }
     }
   }

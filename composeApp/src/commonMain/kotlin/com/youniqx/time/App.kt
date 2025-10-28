@@ -110,11 +110,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.apolloUnsafeCast
 import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
-import com.youniqx.time.gitlab.models.fragment.Issues
-import com.youniqx.time.gitlab.models.type.IssueState
+import com.youniqx.time.gitlab.models.fragment.BareWorkItem
+import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
+import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
@@ -155,10 +158,10 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
     )
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {
-        var issues: List<Issues.Node>? by remember { mutableStateOf(null) }
+        var issues: List<BareWorkItem>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var loading: Boolean by remember { mutableStateOf(false) }
-        var openIssue by remember { mutableStateOf<Issues.Node?>(null) }
+        var openIssue by remember { mutableStateOf<BareWorkItem?>(null) }
         var disableGlobalSearch by remember { mutableStateOf(false) }
         val disableGlobalSearchIfFocused: Modifier.() -> Modifier = {
             onFocusChanged { disableGlobalSearch = it.hasFocus }
@@ -175,14 +178,27 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 issues = buildList {
                     repeat(20) {
                         val start = Random.nextInt(loremIpsum.lastIndex - 100)
-                        add(Issues.Node(
+                        add(BareWorkItem(
                             id = it.toString(),
                             iid = it.toString(),
                             title = loremIpsum.substring(start, start + Random.nextInt(20, 100)).trim(),
                             webUrl = "",
-                            state = IssueState.opened,
-                            labels = null,
-                            assignees = null
+                            state = WorkItemState.OPEN,
+                            workItemType = BareWorkItem.WorkItemType(id = "", name = "team::shrews"),
+                            widgets = listOf(
+                                BareWorkItem.Widget(
+                                    __typename = "WorkItemWidgetLabels",
+                                    bareWorkItemWidgets = BareWorkItemWidgets(
+                                        __typename = "WorkItemWidgetLabels",
+                                        onWorkItemWidgetLabels = BareWorkItemWidgets.OnWorkItemWidgetLabels(
+                                            labels = null
+                                        ),
+                                        onWorkItemWidgetAssignees = BareWorkItemWidgets.OnWorkItemWidgetAssignees(
+                                            assignees = null
+                                        )
+                                    )
+                                )
+                            )
                         ))
                     }
                 }
@@ -197,17 +213,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .doSearch(search.isNotBlank())
                 .build()
             val response = apolloClient.query(query).execute()
-            if (response.data != null) with(response.data!!) {
-                sprint?.issues?.issues?.nodes.orEmpty()
-            }
-            response.data?.let {
-                issues = buildList {
-                    addAll(it.sprint?.issues?.issues?.nodes.orEmpty())
-                    addAll(it.pinned?.issues?.issues?.nodes.orEmpty())
-                    addAll(it.search?.issues?.issues?.nodes.orEmpty())
-                    addAll(it.searchIid?.issues?.issues?.nodes.orEmpty())
-                }.filterNotNull().distinctBy { it.id }
-            }
+            issues = response.extractIssues()
             loading = false
         }
         val navigator = rememberSupportingPaneScaffoldNavigator()
@@ -284,10 +290,10 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             }
                             itemsIndexed(issues.orEmpty().filter {
                                 it.title.contains(search, ignoreCase = true) ||
-                                        it.id.contains(search, ignoreCase = true) ||
+                                        it.id.apolloUnsafeCast<String>().contains(search, ignoreCase = true) ||
                                         it.id == openIssue?.id ||
                                         it.iid.contains(search, ignoreCase = true) ||
-                                        it.webUrl.contains(search, ignoreCase = true) ||
+                                        it.webUrl.orEmpty().contains(search, ignoreCase = true) ||
                                         it.assignees?.nodes.orEmpty().filterNotNull().any {
                                             it.name.contains(search, ignoreCase = true) ||
                                                     it.username.contains(search, ignoreCase = true)
@@ -343,6 +349,22 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
     }
 }
 
+val BareWorkItem.assignees get() = this.widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetAssignees != null }
+    ?.bareWorkItemWidgets?.onWorkItemWidgetAssignees?.assignees
+val BareWorkItem.labels get() = this.widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetLabels != null }
+    ?.bareWorkItemWidgets?.onWorkItemWidgetLabels?.labels
+
+@Suppress("DEPRECATION") // experimental api
+private fun ApolloResponse<IssuesQuery.Data>.extractIssues(): List<BareWorkItem>? {
+    val namespace = data?.namespace
+    return buildList {
+        addAll(namespace?.sprint?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(namespace?.pinned?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(namespace?.search?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(namespace?.searchIid?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
+    }.filterNotNull().distinctBy { it.id }
+}
+
 @Composable
 fun Search(
     search: String,
@@ -392,7 +414,7 @@ fun Search(
 @OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable
 fun Issue(
-    issue: Issues.Node,
+    issue: BareWorkItem,
     showLabelsByDefault: Boolean,
     useLabelColors: Boolean,
     open: Boolean,
@@ -524,7 +546,7 @@ fun Issue(
                             )
                         }
                     }
-                    SimpleTooltip("Open issue") {
+                    if (issue.webUrl != null) SimpleTooltip("Open issue") {
                         IconButton(onClick = { uriHandler.openUri(issue.webUrl) }) {
                             Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open issue")
                         }
