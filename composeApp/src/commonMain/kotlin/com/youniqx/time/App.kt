@@ -195,10 +195,11 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             }
             loading = true
             if (search.isNotEmpty()) delay(300)
+            val pinnedPlusOpen = settingsUiState.pinnedIssues + (openIssue?.let { listOf(it.iid) } ?: emptyList())
             val query = IssuesQuery.Builder()
                 .iterationCadenceId((settingsUiState.iterationCadenceId?.let { listOf(it) } ?: emptyList()))
-                .pinnedIids(settingsUiState.pinnedIssues + (openIssue?.let { listOf(it.iid) } ?: emptyList()))
-                .doPinnedSearch(settingsUiState.pinnedIssues.isNotEmpty())
+                .pinnedIids(pinnedPlusOpen)
+                .doPinnedSearch(pinnedPlusOpen.isNotEmpty())
                 .search(search)
                 .doSearch(search.isNotBlank())
                 .build()
