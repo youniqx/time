@@ -17,6 +17,7 @@ data class UiState(
     val token: String,
     val darkTheme: Boolean,
     val highContrastColors: Boolean,
+    val groupSprintInEpics: Boolean,
     val showLabelsByDefault: Boolean,
     val useLabelColors: Boolean,
     val pinnedIssues: List<String>,
@@ -26,6 +27,7 @@ private enum class SettingKey {
     Token,
     DarkTheme,
     HighContrastColors,
+    GroupSprintInEpics,
     ShowLabelsByDefault,
     UseLabelColors,
     PinnedIssues,
@@ -39,6 +41,7 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
                 token = token,
                 darkTheme = systemInDarkTheme,
                 highContrastColors = false,
+                groupSprintInEpics = false,
                 showLabelsByDefault = false,
                 useLabelColors = false,
                 pinnedIssues = emptyList()
@@ -51,6 +54,7 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
         settings.getStringFlow(SettingKey.Token.name, token).loadInto { copy(token = it) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).loadInto { copy(darkTheme = it) }
         settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).loadInto { copy(highContrastColors = it) }
+        settings.getBooleanFlow(SettingKey.GroupSprintInEpics.name, false).loadInto { copy(groupSprintInEpics = it) }
         settings.getBooleanFlow(SettingKey.ShowLabelsByDefault.name, false).loadInto { copy(showLabelsByDefault = it) }
         settings.getBooleanFlow(SettingKey.UseLabelColors.name, false).loadInto { copy(useLabelColors = it) }
         settings.getStringFlow(
@@ -68,6 +72,12 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
     fun toggleHighContrastColors() {
         viewModelScope.launch {
             settings.putBoolean(SettingKey.HighContrastColors.name, !uiState.value.highContrastColors)
+        }
+    }
+
+    fun toggleGroupSprintInEpics() {
+        viewModelScope.launch {
+            settings.putBoolean(SettingKey.GroupSprintInEpics.name, !uiState.value.groupSprintInEpics)
         }
     }
 

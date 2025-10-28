@@ -116,6 +116,7 @@ import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.gitlab.models.fragment.WorkItems
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.settings.Settings
@@ -173,7 +174,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
                 .build()
         }
-        LaunchedEffect(search, settingsUiState.pinnedIssues, apolloClient) {
+        LaunchedEffect(search, settingsUiState.pinnedIssues, settingsUiState.groupSprintInEpics, apolloClient) {
             if (isPreview) {
                 issues = buildList {
                     repeat(20) {
@@ -213,7 +214,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .doSearch(search.isNotBlank())
                 .build()
             val response = apolloClient.query(query).execute()
-            issues = response.extractIssues()
+            issues = response.extractIssues(settingsUiState.groupSprintInEpics)
             loading = false
         }
         val navigator = rememberSupportingPaneScaffoldNavigator()
@@ -349,16 +350,24 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
     }
 }
 
-val BareWorkItem.assignees get() = this.widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetAssignees != null }
+val BareWorkItem.assignees get() = widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetAssignees != null }
     ?.bareWorkItemWidgets?.onWorkItemWidgetAssignees?.assignees
-val BareWorkItem.labels get() = this.widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetLabels != null }
+val BareWorkItem.labels get() = widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetLabels != null }
     ?.bareWorkItemWidgets?.onWorkItemWidgetLabels?.labels
+val WorkItems.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
+    ?.onWorkItemWidgetHierarchy?.parent?.bareWorkItem
 
 @Suppress("DEPRECATION") // experimental api
-private fun ApolloResponse<IssuesQuery.Data>.extractIssues(): List<BareWorkItem>? {
+private fun ApolloResponse<IssuesQuery.Data>.extractIssues(groupSprintInEpics: Boolean): List<BareWorkItem>? {
     val namespace = data?.namespace
     return buildList {
-        addAll(namespace?.sprint?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(namespace?.sprint?.workItems?.nodes?.map {
+            if (groupSprintInEpics) {
+                it?.parent ?: it?.bareWorkItem
+            } else {
+                it?.bareWorkItem
+            }
+        }.orEmpty())
         addAll(namespace?.pinned?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
         addAll(namespace?.search?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
         addAll(namespace?.searchIid?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())

@@ -47,6 +47,8 @@ fun Settings(viewModel: SettingsViewModel, disableGlobalSearchIfFocused: Modifie
         toggleDarkTheme = viewModel::toggleDarkTheme,
         highContrastColors = uiState.highContrastColors,
         toggleHighContrastColors = viewModel::toggleHighContrastColors,
+        groupSprintInEpics = uiState.groupSprintInEpics,
+        toggleGroupSprintInEpics = viewModel::toggleGroupSprintInEpics,
         showLabelsByDefault = uiState.showLabelsByDefault,
         toggleShowLabelsByDefault = viewModel::toggleShowLabelsByDefault,
         useLabelColors = uiState.useLabelColors,
@@ -63,6 +65,8 @@ fun SettingsScreen(
     toggleDarkTheme: () -> Unit,
     highContrastColors: Boolean,
     toggleHighContrastColors: () -> Unit,
+    groupSprintInEpics: Boolean,
+    toggleGroupSprintInEpics: () -> Unit,
     showLabelsByDefault: Boolean,
     toggleShowLabelsByDefault: () -> Unit,
     useLabelColors: Boolean,
@@ -132,6 +136,22 @@ fun SettingsScreen(
         }
         Row(
             modifier = Modifier.fillMaxWidth().clickable(
+                onClickLabel = if (groupSprintInEpics) {
+                    "Show individual issues of sprint even if they have parent epics"
+                } else {
+                    "Show parent epics instead of individual issues if available"
+                },
+                role = Role.Switch,
+                onClick = toggleGroupSprintInEpics
+            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Group sprint in epics")
+            Switch(checked = groupSprintInEpics, onCheckedChange = { toggleGroupSprintInEpics() })
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(
                 onClickLabel = if (showLabelsByDefault) "Hide labels by default" else "Show labels by default",
                 role = Role.Switch,
                 onClick = toggleShowLabelsByDefault
@@ -191,6 +211,8 @@ fun SettingsPreview() {
             toggleDarkTheme = {},
             highContrastColors = false,
             toggleHighContrastColors = {},
+            groupSprintInEpics = false,
+            toggleGroupSprintInEpics = {},
             showLabelsByDefault = true,
             toggleShowLabelsByDefault = {},
             useLabelColors = true,
