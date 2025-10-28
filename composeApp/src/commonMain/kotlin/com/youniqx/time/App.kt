@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -36,7 +37,9 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Settings
@@ -44,7 +47,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconToggleButton
@@ -176,33 +178,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
         }
         LaunchedEffect(search, settingsUiState.pinnedIssues, settingsUiState.groupSprintInEpics, apolloClient) {
             if (isPreview) {
-                issues = buildList {
-                    repeat(20) {
-                        val start = Random.nextInt(loremIpsum.lastIndex - 100)
-                        add(BareWorkItem(
-                            id = it.toString(),
-                            iid = it.toString(),
-                            title = loremIpsum.substring(start, start + Random.nextInt(20, 100)).trim(),
-                            webUrl = "",
-                            state = WorkItemState.OPEN,
-                            workItemType = BareWorkItem.WorkItemType(id = "", name = "team::shrews"),
-                            widgets = listOf(
-                                BareWorkItem.Widget(
-                                    __typename = "WorkItemWidgetLabels",
-                                    bareWorkItemWidgets = BareWorkItemWidgets(
-                                        __typename = "WorkItemWidgetLabels",
-                                        onWorkItemWidgetLabels = BareWorkItemWidgets.OnWorkItemWidgetLabels(
-                                            labels = null
-                                        ),
-                                        onWorkItemWidgetAssignees = BareWorkItemWidgets.OnWorkItemWidgetAssignees(
-                                            assignees = null
-                                        )
-                                    )
-                                )
-                            )
-                        ))
-                    }
-                }
+                issues = previewIssues
                 return@LaunchedEffect
             }
             loading = true
@@ -303,7 +279,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                             it.title.contains(search, ignoreCase = true)
                                         }
                             }, key = { _, issue -> issue.id }) { index, issue ->
-                                if (index != 0) HorizontalDivider(thickness = 0.5.dp)
+                                // if (index != 0) HorizontalDivider(thickness = 0.5.dp)
                                 val open = issue.id == openIssue?.id
                                 Issue(
                                     issue,
@@ -350,6 +326,36 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
     }
 }
 
+private val previewIssues: List<BareWorkItem> = buildList {
+    repeat(20) {
+        val start = Random.nextInt(loremIpsum.lastIndex - 100)
+        add(
+            BareWorkItem(
+                id = it.toString(),
+                iid = it.toString(),
+                title = loremIpsum.substring(start, start + Random.nextInt(20, 100)).trim(),
+                webUrl = "",
+                state = WorkItemState.OPEN,
+                workItemType = BareWorkItem.WorkItemType(id = "", name = "team::shrews"),
+                widgets = listOf(
+                    BareWorkItem.Widget(
+                        __typename = "WorkItemWidgetLabels",
+                        bareWorkItemWidgets = BareWorkItemWidgets(
+                            __typename = "WorkItemWidgetLabels",
+                            onWorkItemWidgetLabels = BareWorkItemWidgets.OnWorkItemWidgetLabels(
+                                labels = null
+                            ),
+                            onWorkItemWidgetAssignees = BareWorkItemWidgets.OnWorkItemWidgetAssignees(
+                                assignees = null
+                            )
+                        )
+                    )
+                )
+            )
+        )
+    }
+}
+
 val BareWorkItem.assignees get() = widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetAssignees != null }
     ?.bareWorkItemWidgets?.onWorkItemWidgetAssignees?.assignees
 val BareWorkItem.labels get() = widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetLabels != null }
@@ -371,7 +377,7 @@ private fun ApolloResponse<IssuesQuery.Data>.extractIssues(groupSprintInEpics: B
         addAll(namespace?.pinned?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
         addAll(namespace?.search?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
         addAll(namespace?.searchIid?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
-    }.filterNotNull().distinctBy { it.id }
+    }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
 }
 
 @Composable
@@ -449,7 +455,19 @@ fun Issue(
             modifier = Modifier.fillMaxWidth().heightIn(min = if (labels.isNullOrEmpty()) 48.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(issue.title)
+            issue.workItemType.name.let {
+                SimpleTooltip(it) {
+                    Icon(
+                        imageVector = if (it == "Epic") Icons.Default.Style else Icons.Default.Sell,
+                        contentDescription = it,
+                        modifier = Modifier.size(16.dp)
+                    )
+                }
+            }
+            Text(
+                text = issue.title + if (issue.state == WorkItemState.CLOSED) " ✓" else "",
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
         }
         labels?.let {
             AnimatedVisibility(visible = labels.isNotEmpty()) {
