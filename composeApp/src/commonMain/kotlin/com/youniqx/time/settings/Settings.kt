@@ -208,7 +208,9 @@ fun SettingsScreen(
             trailingIcon = {
                 SimpleTooltip("Create new GitLab token") {
                     IconButton(onClick = {
-                        uriHandler.openUri("https://gitlab.ci.youniqx.com/-/user_settings/personal_access_tokens")
+                        uriHandler.openUri("https://gitlab.ci.youniqx.com/-/user_settings/personal_access_tokens" +
+                                "?name=Time&scopes=api&" +
+                                "description=https%3A%2F%2Fgitlab.ci.youniqx.com%2Fyouniqx%2Fmobile_chapter%2Ftime")
                     }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.OpenInNew,
