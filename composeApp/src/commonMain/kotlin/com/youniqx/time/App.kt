@@ -113,7 +113,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
-import com.apollographql.apollo.api.apolloUnsafeCast
 import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
@@ -285,7 +284,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             }
                             itemsIndexed(issues.orEmpty().filter {
                                 it.title.contains(search, ignoreCase = true) ||
-                                        it.id.apolloUnsafeCast<String>().contains(search, ignoreCase = true) ||
+                                        it.id.toString().contains(search, ignoreCase = true) ||
                                         it.id == openIssue?.id ||
                                         it.iid.contains(search, ignoreCase = true) ||
                                         it.webUrl.orEmpty().contains(search, ignoreCase = true) ||

@@ -42,7 +42,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.apollographql.apollo.api.apolloUnsafeCast
 import com.youniqx.time.SimpleTooltip
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.systemBarsForVisualComponents
@@ -265,7 +264,7 @@ fun IterationCadenceSelection(
                 DropdownMenuItem(
                     text = { Text(it.title) },
                     onClick = {
-                        onIterationCadenceChange(it.id.apolloUnsafeCast())
+                        onIterationCadenceChange(it.id.toString())
                         expanded = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
