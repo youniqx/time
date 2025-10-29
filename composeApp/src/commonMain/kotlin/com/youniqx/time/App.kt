@@ -30,10 +30,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.filled.ArrowCircleUp
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PushPin
@@ -105,8 +109,12 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.Placeholder
+import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -354,6 +362,7 @@ private val previewIssues: List<BareWorkItem> = buildList {
                 webUrl = "",
                 state = WorkItemState.OPEN,
                 workItemType = BareWorkItem.WorkItemType(id = "", name = "team::shrews"),
+                promotedToEpicUrl = null,
                 widgets = listOf(
                     BareWorkItem.Widget(
                         __typename = "WorkItemWidgetLabels",
@@ -482,7 +491,50 @@ fun Issue(
                 }
             }
             Text(
-                text = issue.title + if (issue.state == WorkItemState.CLOSED) " ✓" else "",
+                text = buildAnnotatedString {
+                    append(issue.title)
+                    if (issue.promotedToEpicUrl != null) {
+                        append(" ")
+                        appendInlineContent("promoted", "(promoted)")
+                    } else if (issue.state == WorkItemState.CLOSED) {
+                        append(" ")
+                        appendInlineContent("closed", "(closed)")
+                    }
+                },
+                inlineContent = mapOf(
+                    "closed" to InlineTextContent(
+                    Placeholder(
+                        width = 16.sp,
+                        height = 16.sp,
+                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                    )
+                ) {
+                    SimpleTooltip("closed") {
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = "closed",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                },
+                    "promoted" to InlineTextContent(
+                        Placeholder(
+                            width = 16.sp,
+                            height = 16.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                        )
+                    ) {
+                        SimpleTooltip("promoted") {
+                            Icon(
+                                imageVector = Icons.Default.ArrowCircleUp,
+                                contentDescription = "promoted",
+                                modifier = Modifier.size(16.dp).clickable {
+                                    issue.promotedToEpicUrl?.let { uri -> uriHandler.openUri(uri) }
+                                }
+                            )
+                        }
+                    },
+                ),
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
         }

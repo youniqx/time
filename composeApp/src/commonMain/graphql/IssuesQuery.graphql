@@ -36,6 +36,7 @@ fragment bareWorkItem on WorkItem {
   title
   webUrl
   state
+  promotedToEpicUrl
   widgets {
     ...bareWorkItemWidgets
   }
