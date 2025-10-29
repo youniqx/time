@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Style
+import androidx.compose.material.icons.filled.Task
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Settings
@@ -484,7 +485,11 @@ fun Issue(
             issue.workItemType.name.let {
                 SimpleTooltip(it) {
                     Icon(
-                        imageVector = if (it == "Epic") Icons.Default.Style else Icons.Default.Sell,
+                        imageVector = when (it) {
+                            "Task" -> Icons.Default.Task
+                            "Epic" -> Icons.Default.Style
+                            else -> Icons.Default.Sell
+                        },
                         contentDescription = it,
                         modifier = Modifier.size(16.dp)
                     )
