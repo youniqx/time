@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "local>youniqx/infrastructure/renovate-config#v1.44.1",
+    "local>youniqx/infrastructure/renovate-config#v1.45.0",
     "local>youniqx/mia/resources//ci/automerge.json5"
   ],
 }
