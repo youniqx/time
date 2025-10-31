@@ -67,6 +67,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.layout.AnimatedPane
@@ -508,20 +509,20 @@ fun Issue(
                 },
                 inlineContent = mapOf(
                     "closed" to InlineTextContent(
-                    Placeholder(
-                        width = 16.sp,
-                        height = 16.sp,
-                        placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                    )
-                ) {
-                    SimpleTooltip("closed") {
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = "closed",
-                            modifier = Modifier.size(16.dp)
+                        Placeholder(
+                            width = 16.sp,
+                            height = 16.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
                         )
-                    }
-                },
+                    ) {
+                        SimpleTooltip("closed") {
+                            Icon(
+                                imageVector = Icons.Default.Done,
+                                contentDescription = "closed",
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    },
                     "promoted" to InlineTextContent(
                         Placeholder(
                             width = 16.sp,
@@ -568,12 +569,38 @@ fun Issue(
                         } else {
                             default
                         }
+                        val titleParts = label.title.split("::")
                         SuggestionChip(
                             onClick = { },
                             enabled = false,
                             colors = colors,
                             label = {
-                                Text(label.title.replace("::", " ⏐ "))
+                                Text(
+                                    text = buildAnnotatedString {
+                                        titleParts.forEachIndexed { i, titlePart ->
+                                            append(titlePart)
+                                            if (i != titleParts.lastIndex) {
+                                                append(" ")
+                                                appendInlineContent("divider", "|")
+                                                append(" ")
+                                            }
+                                        }
+                                    },
+                                    inlineContent = mapOf(
+                                        "divider" to InlineTextContent(
+                                            Placeholder(
+                                                width = 1.sp,
+                                                height = 18.sp,
+                                                placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                                            )
+                                        ) {
+                                            VerticalDivider(
+                                                thickness = 1.dp,
+                                                color = colors.disabledLabelColor.copy(alpha = 0.6f)
+                                            )
+                                        },
+                                    )
+                                )
                             }
                         )
                     }
