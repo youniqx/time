@@ -12,16 +12,31 @@ query IssuesQuery(
       iterationCadenceId: $iterationCadenceId
       includeDescendants: true
     ) {
-      ...workItems
+      nodes {
+        ...bareWorkItem
+        widgets {
+          ... on WorkItemWidgetHierarchy {
+            parent {
+              ...bareWorkItem
+            }
+          }
+        }
+      }
     }
     pinned: workItems(iids: $pinnedIids, includeDescendants: true) @include(if: $doPinnedSearch) {
-      ...workItems
+      nodes {
+        ...bareWorkItem
+      }
     }
     search: workItems(search: $search, sort: UPDATED_DESC, includeDescendants: true) @include(if: $doSearch) {
-      ...workItems
+      nodes {
+        ...bareWorkItem
+      }
     }
     searchIid: workItems(iid: $search, includeDescendants: true) @include(if: $doSearch) {
-      ...workItems
+      nodes {
+        ...bareWorkItem
+      }
     }
   }
 }
@@ -58,19 +73,6 @@ fragment bareWorkItemWidgets on WorkItemWidget {
         avatarUrl
         name
         username
-      }
-    }
-  }
-}
-
-fragment workItems on WorkItemConnection {
-  nodes {
-    ...bareWorkItem
-    widgets {
-      ... on WorkItemWidgetHierarchy {
-        parent {
-          ...bareWorkItem
-        }
       }
     }
   }

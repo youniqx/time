@@ -128,7 +128,6 @@ import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
-import com.youniqx.time.gitlab.models.fragment.WorkItems
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.settings.Settings
@@ -388,23 +387,23 @@ val BareWorkItem.assignees get() = widgets?.firstOrNull { it.bareWorkItemWidgets
     ?.bareWorkItemWidgets?.onWorkItemWidgetAssignees?.assignees
 val BareWorkItem.labels get() = widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetLabels != null }
     ?.bareWorkItemWidgets?.onWorkItemWidgetLabels?.labels
-val WorkItems.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
+val IssuesQuery.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
     ?.onWorkItemWidgetHierarchy?.parent?.bareWorkItem
 
 @Suppress("DEPRECATION") // experimental api
 private fun ApolloResponse<IssuesQuery.Data>.extractIssues(groupSprintInEpics: Boolean): List<BareWorkItem>? {
     val namespace = data?.namespace
     return buildList {
-        addAll(namespace?.sprint?.workItems?.nodes?.map {
+        addAll(namespace?.sprint?.nodes?.map {
             if (groupSprintInEpics) {
                 it?.parent ?: it?.bareWorkItem
             } else {
                 it?.bareWorkItem
             }
         }.orEmpty())
-        addAll(namespace?.pinned?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(namespace?.search?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(namespace?.searchIid?.workItems?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(namespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(namespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(namespace?.searchIid?.nodes?.map { it?.bareWorkItem }.orEmpty())
     }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
 }
 
