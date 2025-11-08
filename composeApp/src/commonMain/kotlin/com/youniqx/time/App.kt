@@ -144,7 +144,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -617,12 +616,29 @@ fun Issue(
             var customTimeSpent by remember { mutableStateOf<String?>(null) }
             var summary by remember { mutableStateOf("") }
             val focusRequester = remember { FocusRequester() }
+            val coroutineScope = rememberCoroutineScope()
+            fun commitTimeTracking() {
+                coroutineScope.launch {
+                    apolloClient.mutation(
+                        TimelogCreateMutation(
+                            input =
+                                TimelogCreateInput.Builder()
+                                    .issuableId(issue.id)
+                                    .summary(summary)
+                                    .timeSpent(customTimeSpent ?: timeSinceOpenInWholeMinutes.toString())
+                                    .build()
+                        )
+                    ).execute()
+                    onClick()
+                }
+            }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth()
                         .disableGlobalSearchIfFocused()
                         .focusRequester(focusRequester)
                         .changeFocusOnTab()
+                        .onCtrlOrMetaEnter(::commitTimeTracking)
                         .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612,
                     value = summary,
                     label = { Text("What have I achieved? (optional)") },
@@ -635,6 +651,7 @@ fun Issue(
                     modifier = Modifier.fillMaxWidth()
                         .disableGlobalSearchIfFocused()
                         .changeFocusOnTab()
+                        .onCtrlOrMetaEnter(::commitTimeTracking)
                         .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612
                     value = customTimeSpent ?: timeSinceOpenString,
                     onValueChange = { customTimeSpent = it },
@@ -712,22 +729,7 @@ fun Issue(
                         }
                     }
                     SimpleTooltip("Commit time tracking") {
-                        val coroutineScope = rememberCoroutineScope()
-                        FilledTonalIconButton(modifier = Modifier.padding(start = 4.dp), onClick = {
-                            coroutineScope.launch {
-                                apolloClient.mutation(
-                                    TimelogCreateMutation(
-                                        input =
-                                            TimelogCreateInput.Builder()
-                                                .issuableId(issue.id)
-                                                .summary(summary)
-                                                .timeSpent(customTimeSpent ?: timeSinceOpenInWholeMinutes.toString())
-                                                .build()
-                                    )
-                                ).execute()
-                                onClick()
-                            }
-                        }) {
+                        FilledTonalIconButton(modifier = Modifier.padding(start = 4.dp), onClick = ::commitTimeTracking) {
                             Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "Commit time tracking")
                         }
                     }
@@ -757,6 +759,15 @@ fun Modifier.changeFocusOnTab(): Modifier {
         } else {
             false
         }
+    }
+}
+
+fun Modifier.onCtrlOrMetaEnter(block: () -> Unit) = onPreviewKeyEvent {
+    if (it.key == Key.Enter && (it.isMetaPressed || it.isCtrlPressed) && it.type == KeyEventType.KeyUp) {
+        block()
+        true
+    } else {
+        false
     }
 }
 
