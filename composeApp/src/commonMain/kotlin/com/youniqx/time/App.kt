@@ -43,6 +43,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Start
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.Task
 import androidx.compose.material.icons.outlined.Home
@@ -626,10 +627,8 @@ fun Issue(
                     label = { Text("What have I achieved? (optional)") },
                     onValueChange = { summary = it },
                 )
-                val timeSinceOpenString = when {
-                    timeSinceOpenInWholeMinutes < 1.minutes -> "0h 0m"
-                    timeSinceOpenInWholeMinutes < 1.hours -> "0h $timeSinceOpenInWholeMinutes"
-                    else -> "$timeSinceOpenInWholeMinutes"
+                val timeSinceOpenString = timeSinceOpenInWholeMinutes.toComponents { hours, minutes, _, _ ->
+                    "${hours}h ${minutes}m"
                 }
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth()
@@ -649,18 +648,38 @@ fun Issue(
                         ),
                     trailingIcon = {
                         when {
-                            customTimeSpent != null -> SimpleTooltip("Reset to running timer\n($timeSinceOpenString)") {
-                                IconButton(
-                                    modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
-                                    onClick = { customTimeSpent = null }
-                                ) {
-                                    Icon(
-                                        Icons.Default.History,
-                                        contentDescription = "Reset to running timer"
-                                    )
+                            customTimeSpent != null -> Row {
+                                val customTimeSpentDuration = customTimeSpent?.let { Duration.parseOrNull(it.trim()) }
+                                customTimeSpentDuration?.let {
+                                    SimpleTooltip("Continue timer\n(overwrites $timeSinceOpenString)") {
+                                        IconButton(
+                                            modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                                            onClick = {
+                                                timeOfOpen = Clock.System.now() - customTimeSpentDuration
+                                                timeSinceOpen = customTimeSpentDuration
+                                                customTimeSpent = null
+                                            }
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Start,
+                                                contentDescription = "Continue timer from entered time"
+                                            )
+                                        }
+                                    }
+                                }
+                                SimpleTooltip("Reset to running timer\n($timeSinceOpenString)") {
+                                    IconButton(
+                                        modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                                        onClick = { customTimeSpent = null }
+                                    ) {
+                                        Icon(
+                                            Icons.Default.History,
+                                            contentDescription = "Reset to running timer"
+                                        )
+                                    }
                                 }
                             }
-                            timeSinceOpen >= 1.minutes -> SimpleTooltip("Restart time spent timer") {
+                            else -> SimpleTooltip("Restart time spent timer") {
                                 IconButton(
                                     modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
                                     onClick = { timeOfOpen = Clock.System.now() }
