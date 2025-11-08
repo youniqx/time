@@ -622,6 +622,7 @@ fun Issue(
                     modifier = Modifier.fillMaxWidth()
                         .disableGlobalSearchIfFocused()
                         .focusRequester(focusRequester)
+                        .changeFocusOnTab()
                         .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612,
                     value = summary,
                     label = { Text("What have I achieved? (optional)") },
@@ -633,6 +634,7 @@ fun Issue(
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth()
                         .disableGlobalSearchIfFocused()
+                        .changeFocusOnTab()
                         .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612
                     value = customTimeSpent ?: timeSinceOpenString,
                     onValueChange = { customTimeSpent = it },
@@ -740,6 +742,20 @@ fun Issue(
                     delay(1.seconds)
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun Modifier.changeFocusOnTab(): Modifier {
+    val focusManager = LocalFocusManager.current
+    return onPreviewKeyEvent {
+        if (it.key == Key.Tab && it.type == KeyEventType.KeyDown) {
+            val direction = if (it.isShiftPressed) FocusDirection.Previous else FocusDirection.Next
+            focusManager.moveFocus(direction)
+            true
+        } else {
+            false
         }
     }
 }
