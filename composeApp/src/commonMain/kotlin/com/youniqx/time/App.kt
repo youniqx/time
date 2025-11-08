@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class, ExperimentalTime::class)
 
 package com.youniqx.time
 
@@ -134,6 +134,7 @@ import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.gitlab.models.type.WorkItemState
+import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
@@ -177,7 +178,6 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
         var iterationCadences: List<IterationCadencesQuery.Node>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var loading: Boolean by remember { mutableStateOf(false) }
-        var openIssue by remember { mutableStateOf<BareWorkItem?>(null) }
         var disableGlobalSearch by remember { mutableStateOf(false) }
         val disableGlobalSearchIfFocused: Modifier.() -> Modifier = {
             onFocusChanged { disableGlobalSearch = it.hasFocus }
@@ -206,7 +206,8 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             }
             loading = true
             if (search.isNotEmpty()) delay(300)
-            val pinnedPlusOpen = settingsUiState.pinnedIssues + (openIssue?.let { listOf(it.iid) } ?: emptyList())
+            val pinnedPlusOpen = settingsUiState.pinnedIssues +
+                    (settingsUiState.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
             val query = IssuesQuery.Builder()
                 .iterationCadenceId((settingsUiState.iterationCadenceId?.let { listOf(it) } ?: emptyList()))
                 .pinnedIids(pinnedPlusOpen)
@@ -297,7 +298,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             itemsIndexed(issues.orEmpty().filter {
                                 it.title.contains(search, ignoreCase = true) ||
                                         it.id.toString().contains(search, ignoreCase = true) ||
-                                        it.id == openIssue?.id ||
+                                        it.id == settingsUiState.openTracking?.workItemId ||
                                         it.iid.contains(search, ignoreCase = true) ||
                                         it.webUrl.orEmpty().contains(search, ignoreCase = true) ||
                                         it.assignees?.nodes.orEmpty().filterNotNull().any {
@@ -309,19 +310,49 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                         }
                             }, key = { _, issue -> issue.id }) { index, issue ->
                                 // if (index != 0) HorizontalDivider(thickness = 0.5.dp)
-                                val open = issue.id == openIssue?.id
+                                val open = issue.iid == settingsUiState.openTracking?.workItemId
                                 Issue(
                                     issue,
                                     settingsUiState.showLabelsByDefault,
                                     settingsUiState.useLabelColors,
-                                    open = open,
-                                    onClick = {
-                                        openIssue = if (open) null else issue
+                                    openTracking = settingsUiState.openTracking,
+                                    onOpenTrackingChange = { openTracking ->
+                                        settingsViewModel.setOpenTracking(openTracking)
                                     },
                                     pinned = issue.iid in settingsUiState.pinnedIssues,
                                     togglePinned = { settingsViewModel.togglePinIssue(issue.iid) },
-                                    apolloClient = apolloClient,
-                                    disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
+                                    commitTimeTracking = {
+                                        coroutineScope.launch {
+                                            settingsUiState.openTracking?.let {
+                                                val timeSpent = it.customTimeSpent
+                                                    ?: (Clock.System.now() - it.timeOfOpen)
+                                                        .inWholeMinutes.minutes.toString()
+                                                apolloClient.mutation(
+                                                    TimelogCreateMutation(
+                                                        input =
+                                                            TimelogCreateInput.Builder()
+                                                                .issuableId(issue.id)
+                                                                .summary(it.summary.orEmpty())
+                                                                .timeSpent(timeSpent)
+                                                                .build()
+                                                    )
+                                                ).execute()
+                                            }
+                                        }
+                                    },
+                                    disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
+                                    modifier = Modifier.clickable(
+                                        onClickLabel = if (open) "Collapse issue and reset current timer" else "Work on issue",
+                                        role = Role.Switch
+                                    ) {
+                                        settingsViewModel.setOpenTracking(
+                                            if (open) {
+                                                null
+                                            } else {
+                                                OpenTracking(workItemId = issue.iid, timeOfOpen = Clock.System.now())
+                                            }
+                                        )
+                                    }
                                 )
                             }
                             if (loading) item {
@@ -462,20 +493,18 @@ fun Issue(
     issue: BareWorkItem,
     showLabelsByDefault: Boolean,
     useLabelColors: Boolean,
-    open: Boolean,
-    onClick: () -> Unit,
+    openTracking: OpenTracking?,
+    onOpenTrackingChange: (openTracking: OpenTracking) -> Unit,
     pinned: Boolean,
     togglePinned: () -> Unit,
-    apolloClient: ApolloClient,
-    disableGlobalSearchIfFocused: Modifier.() -> Modifier
+    disableGlobalSearchIfFocused: Modifier.() -> Modifier,
+    commitTimeTracking: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val uriHandler = LocalUriHandler.current
+    val open = openTracking?.workItemId == issue.iid
     Column(
-        modifier = Modifier
-            .clickable(
-                onClickLabel = if (open) "Collapse issue and reset current timer" else "Work on issue",
-                role = Role.Switch
-            ) { onClick() }
+        modifier = modifier
             .heightIn(min = 48.dp)
             .padding(horizontal = 12.dp)
             .padding(vertical = 8.dp)
@@ -610,39 +639,22 @@ fun Issue(
             }
         }
         AnimatedVisibility(visible = open) {
-            var timeOfOpen by remember { mutableStateOf(Clock.System.now()) }
+            if (!open) return@AnimatedVisibility
             var timeSinceOpen by remember { mutableStateOf(Duration.ZERO) }
             val timeSinceOpenInWholeMinutes = timeSinceOpen.inWholeMinutes.minutes
-            var customTimeSpent by remember { mutableStateOf<String?>(null) }
-            var summary by remember { mutableStateOf("") }
+            val customTimeSpent = openTracking.customTimeSpent
             val focusRequester = remember { FocusRequester() }
-            val coroutineScope = rememberCoroutineScope()
-            fun commitTimeTracking() {
-                coroutineScope.launch {
-                    apolloClient.mutation(
-                        TimelogCreateMutation(
-                            input =
-                                TimelogCreateInput.Builder()
-                                    .issuableId(issue.id)
-                                    .summary(summary)
-                                    .timeSpent(customTimeSpent ?: timeSinceOpenInWholeMinutes.toString())
-                                    .build()
-                        )
-                    ).execute()
-                    onClick()
-                }
-            }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth()
                         .disableGlobalSearchIfFocused()
                         .focusRequester(focusRequester)
                         .changeFocusOnTab()
-                        .onCtrlOrMetaEnter(::commitTimeTracking)
+                        .onCtrlOrMetaEnter(commitTimeTracking)
                         .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612,
-                    value = summary,
+                    value = openTracking.summary.orEmpty(),
                     label = { Text("What have I achieved? (optional)") },
-                    onValueChange = { summary = it },
+                    onValueChange = { text -> onOpenTrackingChange(openTracking.copy(summary = text)) },
                 )
                 val timeSinceOpenString = timeSinceOpenInWholeMinutes.toComponents { hours, minutes, _, _ ->
                     "${hours}h ${minutes}m"
@@ -651,10 +663,10 @@ fun Issue(
                     modifier = Modifier.fillMaxWidth()
                         .disableGlobalSearchIfFocused()
                         .changeFocusOnTab()
-                        .onCtrlOrMetaEnter(::commitTimeTracking)
+                        .onCtrlOrMetaEnter(commitTimeTracking)
                         .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612
                     value = customTimeSpent ?: timeSinceOpenString,
-                    onValueChange = { customTimeSpent = it },
+                    onValueChange = { text -> onOpenTrackingChange(openTracking.copy(customTimeSpent = text)) },
                     label = { Text("Time spent")},
                     placeholder = { Text("Example: 1h 30m") },
                     visualTransformation = customTimeSpent?.let { VisualTransformation.None }
@@ -674,9 +686,11 @@ fun Issue(
                                         IconButton(
                                             modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
                                             onClick = {
-                                                timeOfOpen = Clock.System.now() - customTimeSpentDuration
                                                 timeSinceOpen = customTimeSpentDuration
-                                                customTimeSpent = null
+                                                onOpenTrackingChange(openTracking.copy(
+                                                    timeOfOpen = Clock.System.now() - customTimeSpentDuration,
+                                                    customTimeSpent = null,
+                                                ))
                                             }
                                         ) {
                                             Icon(
@@ -689,7 +703,7 @@ fun Issue(
                                 SimpleTooltip("Reset to running timer\n($timeSinceOpenString)") {
                                     IconButton(
                                         modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
-                                        onClick = { customTimeSpent = null }
+                                        onClick = { onOpenTrackingChange(openTracking.copy(customTimeSpent = null)) }
                                     ) {
                                         Icon(
                                             Icons.Default.History,
@@ -701,7 +715,7 @@ fun Issue(
                             else -> SimpleTooltip("Restart time spent timer") {
                                 IconButton(
                                     modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
-                                    onClick = { timeOfOpen = Clock.System.now() }
+                                    onClick = { onOpenTrackingChange(openTracking.copy(timeOfOpen = Clock.System.now())) }
                                 ) {
                                     Icon(
                                         Icons.Default.Clear,
@@ -729,18 +743,18 @@ fun Issue(
                         }
                     }
                     SimpleTooltip("Commit time tracking") {
-                        FilledTonalIconButton(modifier = Modifier.padding(start = 4.dp), onClick = ::commitTimeTracking) {
+                        FilledTonalIconButton(modifier = Modifier.padding(start = 4.dp), onClick = commitTimeTracking) {
                             Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "Commit time tracking")
                         }
                     }
                 }
             }
-            LaunchedEffect(open, timeOfOpen) {
+            LaunchedEffect(open, openTracking.timeOfOpen) {
                 if (!open) return@LaunchedEffect
                 focusRequester.requestFocus()
                 while (true) {
                     if (!isActive) return@LaunchedEffect
-                    timeSinceOpen = (Clock.System.now() - timeOfOpen)
+                    timeSinceOpen = (Clock.System.now() - openTracking.timeOfOpen)
                     delay(1.seconds)
                 }
             }

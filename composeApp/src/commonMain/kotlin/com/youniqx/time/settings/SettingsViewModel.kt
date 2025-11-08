@@ -11,7 +11,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 data class UiState(
     val token: String,
@@ -22,6 +25,16 @@ data class UiState(
     val showLabelsByDefault: Boolean,
     val useLabelColors: Boolean,
     val pinnedIssues: List<String>,
+    val openTracking: OpenTracking?,
+)
+
+@OptIn(ExperimentalTime::class)
+@Serializable
+data class OpenTracking(
+    val workItemId: String,
+    val summary: String? = null,
+    val timeOfOpen: Instant,
+    val customTimeSpent: String? = null,
 )
 
 private enum class SettingKey {
@@ -33,6 +46,7 @@ private enum class SettingKey {
     ShowLabelsByDefault,
     UseLabelColors,
     PinnedIssues,
+    OpenTracking,
 }
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -47,7 +61,8 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
                 groupSprintInEpics = false,
                 showLabelsByDefault = false,
                 useLabelColors = false,
-                pinnedIssues = emptyList()
+                pinnedIssues = emptyList(),
+                openTracking = null,
             )
         )
     val uiState = _uiState.asStateFlow()
@@ -65,6 +80,8 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
             SettingKey.PinnedIssues.name,
             Json.encodeToString(emptyList<String>())
         ).loadInto { copy(pinnedIssues = Json.decodeFromString(it)) }
+        settings.getStringOrNullFlow(SettingKey.OpenTracking.name)
+            .loadInto { copy(openTracking = it?.let { Json.decodeFromString(it) }) }
     }
 
     fun toggleDarkTheme() {
@@ -118,6 +135,17 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
                 pinned.add(iid)
             }
             settings.putString(SettingKey.PinnedIssues.name, Json.encodeToString(pinned))
+        }
+    }
+
+    fun setOpenTracking(openTracking: OpenTracking?) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(openTracking = openTracking) } // optimistic ui
+            if (openTracking == null) {
+                settings.remove(SettingKey.OpenTracking.name)
+            } else {
+                settings.putString(SettingKey.OpenTracking.name, Json.encodeToString(openTracking))
+            }
         }
     }
 
