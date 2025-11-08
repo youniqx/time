@@ -113,7 +113,10 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -609,6 +612,7 @@ fun Issue(
         AnimatedVisibility(visible = open) {
             var timeOfOpen by remember { mutableStateOf(Clock.System.now()) }
             var timeSinceOpen by remember { mutableStateOf(Duration.ZERO) }
+            val timeSinceOpenInWholeMinutes = timeSinceOpen.inWholeMinutes.minutes
             var customTimeSpent by remember { mutableStateOf<String?>(null) }
             var summary by remember { mutableStateOf("") }
             val focusRequester = remember { FocusRequester() }
@@ -623,9 +627,9 @@ fun Issue(
                     onValueChange = { summary = it },
                 )
                 val timeSinceOpenString = when {
-                    timeSinceOpen < 1.minutes -> "0h 0m"
-                    timeSinceOpen < 1.hours -> "0h $timeSinceOpen"
-                    else -> "$timeSinceOpen"
+                    timeSinceOpenInWholeMinutes < 1.minutes -> "0h 0m"
+                    timeSinceOpenInWholeMinutes < 1.hours -> "0h $timeSinceOpenInWholeMinutes"
+                    else -> "$timeSinceOpenInWholeMinutes"
                 }
                 OutlinedTextField(
                     modifier = Modifier.fillMaxWidth()
@@ -635,6 +639,14 @@ fun Issue(
                     onValueChange = { customTimeSpent = it },
                     label = { Text("Time spent")},
                     placeholder = { Text("Example: 1h 30m") },
+                    visualTransformation = customTimeSpent?.let { VisualTransformation.None }
+                        ?: AddedTextVisualTransformation(
+                            addedText = buildAnnotatedString {
+                                withStyle(SpanStyle(color = LocalContentColor.current.copy(alpha = 0.5f))) {
+                                    append(" ${(timeSinceOpen - timeSinceOpenInWholeMinutes).inWholeSeconds}s")
+                                }
+                            }
+                        ),
                     trailingIcon = {
                         when {
                             customTimeSpent != null -> SimpleTooltip("Reset to running timer\n($timeSinceOpenString)") {
@@ -688,7 +700,7 @@ fun Issue(
                                             TimelogCreateInput.Builder()
                                                 .issuableId(issue.id)
                                                 .summary(summary)
-                                                .timeSpent(customTimeSpent ?: timeSinceOpen.toString())
+                                                .timeSpent(customTimeSpent ?: timeSinceOpenInWholeMinutes.toString())
                                                 .build()
                                     )
                                 ).execute()
@@ -705,7 +717,7 @@ fun Issue(
                 focusRequester.requestFocus()
                 while (true) {
                     if (!isActive) return@LaunchedEffect
-                    timeSinceOpen = (Clock.System.now() - timeOfOpen).inWholeMinutes.minutes
+                    timeSinceOpen = (Clock.System.now() - timeOfOpen)
                     delay(1.seconds)
                 }
             }
