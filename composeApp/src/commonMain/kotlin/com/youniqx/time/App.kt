@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.MutableWindowInsets
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -37,6 +38,8 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowCircleUp
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -46,9 +49,12 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
 import androidx.compose.material.icons.filled.Style
 import androidx.compose.material.icons.filled.Task
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -65,6 +71,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -271,7 +278,22 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             WindowInsets.systemBarsForVisualComponents
                                 .exclude(consumedWindowInsets)
                                 .asPaddingValues()
+                        val filteredIssues = issues.orEmpty().filter {
+                            it.title.contains(search, ignoreCase = true) ||
+                                    it.id.toString().contains(search, ignoreCase = true) ||
+                                    it.id == settingsUiState.openTracking?.workItemId ||
+                                    it.iid.contains(search, ignoreCase = true) ||
+                                    it.webUrl.orEmpty().contains(search, ignoreCase = true) ||
+                                    it.assignees?.nodes.orEmpty().filterNotNull().any {
+                                        it.name.contains(search, ignoreCase = true) ||
+                                                it.username.contains(search, ignoreCase = true)
+                                    } ||
+                                    it.labels?.nodes.orEmpty().filterNotNull().any {
+                                        it.title.contains(search, ignoreCase = true)
+                                    }
+                        }
                         val lazyListState = rememberLazyListState()
+                        var openTrackingWarningOn by remember { mutableStateOf<String?>(null) }
                         LazyColumn(
                             modifier =
                                 Modifier
@@ -295,65 +317,134 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                     focusRequester.requestFocus()
                                 }
                             }
-                            itemsIndexed(issues.orEmpty().filter {
-                                it.title.contains(search, ignoreCase = true) ||
-                                        it.id.toString().contains(search, ignoreCase = true) ||
-                                        it.id == settingsUiState.openTracking?.workItemId ||
-                                        it.iid.contains(search, ignoreCase = true) ||
-                                        it.webUrl.orEmpty().contains(search, ignoreCase = true) ||
-                                        it.assignees?.nodes.orEmpty().filterNotNull().any {
-                                            it.name.contains(search, ignoreCase = true) ||
-                                                    it.username.contains(search, ignoreCase = true)
-                                        } ||
-                                        it.labels?.nodes.orEmpty().filterNotNull().any {
-                                            it.title.contains(search, ignoreCase = true)
-                                        }
-                            }, key = { _, issue -> issue.id }) { index, issue ->
+                            itemsIndexed(filteredIssues, key = { _, issue -> issue.id }) { index, issue ->
                                 // if (index != 0) HorizontalDivider(thickness = 0.5.dp)
+                                val showOpenTrackingWarning = openTrackingWarningOn == issue.iid
                                 val open = issue.iid == settingsUiState.openTracking?.workItemId
-                                Issue(
-                                    issue,
-                                    settingsUiState.showLabelsByDefault,
-                                    settingsUiState.useLabelColors,
-                                    openTracking = settingsUiState.openTracking,
-                                    onOpenTrackingChange = { openTracking ->
-                                        settingsViewModel.setOpenTracking(openTracking)
-                                    },
-                                    pinned = issue.iid in settingsUiState.pinnedIssues,
-                                    togglePinned = { settingsViewModel.togglePinIssue(issue.iid) },
-                                    commitTimeTracking = {
-                                        coroutineScope.launch {
-                                            settingsUiState.openTracking?.let {
-                                                val timeSpent = it.customTimeSpent
-                                                    ?: (Clock.System.now() - it.timeOfOpen)
-                                                        .inWholeMinutes.minutes.toString()
-                                                apolloClient.mutation(
-                                                    TimelogCreateMutation(
-                                                        input =
-                                                            TimelogCreateInput.Builder()
-                                                                .issuableId(issue.id)
-                                                                .summary(it.summary.orEmpty())
-                                                                .timeSpent(timeSpent)
-                                                                .build()
-                                                    )
-                                                ).execute()
+                                fun startTracking() = settingsViewModel.setOpenTracking(
+                                    OpenTracking(workItemId = issue.iid, timeOfOpen = Clock.System.now())
+                                )
+                                Column {
+                                    Issue(
+                                        issue,
+                                        settingsUiState.showLabelsByDefault,
+                                        settingsUiState.useLabelColors,
+                                        openTracking = settingsUiState.openTracking,
+                                        onOpenTrackingChange = { openTracking ->
+                                            settingsViewModel.setOpenTracking(openTracking)
+                                        },
+                                        pinned = issue.iid in settingsUiState.pinnedIssues,
+                                        togglePinned = { settingsViewModel.togglePinIssue(issue.iid) },
+                                        commitTimeTracking = {
+                                            coroutineScope.launch {
+                                                settingsUiState.openTracking?.let {
+                                                    val timeSpent = it.customTimeSpent
+                                                        ?: (Clock.System.now() - it.timeOfOpen)
+                                                            .inWholeMinutes.minutes.toString()
+                                                    apolloClient.mutation(
+                                                        TimelogCreateMutation(
+                                                            input =
+                                                                TimelogCreateInput.Builder()
+                                                                    .issuableId(issue.id)
+                                                                    .summary(it.summary.orEmpty())
+                                                                    .timeSpent(timeSpent)
+                                                                    .build()
+                                                        )
+                                                    ).execute()
+                                                }
+                                            }
+                                        },
+                                        disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
+                                        modifier = Modifier.clickable(
+                                            onClickLabel = if (open) "Collapse issue and reset current timer" else "Work on issue",
+                                            role = Role.Switch
+                                        ) {
+                                            when (settingsUiState.openTracking?.workItemId) {
+                                                issue.iid -> settingsViewModel.setOpenTracking(null)
+                                                null -> startTracking()
+                                                else -> {
+                                                    openTrackingWarningOn =
+                                                        if (showOpenTrackingWarning) null else issue.iid
+                                                }
                                             }
                                         }
-                                    },
-                                    disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
-                                    modifier = Modifier.clickable(
-                                        onClickLabel = if (open) "Collapse issue and reset current timer" else "Work on issue",
-                                        role = Role.Switch
                                     ) {
-                                        settingsViewModel.setOpenTracking(
-                                            if (open) {
-                                                null
-                                            } else {
-                                                OpenTracking(workItemId = issue.iid, timeOfOpen = Clock.System.now())
+                                        AnimatedVisibility(visible = showOpenTrackingWarning) {
+                                            settingsUiState.openTracking?.let {
+                                                Column {
+                                                    Spacer(Modifier.size(ButtonDefaults.IconSpacing * 1.5f))
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Icon(
+                                                            imageVector = Icons.Outlined.Warning,
+                                                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                                                            contentDescription = null
+                                                        )
+                                                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                                                        Text(text = "You are currently tracking another issue")
+                                                    }
+                                                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                                                    FlowRow(
+                                                        horizontalArrangement = Arrangement.spacedBy(space = 4.dp)
+                                                    ) {
+                                                        TextButton(
+                                                            onClick = {
+                                                                val index = filteredIssues.indexOfFirst {
+                                                                    issue -> issue.iid == it.workItemId
+                                                                }
+                                                                coroutineScope.launch {
+                                                                    lazyListState.animateScrollToItem(index + 1, -100)
+                                                                }
+                                                            },
+                                                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Filled.Visibility,
+                                                                contentDescription = "Show",
+                                                                modifier = Modifier.size(ButtonDefaults.IconSize),
+                                                            )
+                                                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                                                            Text("Show")
+                                                        }
+                                                        TextButton(
+                                                            onClick = {
+                                                                openTrackingWarningOn = null
+                                                                startTracking()
+                                                            },
+                                                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Filled.DeleteForever,
+                                                                contentDescription = "Discard",
+                                                                modifier = Modifier.size(ButtonDefaults.IconSize),
+                                                            )
+                                                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                                                            Text("Discard")
+                                                        }
+                                                        TextButton(
+                                                            onClick = {
+                                                                openTrackingWarningOn = null
+                                                                settingsViewModel.setOpenTracking(
+                                                                    openTracking = it.copy(workItemId = issue.iid)
+                                                                )
+                                                            },
+                                                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                                                        ) {
+                                                            Icon(
+                                                                Icons.Filled.ContentCopy,
+                                                                contentDescription = "Copy over",
+                                                                modifier = Modifier.size(ButtonDefaults.IconSize),
+                                                            )
+                                                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
+                                                            Text("Copy over")
+                                                        }
+                                                    }
+                                                }
                                             }
-                                        )
+                                        }
                                     }
-                                )
+                                }
                             }
                             if (loading) item {
                                 Box(
@@ -499,7 +590,8 @@ fun Issue(
     togglePinned: () -> Unit,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
     commitTimeTracking: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    additionalContent: (@Composable () -> Unit)? = null
 ) {
     val uriHandler = LocalUriHandler.current
     val open = openTracking?.workItemId == issue.iid
@@ -759,6 +851,7 @@ fun Issue(
                 }
             }
         }
+        additionalContent?.invoke()
     }
 }
 

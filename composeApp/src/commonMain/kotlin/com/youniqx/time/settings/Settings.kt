@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.DarkMode
@@ -94,7 +96,11 @@ fun SettingsScreen(
     onIterationCadenceChange: (id: String) -> Unit,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
 ) {
-    Column(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)) {
+    Column(
+        modifier = Modifier
+            .verticalScroll(rememberScrollState())
+            .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
+    ) {
         val lightInteractionSource = remember { MutableInteractionSource() }
         val lightIsHovered by lightInteractionSource.collectIsHoveredAsState()
         val darkInteractionSource = remember { MutableInteractionSource() }
