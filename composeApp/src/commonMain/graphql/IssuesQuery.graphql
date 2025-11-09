@@ -6,6 +6,9 @@ query IssuesQuery(
   $doPinnedSearch: Boolean! = false,
   $doSearch: Boolean! = false
 ) {
+  currentUser {
+    id
+  }
   namespace(fullPath: $group) {
     sprint: workItems(
       iterationWildcardId: CURRENT
@@ -73,6 +76,19 @@ fragment bareWorkItemWidgets on WorkItemWidget {
         avatarUrl
         name
         username
+      }
+    }
+  }
+  ... on WorkItemWidgetTimeTracking {
+    timelogs {
+      nodes {
+        id
+        spentAt
+        summary
+        timeSpent
+        user {
+          id
+        }
       }
     }
   }

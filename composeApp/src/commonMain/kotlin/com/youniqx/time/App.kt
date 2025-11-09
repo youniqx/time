@@ -119,11 +119,15 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -141,6 +145,8 @@ import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.gitlab.models.type.WorkItemState
+import com.youniqx.time.relativetime.RelativeTime
+import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
@@ -150,11 +156,13 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.random.Random
+import kotlin.text.Typography.nbsp
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingValues(
     start = this.calculateStartPadding(LayoutDirection.Ltr) +
@@ -181,6 +189,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
     )
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {
+        var currentUserId: String? by remember { mutableStateOf(null) }
         var issues: List<BareWorkItem>? by remember { mutableStateOf(null) }
         var iterationCadences: List<IterationCadencesQuery.Node>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
@@ -208,6 +217,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             apolloClient
         ) {
             if (isPreview) {
+                currentUserId = "gid://gitlab/User/123"
                 issues = previewIssues
                 return@LaunchedEffect
             }
@@ -223,6 +233,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .doSearch(search.isNotBlank())
                 .build()
             val response = apolloClient.query(query).execute()
+            currentUserId = response.data?.currentUser?.id.toString()
             issues = response.extractIssues(
                 groupSprintInEpics = settingsUiState.groupSprintInEpics,
                 openWorkItemId = settingsUiState.openTracking?.workItemId
@@ -334,6 +345,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                 Column {
                                     Issue(
                                         issue,
+                                        currentUserId = currentUserId,
                                         settingsUiState.showLabelsByDefault,
                                         settingsUiState.useLabelColors,
                                         openTracking = settingsUiState.openTracking,
@@ -509,6 +521,9 @@ private val previewIssues: List<BareWorkItem> = buildList {
                             ),
                             onWorkItemWidgetAssignees = BareWorkItemWidgets.OnWorkItemWidgetAssignees(
                                 assignees = null
+                            ),
+                            onWorkItemWidgetTimeTracking = BareWorkItemWidgets.OnWorkItemWidgetTimeTracking(
+                                timelogs = null
                             )
                         )
                     )
@@ -524,6 +539,8 @@ val BareWorkItem.labels get() = widgets?.firstOrNull { it.bareWorkItemWidgets.on
     ?.bareWorkItemWidgets?.onWorkItemWidgetLabels?.labels
 val IssuesQuery.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
     ?.onWorkItemWidgetHierarchy?.parent?.bareWorkItem
+val BareWorkItem.timelogs get() = widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetTimeTracking != null }
+    ?.bareWorkItemWidgets?.onWorkItemWidgetTimeTracking?.timelogs?.nodes?.filterNotNull().orEmpty()
 
 @Suppress("DEPRECATION") // experimental api
 private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
@@ -603,6 +620,7 @@ fun Search(
 @Composable
 fun Issue(
     issue: BareWorkItem,
+    currentUserId: String?,
     showLabelsByDefault: Boolean,
     useLabelColors: Boolean,
     openTracking: OpenTracking?,
@@ -616,6 +634,11 @@ fun Issue(
 ) {
     val uriHandler = LocalUriHandler.current
     val open = openTracking?.workItemId == issue.id
+    var showTimelogs by remember { mutableStateOf(false) }
+    val allTimelogs = issue.timelogs
+    val myTimelogs = allTimelogs.filter { it.user.id == currentUserId }
+    val myTotalTime = myTimelogs.fold(0) { acc, timelog -> acc + timelog.timeSpent }
+    val myTotalTimeString = myTotalTime.seconds.inWholeMinutes.minutes.toString()
     Column(
         modifier = modifier
             .heightIn(min = 48.dp)
@@ -643,6 +666,29 @@ fun Issue(
             Text(
                 text = buildAnnotatedString {
                     append(issue.title)
+                    if (myTotalTime > 0) {
+                        append(" - ")
+                        val linkStyle = SpanStyle(
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        withLink(
+                            LinkAnnotation.Clickable(
+                                tag = "Tracking",
+                                styles = TextLinkStyles(
+                                    style = SpanStyle(color = LocalContentColor.current),
+                                    focusedStyle = linkStyle,
+                                    hoveredStyle = linkStyle,
+                                    pressedStyle = linkStyle,
+                        ),
+                                linkInteractionListener = {
+                                    showTimelogs = !showTimelogs
+                                },
+
+                            )
+                        ) {
+                            append(myTotalTimeString.replace(' ', nbsp))
+                        }
+                    }
                     if (issue.promotedToEpicUrl != null) {
                         append(" ")
                         appendInlineContent("promoted", "(promoted)")
@@ -747,6 +793,31 @@ fun Issue(
                                 )
                             }
                         )
+                    }
+                }
+            }
+        }
+        AnimatedVisibility(visible = showTimelogs) {
+            Column {
+                myTimelogs.forEach {
+                    SimpleTooltip(it.spentAt?.let { Instant.parseOrNull(it.toString()) }?.let {
+                        "${formatDuration(Clock.System.now() - it, RelativeTime.Past)} ago"
+                    }.orEmpty()) {
+                        Row(modifier = Modifier.padding(horizontal = 8.dp)) {
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = it.timeSpent.seconds.inWholeMinutes.minutes.toString().replace(' ', nbsp)
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            VerticalDivider(thickness = 0.5.dp, modifier = Modifier.size(width = 0.5.dp, height = 20.dp))
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text(
+                                modifier = Modifier.weight(4f),
+                                text = it.summary.orEmpty(),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }
