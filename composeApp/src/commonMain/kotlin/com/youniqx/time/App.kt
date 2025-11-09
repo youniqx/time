@@ -214,7 +214,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
             loading = true
             if (search.isNotEmpty()) delay(300)
             val pinnedPlusOpen = settingsUiState.pinnedIssues +
-                    (settingsUiState.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
+                    (settingsUiState.openTracking?.let { listOf(it.workItemIid) } ?: emptyList())
             val query = IssuesQuery.Builder()
                 .iterationCadenceId((settingsUiState.iterationCadenceId?.let { listOf(it) } ?: emptyList()))
                 .pinnedIids(pinnedPlusOpen)
@@ -223,7 +223,10 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .doSearch(search.isNotBlank())
                 .build()
             val response = apolloClient.query(query).execute()
-            issues = response.extractIssues(settingsUiState.groupSprintInEpics)
+            issues = response.extractIssues(
+                groupSprintInEpics = settingsUiState.groupSprintInEpics,
+                openWorkItemId = settingsUiState.openTracking?.workItemId
+            )
             loading = false
         }
         val navigator = rememberSupportingPaneScaffoldNavigator()
@@ -319,10 +322,14 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                             }
                             itemsIndexed(filteredIssues, key = { _, issue -> issue.id }) { index, issue ->
                                 // if (index != 0) HorizontalDivider(thickness = 0.5.dp)
-                                val showOpenTrackingWarning = openTrackingWarningOn == issue.iid
-                                val open = issue.iid == settingsUiState.openTracking?.workItemId
+                                val showOpenTrackingWarning = openTrackingWarningOn == issue.id
+                                val open = issue.id == settingsUiState.openTracking?.workItemId
                                 fun startTracking() = settingsViewModel.setOpenTracking(
-                                    OpenTracking(workItemId = issue.iid, timeOfOpen = Clock.System.now())
+                                    OpenTracking(
+                                        workItemId = issue.id.toString(),
+                                        workItemIid = issue.iid,
+                                        timeOfOpen = Clock.System.now()
+                                    )
                                 )
                                 Column {
                                     Issue(
@@ -360,11 +367,11 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                             role = Role.Switch
                                         ) {
                                             when (settingsUiState.openTracking?.workItemId) {
-                                                issue.iid -> settingsViewModel.setOpenTracking(null)
+                                                issue.id -> settingsViewModel.setOpenTracking(null)
                                                 null -> startTracking()
                                                 else -> {
                                                     openTrackingWarningOn =
-                                                        if (showOpenTrackingWarning) null else issue.iid
+                                                        if (showOpenTrackingWarning) null else issue.id.toString()
                                                 }
                                             }
                                         }
@@ -391,7 +398,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                                         TextButton(
                                                             onClick = {
                                                                 val index = filteredIssues.indexOfFirst {
-                                                                    issue -> issue.iid == it.workItemId
+                                                                    issue -> issue.id == it.workItemId
                                                                 }
                                                                 coroutineScope.launch {
                                                                     lazyListState.animateScrollToItem(index + 1, -100)
@@ -426,7 +433,10 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                                             onClick = {
                                                                 openTrackingWarningOn = null
                                                                 settingsViewModel.setOpenTracking(
-                                                                    openTracking = it.copy(workItemId = issue.iid)
+                                                                    openTracking = it.copy(
+                                                                        workItemId = issue.id.toString(),
+                                                                        workItemIid = issue.iid
+                                                                    )
                                                                 )
                                                             },
                                                             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
@@ -516,7 +526,10 @@ val IssuesQuery.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWid
     ?.onWorkItemWidgetHierarchy?.parent?.bareWorkItem
 
 @Suppress("DEPRECATION") // experimental api
-private fun ApolloResponse<IssuesQuery.Data>.extractIssues(groupSprintInEpics: Boolean): List<BareWorkItem>? {
+private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
+    groupSprintInEpics: Boolean,
+    openWorkItemId: String?
+): List<BareWorkItem> {
     val namespace = data?.namespace
     return buildList {
         addAll(namespace?.sprint?.nodes?.map {
@@ -526,7 +539,15 @@ private fun ApolloResponse<IssuesQuery.Data>.extractIssues(groupSprintInEpics: B
                 it?.bareWorkItem
             }
         }.orEmpty())
-        addAll(namespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        val pinned = namespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty()
+        // always add the open work item, so it will be prioritized if another work item with the same iid is present.
+        openWorkItemId?.let { pinned.find { it?.id == openWorkItemId }?.let(::add) }
+        addAll(pinned.distinctBy { it?.iid }.also {
+            if (it.size < pinned.size) {
+                println("Warning: filtered out some pinned issues.")
+                println(pinned - it.toSet())
+            }
+        })
         addAll(namespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
         addAll(namespace?.searchIid?.nodes?.map { it?.bareWorkItem }.orEmpty())
     }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
@@ -594,7 +615,7 @@ fun Issue(
     additionalContent: (@Composable () -> Unit)? = null
 ) {
     val uriHandler = LocalUriHandler.current
-    val open = openTracking?.workItemId == issue.iid
+    val open = openTracking?.workItemId == issue.id
     Column(
         modifier = modifier
             .heightIn(min = 48.dp)
@@ -772,7 +793,7 @@ fun Issue(
                     trailingIcon = {
                         when {
                             customTimeSpent != null -> Row {
-                                val customTimeSpentDuration = customTimeSpent?.let { Duration.parseOrNull(it.trim()) }
+                                val customTimeSpentDuration = Duration.parseOrNull(customTimeSpent.trim())
                                 customTimeSpentDuration?.let {
                                     SimpleTooltip("Continue timer\n(overwrites $timeSinceOpenString)") {
                                         IconButton(

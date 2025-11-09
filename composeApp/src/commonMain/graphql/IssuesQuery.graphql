@@ -23,7 +23,7 @@ query IssuesQuery(
         }
       }
     }
-    pinned: workItems(iids: $pinnedIids, includeDescendants: true) @include(if: $doPinnedSearch) {
+    pinned: workItems(iids: $pinnedIids, sort: UPDATED_DESC, includeDescendants: true) @include(if: $doPinnedSearch) {
       nodes {
         ...bareWorkItem
       }

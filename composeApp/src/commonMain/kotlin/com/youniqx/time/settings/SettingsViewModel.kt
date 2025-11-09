@@ -32,6 +32,7 @@ data class UiState(
 @Serializable
 data class OpenTracking(
     val workItemId: String,
+    val workItemIid: String, // Todo: remove when GitLab 18.6 is released. https://gitlab.com/gitlab-org/gitlab/-/merge_requests/205775
     val summary: String? = null,
     val timeOfOpen: Instant,
     val customTimeSpent: String? = null,
@@ -126,7 +127,7 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
         }
     }
 
-    fun togglePinIssue(iid: String) {
+    fun togglePinIssue(iid: String) { // Todo: Switch to global ID as soon as GitLab 18.6. is released. https://gitlab.com/gitlab-org/gitlab/-/merge_requests/205775
         viewModelScope.launch {
             val pinned = uiState.value.pinnedIssues.toMutableList()
             if (iid in pinned) {
