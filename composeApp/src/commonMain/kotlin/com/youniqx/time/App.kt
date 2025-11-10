@@ -137,7 +137,19 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.api.ApolloRequest
 import com.apollographql.apollo.api.ApolloResponse
+import com.apollographql.apollo.api.Operation
+import com.apollographql.apollo.cache.normalized.FetchPolicy
+import com.apollographql.apollo.cache.normalized.api.CacheKey
+import com.apollographql.apollo.cache.normalized.api.CacheKeyGenerator
+import com.apollographql.apollo.cache.normalized.api.CacheKeyGeneratorContext
+import com.apollographql.apollo.cache.normalized.api.MemoryCacheFactory
+import com.apollographql.apollo.cache.normalized.fetchPolicy
+import com.apollographql.apollo.cache.normalized.normalizedCache
+import com.apollographql.apollo.cache.normalized.watch
+import com.apollographql.apollo.interceptor.ApolloInterceptor
+import com.apollographql.apollo.interceptor.ApolloInterceptorChain
 import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
@@ -152,6 +164,7 @@ import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -200,9 +213,29 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
         }
         val isPreview = LocalInspectionMode.current
         val apolloClient = remember(settingsUiState.token) {
+            val cacheFactory = MemoryCacheFactory(maxSizeBytes = 30 * 1024 * 1024)
+            val cacheKeyGenerator = object : CacheKeyGenerator {
+                override fun cacheKeyForObject(obj: Map<String, Any?>, context: CacheKeyGeneratorContext): CacheKey? {
+                    // Generate the cache ID based on the object's id field
+                    return (obj["id"] as? String)?.let(::CacheKey)
+                }
+            }
             ApolloClient.Builder()
                 .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
                 .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
+                .normalizedCache(
+                    normalizedCacheFactory = cacheFactory,
+                    cacheKeyGenerator = cacheKeyGenerator
+                )
+                .cacheInterceptor(object : ApolloInterceptor {
+                    override fun <D : Operation.Data> intercept(
+                        request: ApolloRequest<D>,
+                        chain: ApolloInterceptorChain
+                    ): Flow<ApolloResponse<D>> {
+                        println("cache")
+                        return chain.proceed(request)
+                    }
+                })
                 .build()
         }
         LaunchedEffect(apolloClient) {
@@ -232,13 +265,14 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                 .search(search)
                 .doSearch(search.isNotBlank())
                 .build()
-            val response = apolloClient.query(query).execute()
-            currentUserId = response.data?.currentUser?.id.toString()
-            issues = response.extractIssues(
-                groupSprintInEpics = settingsUiState.groupSprintInEpics,
-                openWorkItemId = settingsUiState.openTracking?.workItemId
-            )
-            loading = false
+            apolloClient.query(query).fetchPolicy(FetchPolicy.NetworkFirst).watch().collect {
+                currentUserId = it.data?.currentUser?.id.toString()
+                issues = it.extractIssues(
+                    groupSprintInEpics = settingsUiState.groupSprintInEpics,
+                    openWorkItemId = settingsUiState.openTracking?.workItemId
+                )
+                loading = false
+            }
         }
         val navigator = rememberSupportingPaneScaffoldNavigator()
         val coroutineScope = rememberCoroutineScope()
@@ -362,6 +396,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                                             .inWholeMinutes.minutes.toString()
                                                     apolloClient.mutation(
                                                         TimelogCreateMutation(
+                                                            workItemIid = issue.iid,
                                                             input =
                                                                 TimelogCreateInput.Builder()
                                                                     .issuableId(issue.id)
@@ -510,7 +545,7 @@ private val previewIssues: List<BareWorkItem> = buildList {
                 title = loremIpsum.substring(start, start + Random.nextInt(20, 100)).trim(),
                 webUrl = "",
                 state = WorkItemState.OPEN,
-                workItemType = BareWorkItem.WorkItemType(id = "", name = "team::shrews"),
+                workItemType = BareWorkItem.WorkItemType(__typename = "WorkItemType", id = "", name = "team::shrews"),
                 promotedToEpicUrl = null,
                 widgets = listOf(
                     BareWorkItem.Widget(
@@ -528,7 +563,8 @@ private val previewIssues: List<BareWorkItem> = buildList {
                             )
                         )
                     )
-                )
+                ),
+                __typename = "WorkItem"
             )
         )
     }

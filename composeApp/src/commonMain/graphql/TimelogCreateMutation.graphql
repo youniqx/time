@@ -1,5 +1,6 @@
 mutation TimelogCreateMutation(
-  $input: TimelogCreateInput!
+  $input: TimelogCreateInput!,
+  $workItemIid: String!,
 ) {
   timelogCreate(
     input: $input
@@ -11,6 +12,13 @@ mutation TimelogCreateMutation(
       spentAt
       summary
       timeSpent
+      project {
+        workItems(iid: $workItemIid) {
+          nodes {
+            ...bareWorkItem
+          }
+        }
+      }
     }
   }
 }

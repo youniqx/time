@@ -56,6 +56,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.apollo.runtime)
+            implementation(libs.apollo.normalized.cache)
             implementation(libs.settings.noarg)
             implementation(libs.settings.coroutines)
             implementation(libs.settings.makeObservable)
@@ -123,5 +124,6 @@ apollo {
     service("gitlab") {
         packageName.set("com.youniqx.time.gitlab.models")
         generateInputBuilders.set(true)
+        addTypename.set("always")
     }
 }
