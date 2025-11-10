@@ -14,7 +14,7 @@ default:
 variables:
   VAULT_SERVER_URL: https://vault.build.youniqx.cloud
   VAULT_AUTH_ROLE: youniqx_mobile_chapter_time_unprotected
-
+  VERSION_CODE: ${CI_PIPELINE_ID}
 
 pages:
   tags: [linux-unprivileged]

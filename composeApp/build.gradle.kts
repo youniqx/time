@@ -21,25 +21,25 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosArm64(),
-        iosSimulatorArm64()
+        iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
             baseName = "ComposeApp"
             isStatic = true
         }
     }
-    
+
     jvm()
-    
+
     @OptIn(ExperimentalWasmDsl::class)
     wasmJs {
         browser()
         binaries.executable()
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -83,10 +83,10 @@ android {
 
     defaultConfig {
         applicationId = "com.youniqx.time"
+        versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
+        versionName = System.getenv("CI_COMMIT_TAG") ?: "1.0.0"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
-        versionName = "1.0"
     }
     packaging {
         resources {
@@ -113,9 +113,9 @@ compose.desktop {
         mainClass = "com.youniqx.time.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
+            targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.AppImage)
             packageName = "com.youniqx.time"
-            packageVersion = "1.0.0"
+            packageVersion = System.getenv("CI_COMMIT_TAG") ?: "1.0.0"
         }
     }
 }
