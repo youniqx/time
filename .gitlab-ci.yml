@@ -15,6 +15,7 @@ variables:
   VAULT_SERVER_URL: https://vault.build.youniqx.cloud
   VAULT_AUTH_ROLE: youniqx_mobile_chapter_time_unprotected
   VERSION_CODE: ${CI_PIPELINE_ID}
+  VERSION_NAME: ${CI_COMMIT_TAG#v}
 
 pages:
   tags: [linux-unprivileged]
@@ -78,7 +79,7 @@ Upload Binaries:
     - |
       curl --location --header "JOB-TOKEN: ${CI_JOB_TOKEN}" \
            --upload-file time.appImage \
-           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/com.youniqx.time/${CI_COMMIT_TAG}/time.appImage"
+           "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/com.youniqx.time/${VERSION_NAME}/time.appImage"
 
 
 Add assets to release:
@@ -90,5 +91,5 @@ Add assets to release:
     - if: $CI_COMMIT_TAG
   script:
     - |
-      release-cli create --name "Release $CI_COMMIT_TAG" --tag-name $CI_COMMIT_TAG \
-        --assets-link "{\"name\":\"time.appImage\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/com.youniqx.time/${CI_COMMIT_TAG}/time.appImage\"}"
+      release-cli create --name "Release $VERSION_NAME" --tag-name $CI_COMMIT_TAG \
+        --assets-link "{\"name\":\"time.appImage\",\"url\":\"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/com.youniqx.time/${VERSION_NAME}/time.appImage\"}"

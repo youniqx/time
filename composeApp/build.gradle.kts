@@ -84,7 +84,7 @@ android {
     defaultConfig {
         applicationId = "com.youniqx.time"
         versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
-        versionName = System.getenv("CI_COMMIT_TAG") ?: "1.0.0"
+        versionName = System.getenv("VERSION_NAME") ?: "1.0.0"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
     }
@@ -115,7 +115,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.AppImage)
             packageName = "com.youniqx.time"
-            packageVersion = System.getenv("CI_COMMIT_TAG") ?: "1.0.0"
+            packageVersion = System.getenv("VERSION_NAME") ?: "1.0.0"
         }
     }
 }
