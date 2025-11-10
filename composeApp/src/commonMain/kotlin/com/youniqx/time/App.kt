@@ -370,6 +370,7 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                                                     .build()
                                                         )
                                                     ).execute()
+                                                    settingsViewModel.setOpenTracking(null)
                                                 }
                                             }
                                         },
