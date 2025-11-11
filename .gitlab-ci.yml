@@ -69,7 +69,7 @@ Build Dmg:
 
 Build Linux AppImage:
   tags: [linux-unprivileged]
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.13.0
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:branch-1800358
   variables:
     KUBERNETES_MEMORY_REQUEST: 20Gi
     KUBERNETES_MEMORY_LIMIT: 20Gi
