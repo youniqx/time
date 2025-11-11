@@ -17,4 +17,4 @@ if [ "$CI" = "true" ]; then
     glab config set -g host "$CI_SERVER_HOST"
 fi
 
-glab release upload "${CI_COMMIT_TAG}" composeApp/build/compose/binaries/main/app/com.youniqx.time/bin/com.youniqx.time#time.appImage
+glab release upload "${CI_COMMIT_TAG}" composeApp/build/compose/binaries/main/app/*.tar.gz

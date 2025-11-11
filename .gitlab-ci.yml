@@ -58,11 +58,17 @@ Build Linux AppImage:
     KUBERNETES_MEMORY_REQUEST: 20Gi
     KUBERNETES_MEMORY_LIMIT: 20Gi
   stage: build
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: manual
+      allow_failure: true
+    - if: $CI_COMMIT_TAG
   script:
-    - gradle composeApp:packageAppImage
+    - ./scripts/build.sh
   artifacts:
     paths:
-      - composeApp/build/compose/binaries/main/app/com.youniqx.time/bin/com.youniqx.time
+      - composeApp/build/compose/binaries/main/app/
+    expire_in: 24 hours
 
 
 Upload Binaries:
@@ -75,4 +81,4 @@ Upload Binaries:
   rules:
     - if: $CI_COMMIT_TAG
   script:
-    - ./upload.sh
+    - ./scripts/upload.sh
