@@ -24,9 +24,13 @@ buildAndPackage() {
   getVersionName
 
   ./gradlew composeApp:packageAppImage
+  currentDir=$(pwd)
+  cd composeApp/build/compose/binaries/main/app/ || exit 1
   tar -czf \
     "time_${PKG_ORIGIN}${PKG_VERSION}_linux_amd64.tar.gz" \
-    composeApp/build/compose/binaries/main/app/com.youniqx.time
+    com.youniqx.time
+  mv "time_${PKG_ORIGIN}${PKG_VERSION}_linux_amd64.tar.gz" "${currentDir}/"
+  cd "${currentDir}" || exit 1
 }
 
 buildAndPackage
