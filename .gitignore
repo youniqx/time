@@ -10,6 +10,7 @@ local.properties
 captures
 .externalNativeBuild
 .cxx
+/time_*.tar.gz
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/

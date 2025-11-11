@@ -67,7 +67,7 @@ Build Linux AppImage:
     - ./scripts/build.sh
   artifacts:
     paths:
-      - composeApp/build/compose/binaries/main/app/
+      - time_*.tar.gz
     expire_in: 24 hours
 
 

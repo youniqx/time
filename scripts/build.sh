@@ -24,8 +24,9 @@ buildAndPackage() {
   getVersionName
 
   ./gradlew composeApp:packageAppImage
-  cd composeApp/build/compose/binaries/main/app/ || exit 1
-  tar -czf "time_${PKG_ORIGIN}${PKG_VERSION}.tar.gz" com.youniqx.time
+  tar -czf \
+    "time_${PKG_ORIGIN}${PKG_VERSION}_linux_amd64.tar.gz" \
+    composeApp/build/compose/binaries/main/app/com.youniqx.time
 }
 
 buildAndPackage
