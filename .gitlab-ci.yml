@@ -83,7 +83,7 @@ Build Linux AppImage:
     - ./scripts/build.sh --appImage
   artifacts:
     paths:
-      - time-*.tar.gz
+      - time-*.AppImage
     expire_in: 24 hours
 
 

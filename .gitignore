@@ -10,7 +10,7 @@ local.properties
 captures
 .externalNativeBuild
 .cxx
-/time-*.tar.gz
+/time-*.AppImage
 /time-*.dmg
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj

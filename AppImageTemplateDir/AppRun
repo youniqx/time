@@ -1,0 +1,3 @@
+#!/bin/bash
+# shellcheck disable=SC2086
+exec $APPDIR/usr/bin/com.youniqx.time
