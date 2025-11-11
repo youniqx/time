@@ -5,6 +5,22 @@ set -o errexit
 # shellcheck disable=SC3040
 (set -o pipefail 2> /dev/null) && set -o pipefail
 
+appImage=false
+dmg=false
+
+## get arguments from script call
+while true; do
+  if [ "${1}" = "--appImage" ]; then
+    appImage=true
+    shift
+  elif [ "${1}" = "--dmg" ]; then
+    dmg=true
+    shift
+  else
+    break
+  fi
+done
+
 PKG_ORIGIN=""
 
 getVersionName() {
@@ -20,17 +36,31 @@ getVersionName() {
   echo "PKG_VERSION = ${PKG_VERSION}"
 }
 
-buildAndPackage() {
-  getVersionName
-
+buildAndPackageAppImage() {
   ./gradlew composeApp:packageAppImage
   currentDir=$(pwd)
   cd composeApp/build/compose/binaries/main/app/ || exit 1
   tar -czf \
-    "time_${PKG_ORIGIN}${PKG_VERSION}_linux_amd64.tar.gz" \
+    "time-${PKG_ORIGIN}${PKG_VERSION}-linux_amd64.tar.gz" \
     com.youniqx.time
-  mv "time_${PKG_ORIGIN}${PKG_VERSION}_linux_amd64.tar.gz" "${currentDir}/"
+  mv "time-${PKG_ORIGIN}${PKG_VERSION}-linux_amd64.tar.gz" "${currentDir}/"
   cd "${currentDir}" || exit 1
 }
 
-buildAndPackage
+buildDmg() {
+  ./gradlew composeApp:packageDmg
+  currentDir=$(pwd)
+  mv composeApp/build/compose/binaries/main/dmg/*.dmg "./time-${PKG_ORIGIN}${PKG_VERSION}.dmg"
+}
+
+main() {
+  getVersionName
+  if [ "$appImage" = true ];then
+    buildAndPackageAppImage
+  fi
+  if [ "$dmg" = true ];then
+    buildDmg
+  fi
+}
+
+main
