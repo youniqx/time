@@ -13,7 +13,7 @@ if [ "$CI" = "true" ]; then
     PATH="${PATH}:${PWD}/bin"
 
     GLAB_SEND_TELEMETRY=0 glab config set telemetry 0
-    glab auth login --hostname "$CI_SERVER_HOST" --token "CI_JOB_TOKEN"
+    glab auth login --hostname "$CI_SERVER_HOST" --token "GITLAB_TOKEN"
     glab config set -g host "$CI_SERVER_HOST"
 fi
 
