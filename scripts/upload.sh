@@ -17,5 +17,5 @@ if [ "$CI" = "true" ]; then
     glab config set -g host "$CI_SERVER_HOST"
 fi
 
-touch test.juhu
-glab release upload "v1.0.0" test.juhu
+glab release upload "${CI_COMMIT_TAG}" time-*-linux_amd64.tar.gz
+glab release upload "${CI_COMMIT_TAG}" time-*.dmg

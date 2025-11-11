@@ -91,6 +91,10 @@ Upload Binaries:
   tags: [linux-unprivileged]
   image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/infrastructure/youniqx-ubuntu:1.8.90
   stage: build
+  needs:
+    - job: "Build Linux AppImage"
+    - job: "Build Dmg"
+      artifacts: true
   rules:
     - if: $CI_COMMIT_REF_PROTECTED != "true"
       when: manual
