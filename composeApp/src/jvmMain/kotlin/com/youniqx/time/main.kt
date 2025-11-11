@@ -91,7 +91,9 @@ fun main() =
                 }
                 if (SystemTray.isSupported()) {
                     LaunchedEffect(isVisible) {
-                        if (isVisible) Desktop.getDesktop().requestForeground(true)
+                        if (isVisible) try {
+                            Desktop.getDesktop().requestForeground(true)
+                        } catch (_: Exception) {}
                     }
                     DisposableEffect(window) {
                         val listener =
