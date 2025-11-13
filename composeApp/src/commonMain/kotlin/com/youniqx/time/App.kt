@@ -44,6 +44,7 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
@@ -397,16 +398,15 @@ fun App(token: String = "", focusRequester: FocusRequester = remember { FocusReq
                                         },
                                         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
                                         modifier = Modifier.clickable(
-                                            onClickLabel = if (open) "Collapse issue and reset current timer" else "Work on issue",
+                                            enabled = !open,
+                                            onClickLabel = "Work on issue",
                                             role = Role.Switch
                                         ) {
-                                            when (settingsUiState.openTracking?.workItemId) {
-                                                issue.id -> settingsViewModel.setOpenTracking(null)
-                                                null -> startTracking()
-                                                else -> {
-                                                    openTrackingWarningOn =
-                                                        if (showOpenTrackingWarning) null else issue.id.toString()
-                                                }
+                                            if (settingsUiState.openTracking?.workItemId == null) {
+                                                startTracking()
+                                            } else {
+                                                openTrackingWarningOn =
+                                                    if (showOpenTrackingWarning) null else issue.id.toString()
                                             }
                                         }
                                     ) {
@@ -647,7 +647,7 @@ fun Issue(
     showLabelsByDefault: Boolean,
     useLabelColors: Boolean,
     openTracking: OpenTracking?,
-    onOpenTrackingChange: (openTracking: OpenTracking) -> Unit,
+    onOpenTrackingChange: (openTracking: OpenTracking?) -> Unit,
     pinned: Boolean,
     togglePinned: () -> Unit,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
@@ -947,6 +947,11 @@ fun Issue(
                     if (issue.webUrl != null) SimpleTooltip("Open issue") {
                         IconButton(onClick = { uriHandler.openUri(issue.webUrl) }) {
                             Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open issue")
+                        }
+                    }
+                    SimpleTooltip("Discard time tracking") {
+                        IconButton(onClick = { onOpenTrackingChange(null) }) {
+                            Icon(imageVector = Icons.Default.DeleteForever, contentDescription = "Discard time tracking")
                         }
                     }
                     SimpleTooltip("Commit time tracking") {
