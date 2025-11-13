@@ -39,7 +39,7 @@ fun main() =
             println("--------- WE ARE RUNNING ------------")
         }
         var isOpen by remember { mutableStateOf(true) }
-        var isVisible by remember { mutableStateOf(true) }
+        var isVisible by remember { mutableStateOf(!SystemTray.isSupported()) }
         val windowState =
             rememberWindowState(
                 position = WindowPosition(0.dp, 0.dp),
