@@ -17,5 +17,6 @@ if [ "$CI" = "true" ]; then
     glab config set -g host "$CI_SERVER_HOST"
 fi
 
-glab release upload "${CI_COMMIT_TAG}" time-*-linux_amd64.AppImage#image
-glab release upload "${CI_COMMIT_TAG}" time-*.dmg#image
+for f in time-*.*; do
+  glab release upload "${CI_COMMIT_TAG}" "${f}#image"
+done
