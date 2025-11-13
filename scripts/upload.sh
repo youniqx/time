@@ -18,5 +18,6 @@ if [ "$CI" = "true" ]; then
 fi
 
 for f in time-*.*; do
-  glab release upload "${CI_COMMIT_TAG}" "${f}#image"
+  # path#name#type
+  glab release upload "${CI_COMMIT_TAG}" "${f}#${f}#image"
 done
