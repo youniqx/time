@@ -44,7 +44,6 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
@@ -191,10 +190,10 @@ val loremIpsum = """
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
-fun App(token: String = "", focusRequester: FocusRequester = remember { FocusRequester() }) {
+fun App(focusRequester: FocusRequester = remember { FocusRequester() }) {
     val systemInDarkTheme = isSystemInDarkTheme()
     val settingsViewModel = viewModel<SettingsViewModel>(
-        factory = viewModelFactory { initializer { SettingsViewModel(token, systemInDarkTheme) } }
+        factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } }
     )
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {

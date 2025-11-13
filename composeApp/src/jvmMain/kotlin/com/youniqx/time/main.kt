@@ -29,7 +29,6 @@ import java.awt.Desktop
 import java.awt.SystemTray
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
-import java.lang.Exception
 
 val isMacOs = System.getProperty("os.name") == "Mac OS X"
 
@@ -111,7 +110,7 @@ fun main() =
                         }
                     }
                 }
-                App(token = System.getenv("youniqxGitlabPackageRegistryToken"), focusRequester = focusRequester)
+                App(focusRequester = focusRequester)
             }
         }
     }

@@ -17,7 +17,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 data class UiState(
-    val token: String,
+    val token: String?,
     val iterationCadenceId: String?,
     val darkTheme: Boolean,
     val highContrastColors: Boolean,
@@ -51,11 +51,11 @@ private enum class SettingKey {
 }
 
 @OptIn(ExperimentalSettingsApi::class)
-class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel() {
+class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
     private val _uiState =
         MutableStateFlow(
             UiState(
-                token = token,
+                token = null,
                 iterationCadenceId = null,
                 darkTheme = systemInDarkTheme,
                 highContrastColors = false,
@@ -70,7 +70,7 @@ class SettingsViewModel(token: String, systemInDarkTheme: Boolean) : ViewModel()
     private val settings = Settings().makeObservable().toFlowSettings()
 
     init {
-        settings.getStringFlow(SettingKey.Token.name, token).loadInto { copy(token = it) }
+        settings.getStringOrNullFlow(SettingKey.Token.name).loadInto { copy(token = it) }
         settings.getStringOrNullFlow(SettingKey.IterationCadenceId.name).loadInto { copy(iterationCadenceId = it) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).loadInto { copy(darkTheme = it) }
         settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).loadInto { copy(highContrastColors = it) }

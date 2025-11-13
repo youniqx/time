@@ -89,7 +89,7 @@ fun SettingsScreen(
     toggleShowLabelsByDefault: () -> Unit,
     useLabelColors: Boolean,
     toggleUseLabelColors: () -> Unit,
-    token: String,
+    token: String?,
     onTokenChange: (String) -> Unit,
     iterationCadenceId: String?,
     iterationCadences: List<IterationCadencesQuery.Node>?,
@@ -201,7 +201,7 @@ fun SettingsScreen(
         }
         val uriHandler = LocalUriHandler.current
         OutlinedTextField(
-            value = token,
+            value = token.orEmpty(),
             onValueChange = onTokenChange,
             modifier = Modifier
                 .fillMaxWidth()
