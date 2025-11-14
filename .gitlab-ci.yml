@@ -89,7 +89,7 @@ Build Linux AppImage:
 
 Upload Binaries:
   tags: [linux-unprivileged]
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/infrastructure/youniqx-ubuntu:1.8.91
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/infrastructure/youniqx-ubuntu:1.8.92
   stage: build
   needs:
     - job: "Build Linux AppImage"
