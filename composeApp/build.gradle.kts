@@ -83,6 +83,9 @@ android {
 
     defaultConfig {
         applicationId = "com.youniqx.time"
+        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        minSdk = libs.versions.android.minSdk.get().toInt()
+
         versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
         versionName = System.getenv("PKG_VERSION") ?: "1.0.0"
     }

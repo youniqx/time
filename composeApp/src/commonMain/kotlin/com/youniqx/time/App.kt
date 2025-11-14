@@ -5,7 +5,6 @@ package com.youniqx.time
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -23,7 +22,6 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
@@ -44,11 +42,8 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.PushPin
-import androidx.compose.material.icons.filled.Sell
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
-import androidx.compose.material.icons.filled.Style
-import androidx.compose.material.icons.filled.Task
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.PushPin
@@ -68,8 +63,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
@@ -78,6 +71,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffold
@@ -95,7 +89,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -105,7 +98,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isAltPressed
 import androidx.compose.ui.input.key.isCtrlPressed
 import androidx.compose.ui.input.key.isMetaPressed
 import androidx.compose.ui.input.key.isShiftPressed
@@ -136,6 +128,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.window.core.layout.WindowSizeClass
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.apollographql.apollo.cache.normalized.FetchPolicy
@@ -187,10 +180,18 @@ val loremIpsum = """
     Non distinctio qui placeat dolores ab voluptatum ea. Et corporis veniam labore quia in ut velit qui. Laudantium quo repudiandae quam quae saepe esse voluptatum consequuntur. Qui numquam optio commodi.
 """.trimIndent()
 
+@Composable
+fun alwaysShowSearch() = !hasPhysicalOrShowingKeyboard() || currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
+    WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
+)
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
-fun App(focusRequester: FocusRequester = remember { FocusRequester() }) {
+fun App(
+    focusRequester: FocusRequester = remember { FocusRequester() },
+    alwaysShowSearch: Boolean = alwaysShowSearch()
+) {
     val systemInDarkTheme = isSystemInDarkTheme()
     val settingsViewModel = viewModel<SettingsViewModel>(
         factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } }
@@ -341,15 +342,12 @@ fun App(focusRequester: FocusRequester = remember { FocusRequester() }) {
                                 Search(
                                     search = search,
                                     onSearchChange = { search = it },
-                                    show = search.isNotEmpty() && !lazyListState.canScrollBackward,
+                                    show = (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                                     modifier = Modifier
                                         .focusRequester(focusRequester)
                                         .focusProperties { canFocus = !disableGlobalSearch },
                                     onPress = { disableGlobalSearch = false }
                                 )
-                                LaunchedEffect(true) {
-                                    focusRequester.requestFocus()
-                                }
                             }
                             itemsIndexed(filteredIssues, key = { _, issue -> issue.id }) { index, issue ->
                                 // if (index != 0) HorizontalDivider(thickness = 0.5.dp)
@@ -592,52 +590,6 @@ private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
     }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
 }
 
-@Composable
-fun Search(
-    search: String,
-    onSearchChange: (String) -> Unit,
-    show: Boolean,
-    modifier: Modifier = Modifier,
-    onPress: () -> Unit
-) {
-    val focusManager = LocalFocusManager.current
-    val interactionSource = remember { MutableInteractionSource() }
-    LaunchedEffect(interactionSource) {
-        interactionSource.interactions.collect {
-            if (it is PressInteraction.Press) onPress()
-        }
-    }
-    OutlinedTextField(
-        value = search,
-        onValueChange = onSearchChange,
-        modifier = modifier
-            .onPreviewKeyEvent {
-                if (
-                    !it.isMetaPressed &&
-                    !it.isAltPressed &&
-                    !it.isCtrlPressed &&
-                    !it.isShiftPressed &&
-                    it.key == Key.Tab &&
-                    it.type == KeyEventType.KeyDown
-                ) {
-                    focusManager.moveFocus(FocusDirection.Next)
-                    true
-                } else {
-                    false
-                }
-            }
-            .fillMaxWidth()
-            .then(
-                if (show) {
-                    Modifier.padding(horizontal = 12.dp).padding(vertical = 4.dp)
-                } else {
-                    Modifier.height(0.dp).alpha(0f)
-                }
-            ),
-        interactionSource = interactionSource
-    )
-}
-
 @OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable
 fun Issue(
@@ -672,19 +624,7 @@ fun Issue(
             modifier = Modifier.fillMaxWidth().heightIn(min = if (labels.isNullOrEmpty()) 48.dp else 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            issue.workItemType.name.let {
-                SimpleTooltip(it) {
-                    Icon(
-                        imageVector = when (it) {
-                            "Task" -> Icons.Default.Task
-                            "Epic" -> Icons.Default.Style
-                            else -> Icons.Default.Sell
-                        },
-                        contentDescription = it,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            }
+            issue.workItemType.name.let { WorkItemTypeIcon(it) }
             Text(
                 text = buildAnnotatedString {
                     append(issue.title)
@@ -762,60 +702,7 @@ fun Issue(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalArrangement = Arrangement.spacedBy((-4).dp, Alignment.CenterVertically)
                 ) {
-                    it.filterNotNull().onEach { label ->
-                        val default = SuggestionChipDefaults.suggestionChipColors()
-                            .copy(
-                                disabledContainerColor = MaterialTheme.colorScheme.surface,
-                                disabledLabelColor = LocalContentColor.current,
-                            )
-                        val colors = if (useLabelColors) remember(label.color) {
-                            val color = try {
-                                Color(label.color.toColorInt()).copy(alpha = 0.75f)
-                            } catch (_: Exception) {
-                                default.disabledContainerColor
-                            }
-                            default.copy(
-                                disabledContainerColor = color,
-                                disabledLabelColor = color.contrastingTextColor()
-                            )
-                        } else {
-                            default
-                        }
-                        val titleParts = label.title.split("::")
-                        SuggestionChip(
-                            onClick = { },
-                            enabled = false,
-                            colors = colors,
-                            label = {
-                                Text(
-                                    text = buildAnnotatedString {
-                                        titleParts.forEachIndexed { i, titlePart ->
-                                            append(titlePart)
-                                            if (i != titleParts.lastIndex) {
-                                                append(" ")
-                                                appendInlineContent("divider", "|")
-                                                append(" ")
-                                            }
-                                        }
-                                    },
-                                    inlineContent = mapOf(
-                                        "divider" to InlineTextContent(
-                                            Placeholder(
-                                                width = 1.sp,
-                                                height = 18.sp,
-                                                placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                                            )
-                                        ) {
-                                            VerticalDivider(
-                                                thickness = 1.dp,
-                                                color = colors.disabledLabelColor.copy(alpha = 0.6f)
-                                            )
-                                        },
-                                    )
-                                )
-                            }
-                        )
-                    }
+                    it.filterNotNull().onEach { label -> Label(label = label, useColors = useLabelColors) }
                 }
             }
         }
