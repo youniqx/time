@@ -313,6 +313,9 @@ fun App(
                             WindowInsets.systemBarsForVisualComponents
                                 .exclude(consumedWindowInsets)
                                 .asPaddingValues()
+                        val extraPadding = if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
+                                WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
+                            )) PaddingValues(vertical = 20.dp) else PaddingValues()
                         val filteredIssues = issues.orEmpty().filter {
                             it.title.contains(search, ignoreCase = true) ||
                                     it.id.toString().contains(search, ignoreCase = true) ||
@@ -336,7 +339,7 @@ fun App(
                                         consumedWindowInsets.insets = it
                                     },
                             state = lazyListState,
-                            contentPadding = insets,
+                            contentPadding = insets + extraPadding,
                         ) {
                             stickyHeader {
                                 Search(
@@ -344,6 +347,9 @@ fun App(
                                     onSearchChange = { search = it },
                                     show = (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                                     modifier = Modifier
+                                        .then(Modifier.then(if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
+                                                WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
+                                            )) Modifier.padding(horizontal = 40.dp) else Modifier))
                                         .focusRequester(focusRequester)
                                         .focusProperties { canFocus = !disableGlobalSearch },
                                     onPress = { disableGlobalSearch = false }
@@ -618,6 +624,9 @@ fun Issue(
             .heightIn(min = 48.dp)
             .padding(horizontal = 12.dp)
             .padding(vertical = 8.dp)
+            .then(Modifier.then(if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
+                    WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
+                )) Modifier.padding(horizontal = 40.dp) else Modifier))
     ) {
         val labels = if (showLabelsByDefault) issue.labels?.nodes else null
         Row(
