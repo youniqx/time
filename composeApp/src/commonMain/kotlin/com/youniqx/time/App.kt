@@ -150,6 +150,8 @@ import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.gitlab.models.type.WorkItemState
+import com.youniqx.time.modifier.adaptivePadding
+import com.youniqx.time.modifier.clip
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.settings.OpenTracking
@@ -268,6 +270,11 @@ fun App(
         val singlePaneDirective = remember { PaneScaffoldDirective.Default }
         val defaultPaneDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo())
         var forceSinglePane by remember { mutableStateOf(false) }
+        var refresher by remember { mutableStateOf(forceSinglePane) }
+        LaunchedEffect(forceSinglePane) {
+            delay(500)
+            refresher = forceSinglePane
+        }
 
         val navigator = rememberSupportingPaneScaffoldNavigator(
             scaffoldDirective = if (forceSinglePane) singlePaneDirective else defaultPaneDirective
@@ -312,7 +319,7 @@ fun App(
                 directive = navigator.scaffoldDirective,
                 value = navigator.scaffoldValue,
                 supportingPane = {
-                    AnimatedPane {
+                    AnimatedPane(Modifier.clip(align = Alignment.Start, minWidth = 290.dp)) {
                         Settings(
                             viewModel = settingsViewModel,
                             iterationCadences = iterationCadences,
@@ -320,7 +327,7 @@ fun App(
                         )
                     }
                 }, mainPane = {
-                    AnimatedPane {
+                    AnimatedPane(Modifier.clip(align = Alignment.End, minWidth = 290.dp)) {
                         // https://kotlinlang.slack.com/archives/CJLTWPH7S/p1731631796638429?thread_ts=1731631796.638429
                         val consumedWindowInsets = remember { MutableWindowInsets() }
                         val insets =
@@ -361,9 +368,7 @@ fun App(
                                     onSearchChange = { search = it },
                                     show = (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                                     modifier = Modifier
-                                        .then(Modifier.then(if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
-                                                WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
-                                            )) Modifier.padding(horizontal = 40.dp) else Modifier))
+                                        .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
                                         .focusRequester(focusRequester)
                                         .focusProperties { canFocus = !disableGlobalSearch },
                                     onPress = { disableGlobalSearch = false }
@@ -518,16 +523,17 @@ fun App(
                         }
                     }
                 },
-                paneExpansionState = key(forceSinglePane) {
+                paneExpansionState = key(refresher) {
                     rememberPaneExpansionState(
                         keyProvider = navigator.scaffoldValue,
                         anchors = listOf(
                             PaneExpansionAnchor.Proportion(0f),
-                            PaneExpansionAnchor.Offset.fromStart(600.dp),
+                            PaneExpansionAnchor.Offset.fromStart(300.dp),
                             PaneExpansionAnchor.Proportion(0.5f),
-                            PaneExpansionAnchor.Offset.fromEnd(600.dp),
+                            PaneExpansionAnchor.Offset.fromEnd(300.dp),
                             PaneExpansionAnchor.Proportion(1f)
                         ),
+                        // initialAnchoredIndex = if (forceSinglePane) 0 else -1,
                     )
                 },
                 paneExpansionDragHandle = { state ->
@@ -663,11 +669,9 @@ fun Issue(
     Column(
         modifier = modifier
             .heightIn(min = 48.dp)
+            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
             .padding(horizontal = 12.dp)
             .padding(vertical = 8.dp)
-            .then(Modifier.then(if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
-                    WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
-                )) Modifier.padding(horizontal = 40.dp) else Modifier))
     ) {
         val labels = if (showLabelsByDefault) issue.labels?.nodes else null
         Row(
