@@ -74,8 +74,11 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
+import androidx.compose.material3.adaptive.layout.PaneExpansionAnchor
+import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffold
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldRole
+import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.material3.adaptive.navigation.rememberSupportingPaneScaffoldNavigator
 import androidx.compose.material3.rememberTooltipState
@@ -83,6 +86,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -261,7 +265,13 @@ fun App(
                 loading = false
             }
         }
-        val navigator = rememberSupportingPaneScaffoldNavigator()
+        val singlePaneDirective = remember { PaneScaffoldDirective.Default }
+        val defaultPaneDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo())
+        var forceSinglePane by remember { mutableStateOf(false) }
+
+        val navigator = rememberSupportingPaneScaffoldNavigator(
+            scaffoldDirective = if (forceSinglePane) singlePaneDirective else defaultPaneDirective
+        )
         val coroutineScope = rememberCoroutineScope()
         Scaffold(
             floatingActionButton = {
@@ -274,6 +284,10 @@ fun App(
                     FloatingActionButton(
                         onClick = {
                             coroutineScope.launch {
+                                if (forceSinglePane) {
+                                    forceSinglePane = false
+                                    return@launch
+                                }
                                 if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
                                     navigator.navigateTo(SupportingPaneScaffoldRole.Main)
                                 } else {
@@ -504,10 +518,37 @@ fun App(
                         }
                     }
                 },
-                paneExpansionState = rememberPaneExpansionState(navigator.scaffoldValue),
+                paneExpansionState = key(forceSinglePane) {
+                    rememberPaneExpansionState(
+                        keyProvider = navigator.scaffoldValue,
+                        anchors = listOf(
+                            PaneExpansionAnchor.Proportion(0f),
+                            PaneExpansionAnchor.Offset.fromStart(600.dp),
+                            PaneExpansionAnchor.Proportion(0.5f),
+                            PaneExpansionAnchor.Offset.fromEnd(600.dp),
+                            PaneExpansionAnchor.Proportion(1f)
+                        ),
+                    )
+                },
                 paneExpansionDragHandle = { state ->
                     val interactionSource =
                         remember { MutableInteractionSource() }
+                    LaunchedEffect(state.currentAnchor) {
+                        when (val anchor = state.currentAnchor) {
+                            is PaneExpansionAnchor.Offset -> {} // no-op
+                            is PaneExpansionAnchor.Proportion -> when (anchor.proportion) {
+                                1f -> {
+                                    navigator.navigateTo(SupportingPaneScaffoldRole.Main)
+                                    forceSinglePane = true
+                                }
+                                0f -> {
+                                    navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
+                                    forceSinglePane = true
+                                }
+                            }
+                            null -> {} // no-op
+                        }
+                    }
                     VerticalDragHandle(
                         modifier =
                             Modifier.paneExpansionDraggable(
