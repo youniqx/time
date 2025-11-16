@@ -72,11 +72,13 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.VerticalDragHandle
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.layout.AdaptStrategy
 import androidx.compose.material3.adaptive.layout.AnimatedPane
 import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.layout.PaneExpansionAnchor
 import androidx.compose.material3.adaptive.layout.PaneScaffoldDirective
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffold
+import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldDefaults
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldRole
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
@@ -285,7 +287,10 @@ fun App(
         }
 
         val navigator = rememberSupportingPaneScaffoldNavigator(
-            scaffoldDirective = if (forceSinglePane) singlePaneDirective else defaultPaneDirective
+            scaffoldDirective = if (forceSinglePane) singlePaneDirective else defaultPaneDirective,
+            adaptStrategies = SupportingPaneScaffoldDefaults.adaptStrategies(
+                supportingPaneAdaptStrategy = AdaptStrategy.Hide
+            )
         )
         val coroutineScope = rememberCoroutineScope()
         Scaffold(
