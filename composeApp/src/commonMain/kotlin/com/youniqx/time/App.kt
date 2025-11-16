@@ -277,11 +277,11 @@ fun App(
         }
         val singlePaneDirective = remember { PaneScaffoldDirective.Default }
         val defaultPaneDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo())
-        var forceSinglePane by remember { mutableStateOf(false) }
-        var refresher by remember { mutableStateOf(forceSinglePane) }
-        LaunchedEffect(forceSinglePane) {
-            delay(500)
-            refresher = forceSinglePane
+        var anchorRefresher by remember { mutableStateOf(false) }
+        var forceSinglePane by remember { mutableStateOf(false) } onSet { current, new ->
+            // only refresh anchors when we go back to default mode,
+            // this way we have no visual artifacts when entering single pane mode
+            if (current && !new) anchorRefresher = !anchorRefresher
         }
 
         val navigator = rememberSupportingPaneScaffoldNavigator(
@@ -531,7 +531,7 @@ fun App(
                         }
                     }
                 },
-                paneExpansionState = key(refresher) {
+                paneExpansionState = key(anchorRefresher) {
                     rememberPaneExpansionState(
                         keyProvider = navigator.scaffoldValue,
                         anchors = listOf(
