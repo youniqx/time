@@ -29,6 +29,7 @@ import java.awt.Desktop
 import java.awt.SystemTray
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
+import javax.swing.UIManager
 
 val isMacOs = System.getProperty("os.name") == "Mac OS X"
 
@@ -110,7 +111,12 @@ fun main() =
                         }
                     }
                 }
-                App(focusRequester = focusRequester)
+                App(
+                    focusRequester = focusRequester,
+                    setWindowBackground = {
+                        window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
+                    }
+                )
             }
         }
     }

@@ -196,7 +196,8 @@ fun alwaysShowSearch() = !hasPhysicalOrShowingKeyboard() || currentWindowAdaptiv
 @Preview
 fun App(
     focusRequester: FocusRequester = remember { FocusRequester() },
-    alwaysShowSearch: Boolean = alwaysShowSearch()
+    alwaysShowSearch: Boolean = alwaysShowSearch(),
+    setWindowBackground: ((Color) -> Unit)? = null,
 ) {
     val systemInDarkTheme = isSystemInDarkTheme()
     val settingsViewModel = viewModel<SettingsViewModel>(
@@ -204,6 +205,13 @@ fun App(
     )
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {
+        if (setWindowBackground != null) {
+            MaterialTheme.colorScheme.surface.let { color ->
+                LaunchedEffect(setWindowBackground, color) {
+                    setWindowBackground(color)
+                }
+            }
+        }
         var currentUserId: String? by remember { mutableStateOf(null) }
         var issues: List<BareWorkItem>? by remember { mutableStateOf(null) }
         var iterationCadences: List<IterationCadencesQuery.Node>? by remember { mutableStateOf(null) }
