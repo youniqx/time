@@ -18,16 +18,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         setContent {
-//            val insets = ViewCompat.getRootWindowInsets(LocalView.current)
-//            val imeVisible = insets?.isVisible(WindowInsetsCompat.Type.ime()) ?: false
-//            val hasPhysicalKeyboard = LocalConfiguration.current.keyboard != Configuration.KEYBOARD_NOKEYS
-//            println("imeVisible: $imeVisible")
-//            println("hasPhysicalKeyboard: $hasPhysicalKeyboard")
-//            println("ime: ${WindowInsets.isImeVisible}")
-            hasPhysicalOrShowingKeyboard()
-            Box(Modifier.imePadding()) {
-                App()
-            }
+            App()
         }
     }
 }

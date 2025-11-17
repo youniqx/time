@@ -14,5 +14,5 @@ actual fun hasPhysicalOrShowingKeyboard(): Boolean {
     val hasPhysicalKeyboard = LocalConfiguration.current.keyboard != Configuration.KEYBOARD_NOKEYS
     println("imeVisible: ${WindowInsets.isImeVisible}")
     println("hasPhysicalKeyboard: $hasPhysicalKeyboard")
-    return hasPhysicalKeyboard || imeVisible
+    return hasPhysicalKeyboard // || imeVisible disabled for the time being
 }
