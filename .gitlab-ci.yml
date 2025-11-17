@@ -16,7 +16,7 @@ variables:
   VAULT_AUTH_ROLE: youniqx_mobile_chapter_time_unprotected
   VERSION_CODE: ${CI_PIPELINE_ID}
   # renovate: datasource=gitlab-tags depName=gitlab-org/cli extractVersion=^v(?<version>.*)$
-  GLAB_VERSION: 1.67.0
+  GLAB_VERSION: 1.77.0
 
 
 pages:
