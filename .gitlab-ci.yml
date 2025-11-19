@@ -1,10 +1,10 @@
 ---
 include:
   - project: 'youniqx/infrastructure/ci-commons'
-    ref: v1.88.27
+    ref: v1.88.28
     file: 'global.yaml'
   - project: 'youniqx/infrastructure/ci-commons'
-    ref: v1.88.27
+    ref: v1.88.28
     file: 'release.yaml'
   - component: $CI_SERVER_FQDN/youniqx/mia/ci-templates/disable-ltex@main
 
