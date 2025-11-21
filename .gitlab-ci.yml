@@ -25,7 +25,7 @@ pages:
     KUBERNETES_MEMORY_REQUEST: 20Gi
     KUBERNETES_MEMORY_LIMIT: 20Gi
   stage: deploy
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.13.4
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.13.6
   script:
     - gradle composeApp:wasmJsBrowserDistribution
     - mkdir -p public && cp -R ./composeApp/build/dist/wasmJs/productionExecutable/* ./public
@@ -69,7 +69,7 @@ Build Dmg:
 
 Build Linux AppImage:
   tags: [linux-unprivileged]
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.13.4
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.13.6
   variables:
     KUBERNETES_MEMORY_REQUEST: 20Gi
     KUBERNETES_MEMORY_LIMIT: 20Gi
