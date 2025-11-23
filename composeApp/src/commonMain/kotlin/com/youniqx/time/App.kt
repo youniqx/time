@@ -149,7 +149,6 @@ import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
-import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.modifier.adaptivePadding
@@ -164,7 +163,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import kotlin.random.Random
 import kotlin.text.Typography.nbsp
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -181,12 +179,6 @@ operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingVa
             other.calculateEndPadding(LayoutDirection.Ltr),
     bottom = this.calculateBottomPadding() + other.calculateBottomPadding(),
 )
-
-val loremIpsum = """
-    Aut aut minima quidem occaecati ea consequuntur est. Iure velit minus enim id sit explicabo nulla dolorem. Alias officiis quia et exercitationem.
-    Doloribus adipisci fugit molestias illum. Quos assumenda minus et consequatur officia reprehenderit. Atque quia est et. Minima aut labore nostrum. Omnis voluptates occaecati molestias assumenda. Dolorum quia at soluta sequi vero saepe.
-    Non distinctio qui placeat dolores ab voluptatum ea. Et corporis veniam labore quia in ut velit qui. Laudantium quo repudiandae quam quae saepe esse voluptatum consequuntur. Qui numquam optio commodi.
-""".trimIndent()
 
 @Composable
 fun alwaysShowSearch() = !hasPhysicalOrShowingKeyboard() || currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
@@ -242,6 +234,10 @@ fun App(
                 .build()
         }
         LaunchedEffect(apolloClient) {
+            if (isPreview) {
+                iterationCadences = previewIterationCadences
+                return@LaunchedEffect
+            }
             val response = apolloClient.query(IterationCadencesQuery()).execute()
             iterationCadences = response.data?.group?.iterationCadences?.nodes?.filterNotNull().orEmpty()
         }
@@ -253,7 +249,7 @@ fun App(
             apolloClient
         ) {
             if (isPreview) {
-                currentUserId = "gid://gitlab/User/123"
+                currentUserId = previewUserId
                 issues = previewIssues
                 return@LaunchedEffect
             }
@@ -581,41 +577,6 @@ fun App(
         }
         // Fake item to ignore focus requests if a issue is open
         Box(modifier = Modifier.focusProperties { canFocus = false }.focusRequester(focusRequester))
-    }
-}
-
-private val previewIssues: List<BareWorkItem> = buildList {
-    repeat(20) {
-        val start = Random.nextInt(loremIpsum.lastIndex - 100)
-        add(
-            BareWorkItem(
-                id = it.toString(),
-                iid = it.toString(),
-                title = loremIpsum.substring(start, start + Random.nextInt(20, 100)).trim(),
-                webUrl = "",
-                state = WorkItemState.OPEN,
-                workItemType = BareWorkItem.WorkItemType(__typename = "WorkItemType", id = "", name = "team::shrews"),
-                promotedToEpicUrl = null,
-                widgets = listOf(
-                    BareWorkItem.Widget(
-                        __typename = "WorkItemWidgetLabels",
-                        bareWorkItemWidgets = BareWorkItemWidgets(
-                            __typename = "WorkItemWidgetLabels",
-                            onWorkItemWidgetLabels = BareWorkItemWidgets.OnWorkItemWidgetLabels(
-                                labels = null
-                            ),
-                            onWorkItemWidgetAssignees = BareWorkItemWidgets.OnWorkItemWidgetAssignees(
-                                assignees = null
-                            ),
-                            onWorkItemWidgetTimeTracking = BareWorkItemWidgets.OnWorkItemWidgetTimeTracking(
-                                timelogs = null
-                            )
-                        )
-                    )
-                ),
-                __typename = "WorkItem"
-            )
-        )
     }
 }
 
