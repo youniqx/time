@@ -533,7 +533,7 @@ fun App(
                                 }
                             }
 
-                            val groupedIssues = issues?.groupBy { issue ->
+                            val groupedIssues = filteredIssues.groupBy { issue ->
                                 when {
                                     issue.iid in settingsUiState.pinnedIssues -> Section.Pinned
                                     issue.state == WorkItemState.CLOSED -> Section.Closed
@@ -542,10 +542,10 @@ fun App(
                             }
 
                             fun section(section: Section) {
-                                val sectionIssues = groupedIssues?.get(section)
+                                val sectionIssues = groupedIssues[section]
                                 if (!sectionIssues.isNullOrEmpty()) {
                                     val open = section in openSections
-                                    stickyHeader(listState = lazyListState) { index, isSticky ->
+                                    stickyHeader(listState = lazyListState) { _, isSticky ->
                                         val corner = if (isSticky) 50 else 0
                                         Surface(modifier = Modifier
                                             .then(if (isSticky) Modifier else Modifier.fillMaxWidth())
