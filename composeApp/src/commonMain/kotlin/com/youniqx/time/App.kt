@@ -27,8 +27,9 @@ import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
@@ -63,6 +64,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
@@ -89,18 +91,21 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -184,6 +189,10 @@ operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingVa
 fun alwaysShowSearch() = !hasPhysicalOrShowingKeyboard() || currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
     WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
 )
+
+enum class Section {
+    Pinned, Open, Closed
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -362,6 +371,7 @@ fun App(
                         }
                         val lazyListState = rememberLazyListState()
                         var openTrackingWarningOn by remember { mutableStateOf<String?>(null) }
+                        val openSections = remember { mutableStateListOf(Section.Pinned, Section.Open) }
                         LazyColumn(
                             modifier =
                                 Modifier
@@ -383,20 +393,21 @@ fun App(
                                     onPress = { disableGlobalSearch = false }
                                 )
                             }
-                            itemsIndexed(filteredIssues, key = { _, issue -> issue.id }) { index, issue ->
-                                // if (index != 0) HorizontalDivider(thickness = 0.5.dp)
-                                val showOpenTrackingWarning = openTrackingWarningOn == issue.id
-                                val open = issue.id == settingsUiState.openTracking?.workItemId
+
+                            @Composable
+                            operator fun BareWorkItem.invoke() {
+                                val showOpenTrackingWarning = openTrackingWarningOn == id
+                                val open = id == settingsUiState.openTracking?.workItemId
                                 fun startTracking() = settingsViewModel.setOpenTracking(
                                     OpenTracking(
-                                        workItemId = issue.id.toString(),
-                                        workItemIid = issue.iid,
+                                        workItemId = id.toString(),
+                                        workItemIid = iid,
                                         timeOfOpen = Clock.System.now()
                                     )
                                 )
                                 Column {
                                     Issue(
-                                        issue,
+                                        this@invoke,
                                         currentUserId = currentUserId,
                                         settingsUiState.showLabelsByDefault,
                                         settingsUiState.useLabelColors,
@@ -404,8 +415,8 @@ fun App(
                                         onOpenTrackingChange = { openTracking ->
                                             settingsViewModel.setOpenTracking(openTracking)
                                         },
-                                        pinned = issue.iid in settingsUiState.pinnedIssues,
-                                        togglePinned = { settingsViewModel.togglePinIssue(issue.iid) },
+                                        pinned = iid in settingsUiState.pinnedIssues,
+                                        togglePinned = { settingsViewModel.togglePinIssue(iid) },
                                         commitTimeTracking = {
                                             coroutineScope.launch {
                                                 settingsUiState.openTracking?.let {
@@ -414,10 +425,10 @@ fun App(
                                                             .inWholeMinutes.minutes.toString()
                                                     apolloClient.mutation(
                                                         TimelogCreateMutation(
-                                                            workItemIid = issue.iid,
+                                                            workItemIid = iid,
                                                             input =
                                                                 TimelogCreateInput.Builder()
-                                                                    .issuableId(issue.id)
+                                                                    .issuableId(id)
                                                                     .summary(it.summary.orEmpty())
                                                                     .timeSpent(timeSpent)
                                                                     .build()
@@ -437,7 +448,7 @@ fun App(
                                                 startTracking()
                                             } else {
                                                 openTrackingWarningOn =
-                                                    if (showOpenTrackingWarning) null else issue.id.toString()
+                                                    if (showOpenTrackingWarning) null else id.toString()
                                             }
                                         }
                                     ) {
@@ -463,7 +474,7 @@ fun App(
                                                         TextButton(
                                                             onClick = {
                                                                 val index = filteredIssues.indexOfFirst {
-                                                                    issue -> issue.id == it.workItemId
+                                                                        issue -> issue.id == it.workItemId
                                                                 }
                                                                 coroutineScope.launch {
                                                                     lazyListState.animateScrollToItem(index + 1, -100)
@@ -499,8 +510,8 @@ fun App(
                                                                 openTrackingWarningOn = null
                                                                 settingsViewModel.setOpenTracking(
                                                                     openTracking = it.copy(
-                                                                        workItemId = issue.id.toString(),
-                                                                        workItemIid = issue.iid
+                                                                        workItemId = id.toString(),
+                                                                        workItemIid = iid
                                                                     )
                                                                 )
                                                             },
@@ -521,6 +532,49 @@ fun App(
                                     }
                                 }
                             }
+
+                            val groupedIssues = issues?.groupBy { issue ->
+                                when {
+                                    issue.iid in settingsUiState.pinnedIssues -> Section.Pinned
+                                    issue.state == WorkItemState.CLOSED -> Section.Closed
+                                    else -> Section.Open
+                                }
+                            }
+
+                            fun section(section: Section) {
+                                val sectionIssues = groupedIssues?.get(section)
+                                if (!sectionIssues.isNullOrEmpty()) {
+                                    val open = section in openSections
+                                    stickyHeader(listState = lazyListState) { index, isSticky ->
+                                        val corner = if (isSticky) 50 else 0
+                                        Surface(modifier = Modifier
+                                            .then(if (isSticky) Modifier else Modifier.fillMaxWidth())
+                                            .clip(RoundedCornerShape(topEndPercent = corner, bottomEndPercent = corner))
+                                            .clickable {
+                                                if (open) openSections -= section else openSections += section
+                                            },
+                                            color = if (isSticky) MaterialTheme.colorScheme.surfaceContainer else Transparent,
+                                            shadowElevation = if (isSticky) 5.dp else 0.dp
+                                        ) {
+                                            Section(
+                                                title = { Text(section.name) },
+                                                open = open,
+                                                count = sectionIssues.size
+                                            )
+                                        }
+                                    }
+
+
+                                    if (open) items(sectionIssues, key = { issue -> issue.id }) { sectionIssue ->
+                                        sectionIssue()
+                                    }
+                                }
+                            }
+
+                            section(Section.Pinned)
+                            section(Section.Open)
+                            section(Section.Closed)
+
                             if (loading) item {
                                 Box(
                                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
