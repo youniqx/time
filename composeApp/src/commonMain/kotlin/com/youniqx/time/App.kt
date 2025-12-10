@@ -42,6 +42,7 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
@@ -118,6 +119,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
@@ -902,6 +904,20 @@ fun Issue(
                     if (issue.webUrl != null) SimpleTooltip("Open issue") {
                         IconButton(onClick = { uriHandler.openUri(issue.webUrl) }) {
                             Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open issue")
+                        }
+                    }
+                    val coroutineScope = rememberCoroutineScope()
+                    val clipboard = LocalClipboard.current
+                    SimpleTooltip("Copy issue ID\n${issue.iid}") {
+                        IconButton(onClick = {
+                            coroutineScope.launch {
+                                clipboard.setClipEntry(clipEntryOf(issue.iid))
+                            }
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Numbers,
+                                contentDescription = "Copy issue ID\n${issue.iid}"
+                            )
                         }
                     }
                     SimpleTooltip("Discard time tracking") {

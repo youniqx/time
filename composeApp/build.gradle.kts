@@ -44,6 +44,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(compose.ui)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
