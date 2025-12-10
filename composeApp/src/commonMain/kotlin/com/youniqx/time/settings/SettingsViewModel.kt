@@ -32,7 +32,6 @@ data class UiState(
 @Serializable
 data class OpenTracking(
     val workItemId: String,
-    val workItemIid: String, // Todo: remove when GitLab 18.6 is released. https://gitlab.com/gitlab-org/gitlab/-/merge_requests/205775
     val summary: String? = null,
     val timeOfOpen: Instant,
     val customTimeSpent: String? = null,
@@ -68,6 +67,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         )
     val uiState = _uiState.asStateFlow()
     private val settings = Settings().makeObservable().toFlowSettings()
+    private val json = Json { ignoreUnknownKeys = true }
 
     init {
         settings.getStringOrNullFlow(SettingKey.Token.name).loadInto { copy(token = it) }
@@ -79,10 +79,10 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         settings.getBooleanFlow(SettingKey.UseLabelColors.name, false).loadInto { copy(useLabelColors = it) }
         settings.getStringFlow(
             SettingKey.PinnedIssues.name,
-            Json.encodeToString(emptyList<String>())
-        ).loadInto { copy(pinnedIssues = Json.decodeFromString(it)) }
+            json.encodeToString(emptyList<String>())
+        ).loadInto { copy(pinnedIssues = json.decodeFromString<List<String>>(it).filter(isGlobalId)) }
         settings.getStringOrNullFlow(SettingKey.OpenTracking.name)
-            .loadInto { copy(openTracking = it?.let { Json.decodeFromString(it) }) }
+            .loadInto { copy(openTracking = it?.let { json.decodeFromString(it) }) }
     }
 
     fun toggleDarkTheme() {
@@ -127,15 +127,15 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         }
     }
 
-    fun togglePinIssue(iid: String) { // Todo: Switch to global ID as soon as GitLab 18.6. is released. https://gitlab.com/gitlab-org/gitlab/-/merge_requests/205775
+    fun togglePinIssue(id: String) {
         viewModelScope.launch {
             val pinned = uiState.value.pinnedIssues.toMutableList()
-            if (iid in pinned) {
-                pinned.remove(iid)
+            if (id in pinned) {
+                pinned.remove(id)
             } else {
-                pinned.add(iid)
+                pinned.add(id)
             }
-            settings.putString(SettingKey.PinnedIssues.name, Json.encodeToString(pinned))
+            settings.putString(SettingKey.PinnedIssues.name, json.encodeToString(pinned))
         }
     }
 
@@ -145,7 +145,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
             if (openTracking == null) {
                 settings.remove(SettingKey.OpenTracking.name)
             } else {
-                settings.putString(SettingKey.OpenTracking.name, Json.encodeToString(openTracking))
+                settings.putString(SettingKey.OpenTracking.name, json.encodeToString(openTracking))
             }
         }
     }
@@ -158,3 +158,5 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         }
     }
 }
+
+private val isGlobalId = { id: String -> id.startsWith("gid:") }

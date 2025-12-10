@@ -265,11 +265,12 @@ fun App(
             loading = true
             if (search.isNotEmpty()) delay(300)
             val pinnedPlusOpen = settingsUiState.pinnedIssues +
-                    (settingsUiState.openTracking?.let { listOf(it.workItemIid) } ?: emptyList())
+                    (settingsUiState.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
             val query = IssuesQuery.Builder()
                 .iterationCadenceId((settingsUiState.iterationCadenceId?.let { listOf(it) } ?: emptyList()))
-                .pinnedIids(pinnedPlusOpen)
-                .doPinnedSearch(pinnedPlusOpen.isNotEmpty())
+                .pinnedIds(pinnedPlusOpen)
+                // skip when searching to reduce query complexity
+                .doPinnedSearch(pinnedPlusOpen.isNotEmpty() && search.isBlank())
                 .search(search)
                 .doSearch(search.isNotBlank())
                 .build()
@@ -277,7 +278,6 @@ fun App(
                 currentUserId = it.data?.currentUser?.id.toString()
                 issues = it.extractIssues(
                     groupSprintInEpics = settingsUiState.groupSprintInEpics,
-                    openWorkItemId = settingsUiState.openTracking?.workItemId
                 )
                 loading = false
             }
@@ -401,7 +401,6 @@ fun App(
                                 fun startTracking() = settingsViewModel.setOpenTracking(
                                     OpenTracking(
                                         workItemId = id.toString(),
-                                        workItemIid = iid,
                                         timeOfOpen = Clock.System.now()
                                     )
                                 )
@@ -415,8 +414,8 @@ fun App(
                                         onOpenTrackingChange = { openTracking ->
                                             settingsViewModel.setOpenTracking(openTracking)
                                         },
-                                        pinned = iid in settingsUiState.pinnedIssues,
-                                        togglePinned = { settingsViewModel.togglePinIssue(iid) },
+                                        pinned = id in settingsUiState.pinnedIssues,
+                                        togglePinned = { settingsViewModel.togglePinIssue(id.toString()) },
                                         commitTimeTracking = {
                                             coroutineScope.launch {
                                                 settingsUiState.openTracking?.let {
@@ -425,7 +424,7 @@ fun App(
                                                             .inWholeMinutes.minutes.toString()
                                                     apolloClient.mutation(
                                                         TimelogCreateMutation(
-                                                            workItemIid = iid,
+                                                            workItemId = listOf(id),
                                                             input =
                                                                 TimelogCreateInput.Builder()
                                                                     .issuableId(id)
@@ -509,10 +508,7 @@ fun App(
                                                             onClick = {
                                                                 openTrackingWarningOn = null
                                                                 settingsViewModel.setOpenTracking(
-                                                                    openTracking = it.copy(
-                                                                        workItemId = id.toString(),
-                                                                        workItemIid = iid
-                                                                    )
+                                                                    openTracking = it.copy(workItemId = id.toString())
                                                                 )
                                                             },
                                                             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
@@ -535,7 +531,7 @@ fun App(
 
                             val groupedIssues = filteredIssues.groupBy { issue ->
                                 when {
-                                    issue.iid in settingsUiState.pinnedIssues -> Section.Pinned
+                                    issue.id in settingsUiState.pinnedIssues -> Section.Pinned
                                     issue.state == WorkItemState.CLOSED -> Section.Closed
                                     else -> Section.Open
                                 }
@@ -646,7 +642,6 @@ val BareWorkItem.timelogs get() = widgets?.firstOrNull { it.bareWorkItemWidgets.
 @Suppress("DEPRECATION") // experimental api
 private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
     groupSprintInEpics: Boolean,
-    openWorkItemId: String?
 ): List<BareWorkItem> {
     val namespace = data?.namespace
     return buildList {
@@ -657,15 +652,7 @@ private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
                 it?.bareWorkItem
             }
         }.orEmpty())
-        val pinned = namespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty()
-        // always add the open work item, so it will be prioritized if another work item with the same iid is present.
-        openWorkItemId?.let { pinned.find { it?.id == openWorkItemId }?.let(::add) }
-        addAll(pinned.distinctBy { it?.iid }.also {
-            if (it.size < pinned.size) {
-                println("Warning: filtered out some pinned issues.")
-                println(pinned - it.toSet())
-            }
-        })
+        addAll(namespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty())
         addAll(namespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
         addAll(namespace?.searchIid?.nodes?.map { it?.bareWorkItem }.orEmpty())
     }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
