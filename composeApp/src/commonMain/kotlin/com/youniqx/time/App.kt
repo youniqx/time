@@ -33,7 +33,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.ArrowCircleUp
 import androidx.compose.material.icons.filled.Clear
@@ -42,13 +41,10 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Numbers
-import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ButtonDefaults
@@ -58,7 +54,6 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -119,7 +114,6 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
@@ -407,6 +401,8 @@ fun App(
                                     )
                                 )
                                 Column {
+                                    val pinned = id in settingsUiState.pinnedIssues
+                                    val togglePinned = { settingsViewModel.togglePinIssue(id.toString()) }
                                     Issue(
                                         this@invoke,
                                         currentUserId = currentUserId,
@@ -416,8 +412,8 @@ fun App(
                                         onOpenTrackingChange = { openTracking ->
                                             settingsViewModel.setOpenTracking(openTracking)
                                         },
-                                        pinned = id in settingsUiState.pinnedIssues,
-                                        togglePinned = { settingsViewModel.togglePinIssue(id.toString()) },
+                                        pinned = pinned,
+                                        togglePinned = togglePinned,
                                         commitTimeTracking = {
                                             coroutineScope.launch {
                                                 settingsUiState.openTracking?.let {
@@ -523,6 +519,12 @@ fun App(
                                                             Spacer(Modifier.size(ButtonDefaults.IconSpacing))
                                                             Text("Copy over")
                                                         }
+                                                    }
+                                                    Row(
+                                                        modifier = Modifier.fillMaxWidth(),
+                                                        horizontalArrangement = Arrangement.End
+                                                    ) {
+                                                        AdditionalActions(this@invoke, pinned, togglePinned)
                                                     }
                                                 }
                                             }
@@ -892,34 +894,7 @@ fun Issue(
                     isError = customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
                 )
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    val text = if (pinned) "Unpin issue" else "Pin issue"
-                    SimpleTooltip(text) {
-                        IconToggleButton(checked = pinned, onCheckedChange = { togglePinned() }) {
-                            Icon(
-                                imageVector = if (pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                                contentDescription = text
-                            )
-                        }
-                    }
-                    if (issue.webUrl != null) SimpleTooltip("Open issue") {
-                        IconButton(onClick = { uriHandler.openUri(issue.webUrl) }) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open issue")
-                        }
-                    }
-                    val coroutineScope = rememberCoroutineScope()
-                    val clipboard = LocalClipboard.current
-                    SimpleTooltip("Copy issue ID\n${issue.iid}") {
-                        IconButton(onClick = {
-                            coroutineScope.launch {
-                                clipboard.setClipEntry(clipEntryOf(issue.iid))
-                            }
-                        }) {
-                            Icon(
-                                imageVector = Icons.Default.Numbers,
-                                contentDescription = "Copy issue ID\n${issue.iid}"
-                            )
-                        }
-                    }
+                    AdditionalActions(issue, pinned, togglePinned)
                     SimpleTooltip("Discard time tracking") {
                         IconButton(onClick = { onOpenTrackingChange(null) }) {
                             Icon(imageVector = Icons.Default.DeleteForever, contentDescription = "Discard time tracking")
