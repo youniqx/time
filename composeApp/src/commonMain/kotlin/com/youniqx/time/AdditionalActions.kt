@@ -2,6 +2,7 @@ package com.youniqx.time
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.PushPin
 import androidx.compose.material.icons.outlined.PushPin
@@ -31,11 +32,6 @@ fun AdditionalActions(
             )
         }
     }
-    if (issue.webUrl != null) SimpleTooltip("Open issue") {
-        IconButton(onClick = { uriHandler.openUri(issue.webUrl) }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open issue")
-        }
-    }
     val coroutineScope = rememberCoroutineScope()
     val clipboard = LocalClipboard.current
     SimpleTooltip("Copy issue ID\n${issue.iid}") {
@@ -48,6 +44,23 @@ fun AdditionalActions(
                 imageVector = Icons.Default.Numbers,
                 contentDescription = "Copy issue ID\n${issue.iid}"
             )
+        }
+    }
+    if (issue.webUrl != null) SimpleTooltip("Copy issue URL") {
+        IconButton(onClick = {
+            coroutineScope.launch {
+                clipboard.setClipEntry(clipEntryOf(issue.webUrl))
+            }
+        }) {
+            Icon(
+                imageVector = Icons.Default.Link,
+                contentDescription = "Copy issue URL"
+            )
+        }
+    }
+    if (issue.webUrl != null) SimpleTooltip("Open issue") {
+        IconButton(onClick = { uriHandler.openUri(issue.webUrl) }) {
+            Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open issue")
         }
     }
 }
