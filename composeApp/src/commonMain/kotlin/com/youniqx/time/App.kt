@@ -520,7 +520,7 @@ fun App(
                                                             Text("Copy over")
                                                         }
                                                     }
-                                                    Row(
+                                                    FlowRow(
                                                         modifier = Modifier.fillMaxWidth(),
                                                         horizontalArrangement = Arrangement.End
                                                     ) {
@@ -893,7 +893,7 @@ fun Issue(
                     },
                     isError = customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
                 )
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                     AdditionalActions(issue, pinned, togglePinned)
                     SimpleTooltip("Discard time tracking") {
                         IconButton(onClick = { onOpenTrackingChange(null) }) {
