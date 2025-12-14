@@ -1,6 +1,5 @@
 package com.youniqx.time
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,14 +9,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowCircleUp
-import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Sell
-import androidx.compose.material.icons.filled.Style
-import androidx.compose.material.icons.filled.Task
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,6 +30,8 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
@@ -86,6 +83,21 @@ fun Search(
                 }
             ),
         placeholder = { SearchPlaceholder() },
+        trailingIcon = if (search.isEmpty()) null else {
+            {
+                SimpleTooltip("Clear search") {
+                    IconButton(
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                        onClick = { onSearchChange("") }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = "Clear search",
+                        )
+                    }
+                }
+            }
+        },
         interactionSource = interactionSource
     )
 }
