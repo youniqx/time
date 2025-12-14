@@ -3,6 +3,7 @@
 package com.youniqx.time
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -403,6 +404,10 @@ fun App(
                                 Column {
                                     val pinned = id in settingsUiState.pinnedIssues
                                     val togglePinned = { settingsViewModel.togglePinIssue(id.toString()) }
+                                    var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
+                                    var commitTimeTrackingErrors by remember {
+                                        mutableStateOf<List<String>?>(null)
+                                    }
                                     Issue(
                                         this@invoke,
                                         currentUserId = currentUserId,
@@ -414,13 +419,17 @@ fun App(
                                         },
                                         pinned = pinned,
                                         togglePinned = togglePinned,
-                                        commitTimeTracking = {
+                                        commitTimeTrackingEnabled = commitTimeTrackingEnabled,
+                                        commitTimeTracking = commitTimeTracking@ {
+                                            if (!commitTimeTrackingEnabled) return@commitTimeTracking
+                                            commitTimeTrackingEnabled = false
+                                            commitTimeTrackingErrors = null
                                             coroutineScope.launch {
                                                 settingsUiState.openTracking?.let {
                                                     val timeSpent = it.customTimeSpent
                                                         ?: (Clock.System.now() - it.timeOfOpen)
                                                             .inWholeMinutes.minutes.toString()
-                                                    apolloClient.mutation(
+                                                    val result = apolloClient.mutation(
                                                         TimelogCreateMutation(
                                                             workItemId = listOf(id),
                                                             input =
@@ -431,8 +440,16 @@ fun App(
                                                                     .build()
                                                         )
                                                     ).execute()
-                                                    settingsViewModel.setOpenTracking(null)
+                                                    if (result.exception != null) {
+                                                        commitTimeTrackingErrors =
+                                                            listOf(result.exception?.message.orEmpty())
+                                                    } else if (result.hasErrors()) {
+                                                        commitTimeTrackingErrors = result.errors?.map { it.message }
+                                                    } else {
+                                                        settingsViewModel.setOpenTracking(null)
+                                                    }
                                                 }
+                                                commitTimeTrackingEnabled = true
                                             }
                                         },
                                         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
@@ -527,6 +544,24 @@ fun App(
                                                         AdditionalActions(this@invoke, pinned, togglePinned)
                                                     }
                                                 }
+                                            }
+                                        }
+                                    }
+                                    AnimatedVisibility(visible = !commitTimeTrackingErrors.isNullOrEmpty()) {
+                                        Column(
+                                            modifier = Modifier
+                                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 12.dp)
+                                                .padding(vertical = 8.dp)
+                                                .background(
+                                                    color = MaterialTheme.colorScheme.errorContainer,
+                                                    shape = MaterialTheme.shapes.medium
+                                                )
+                                                .padding(8.dp)
+                                        ) {
+                                            commitTimeTrackingErrors?.forEach {
+                                                Text(text = it, color = MaterialTheme.colorScheme.error)
                                             }
                                         }
                                     }
@@ -674,6 +709,7 @@ fun Issue(
     pinned: Boolean,
     togglePinned: () -> Unit,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
+    commitTimeTrackingEnabled: Boolean,
     commitTimeTracking: () -> Unit,
     modifier: Modifier = Modifier,
     additionalContent: (@Composable () -> Unit)? = null
@@ -901,8 +937,15 @@ fun Issue(
                         }
                     }
                     SimpleTooltip("Commit time tracking") {
-                        FilledTonalIconButton(modifier = Modifier.padding(start = 4.dp), onClick = commitTimeTracking) {
-                            Icon(imageVector = Icons.AutoMirrored.Filled.Send, contentDescription = "Commit time tracking")
+                        FilledTonalIconButton(
+                            enabled = commitTimeTrackingEnabled,
+                            modifier = Modifier.padding(start = 4.dp),
+                            onClick = commitTimeTracking
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Send,
+                                contentDescription = "Commit time tracking"
+                            )
                         }
                     }
                 }
