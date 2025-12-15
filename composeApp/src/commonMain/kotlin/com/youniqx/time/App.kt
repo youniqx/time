@@ -3,6 +3,16 @@
 package com.youniqx.time
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.VectorConverter
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.StartOffset
+import androidx.compose.animation.core.StartOffsetType
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateValue
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -24,6 +34,7 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -96,6 +107,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
@@ -129,6 +141,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -938,11 +951,24 @@ fun Issue(
                     }
                     SimpleTooltip("Commit time tracking") {
                         FilledTonalIconButton(
-                            enabled = commitTimeTrackingEnabled,
                             modifier = Modifier.padding(start = 4.dp),
                             onClick = commitTimeTracking
                         ) {
+                            val x by rememberInfiniteTransition().animateValue(
+                                initialValue = if (commitTimeTrackingEnabled) 0.dp else (-35).dp,
+                                targetValue = if (commitTimeTrackingEnabled) 0.dp  else 35.dp,
+                                typeConverter =  Dp.VectorConverter,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(1500),
+                                    repeatMode = RepeatMode.Restart,
+                                    initialStartOffset = StartOffset(
+                                        offsetMillis = 750,
+                                        offsetType = StartOffsetType.FastForward
+                                    )
+                                ),
+                            )
                             Icon(
+                                modifier = Modifier.offset(x = x, y = -x / 10).rotate(-x.value / 8),
                                 imageVector = Icons.AutoMirrored.Filled.Send,
                                 contentDescription = "Commit time tracking"
                             )
