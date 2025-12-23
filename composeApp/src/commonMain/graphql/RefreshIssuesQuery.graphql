@@ -1,0 +1,12 @@
+query RefreshIssuesQuery(
+  $group: ID = "youniqx/mia",
+  $ids: [WorkItemID!] = [],
+) {
+  namespace(fullPath: $group) {
+    workItems(ids: $ids, includeDescendants: true) {
+      nodes {
+        ...bareWorkItem
+      }
+    }
+  }
+}

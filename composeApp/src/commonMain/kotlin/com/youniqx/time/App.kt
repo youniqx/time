@@ -3,8 +3,6 @@
 package com.youniqx.time
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.VectorConverter
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
@@ -162,6 +160,7 @@ import com.apollographql.apollo.cache.normalized.normalizedCache
 import com.apollographql.apollo.cache.normalized.watch
 import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
+import com.youniqx.time.gitlab.models.RefreshIssuesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
@@ -439,6 +438,35 @@ fun App(
                                             commitTimeTrackingErrors = null
                                             coroutineScope.launch {
                                                 settingsUiState.openTracking?.let {
+                                                    suspend fun manualRefresh() {
+                                                        // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
+                                                        val success = "Saved successfully!"
+                                                        val ignoredWarning = "Only refreshing failed (will be ignored)!"
+                                                        val manualRefreshResult =
+                                                            apolloClient.query(
+                                                                RefreshIssuesQuery.Builder()
+                                                                    .ids(listOf(id)).build()
+                                                            ).execute()
+                                                        if (manualRefreshResult.exception != null) {
+                                                            commitTimeTrackingErrors =
+                                                                listOf(
+                                                                    success,
+                                                                    ignoredWarning,
+                                                                    manualRefreshResult.exception?.message.orEmpty()
+                                                                )
+                                                            delay(4.seconds)
+                                                            commitTimeTrackingErrors = null
+                                                        } else if (manualRefreshResult.hasErrors()) {
+                                                            commitTimeTrackingErrors =
+                                                                listOf(success, ignoredWarning) +
+                                                                        manualRefreshResult.errors
+                                                                            ?.map { it.message }.orEmpty()
+                                                            delay(4.seconds)
+                                                            commitTimeTrackingErrors = null
+                                                        }
+                                                        settingsViewModel.setOpenTracking(null)
+                                                    }
+
                                                     val timeSpent = it.customTimeSpent
                                                         ?: (Clock.System.now() - it.timeOfOpen)
                                                             .inWholeMinutes.minutes.toString()
@@ -453,9 +481,17 @@ fun App(
                                                                     .build()
                                                         )
                                                     ).execute()
+                                                    fun failedBecauseOfEpic() =
+                                                        result.errors?.let { errors ->
+                                                            errors.isNotEmpty() && errors.all {
+                                                                it.message == "Cannot return null for non-nullable field Timelog.project"
+                                                            }
+                                                        } == true
                                                     if (result.exception != null) {
                                                         commitTimeTrackingErrors =
                                                             listOf(result.exception?.message.orEmpty())
+                                                    } else if (failedBecauseOfEpic()) {
+                                                        manualRefresh()
                                                     } else if (result.hasErrors()) {
                                                         commitTimeTrackingErrors = result.errors?.map { it.message }
                                                     } else {
