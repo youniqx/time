@@ -117,7 +117,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.AppImage)
-            packageName = "com.youniqx.time"
+            packageName = "Time"
             packageVersion = System.getenv("PKG_VERSION") ?: "1.0.0"
             macOS {
                 iconFile.set(project.file("${projectDir}/raw/time.icns"))
