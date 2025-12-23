@@ -53,7 +53,7 @@ buildAppImage() {
 
   cp -r "AppImageTemplateDir" "tmp/Time.AppDir"
   mkdir -p "tmp/Time.AppDir/usr"
-  cp -r composeApp/build/compose/binaries/main/app/Time/com.youniqx.time/bin tmp/Time.AppDir/usr/bin
+  cp -r composeApp/build/compose/binaries/main/app/Time/bin tmp/Time.AppDir/usr/bin
   cp -r composeApp/build/compose/binaries/main/app/Time/lib tmp/Time.AppDir/usr/lib
   cp tmp/Time.AppDir/usr/lib/Time.png tmp/Time.AppDir/time.png
   ARCH=x86_64 ./tmp/appimagetool-x86_64.AppImage tmp/Time.AppDir \
