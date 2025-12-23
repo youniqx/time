@@ -17,6 +17,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 data class UiState(
+    val instanceUrl: String?,
     val token: String?,
     val iterationCadenceId: String?,
     val darkTheme: Boolean,
@@ -38,6 +39,7 @@ data class OpenTracking(
 )
 
 private enum class SettingKey {
+    InstanceUrl,
     Token,
     IterationCadenceId,
     DarkTheme,
@@ -54,6 +56,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
     private val _uiState =
         MutableStateFlow(
             UiState(
+                instanceUrl = null,
                 token = null,
                 iterationCadenceId = null,
                 darkTheme = systemInDarkTheme,
@@ -70,6 +73,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
     private val json = Json { ignoreUnknownKeys = true }
 
     init {
+        settings.getStringOrNullFlow(SettingKey.InstanceUrl.name).loadInto { copy(instanceUrl = it) }
         settings.getStringOrNullFlow(SettingKey.Token.name).loadInto { copy(token = it) }
         settings.getStringOrNullFlow(SettingKey.IterationCadenceId.name).loadInto { copy(iterationCadenceId = it) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).loadInto { copy(darkTheme = it) }
@@ -115,7 +119,15 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         }
     }
 
+    fun setInstanceUrl(instanceUrl: String) {
+        _uiState.update { it.copy(instanceUrl = instanceUrl) } // optimistic ui
+        viewModelScope.launch {
+            settings.putString(SettingKey.InstanceUrl.name, instanceUrl)
+        }
+    }
+
     fun setToken(token: String) {
+        _uiState.update { it.copy(token = token) } // optimistic ui
         viewModelScope.launch {
             settings.putString(SettingKey.Token.name, token)
         }

@@ -67,6 +67,7 @@ kotlin {
             implementation(libs.compose.material3.adaptive.navigation)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.libres.compose)
+            implementation(libs.ktor.http)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

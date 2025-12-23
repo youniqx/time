@@ -39,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -48,6 +50,10 @@ import com.youniqx.time.SimpleTooltip
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
+import io.ktor.http.Url
+import io.ktor.http.appendPathSegments
+import io.ktor.http.buildUrl
+import io.ktor.http.takeFrom
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -68,6 +74,8 @@ fun Settings(
         toggleShowLabelsByDefault = viewModel::toggleShowLabelsByDefault,
         useLabelColors = uiState.useLabelColors,
         toggleUseLabelColors = viewModel::toggleUseLabelColors,
+        instanceUrl = uiState.instanceUrl,
+        onInstanceUrlChange = viewModel::setInstanceUrl,
         token = uiState.token,
         onTokenChange = viewModel::setToken,
         iterationCadenceId = uiState.iterationCadenceId,
@@ -89,6 +97,8 @@ fun SettingsScreen(
     toggleShowLabelsByDefault: () -> Unit,
     useLabelColors: Boolean,
     toggleUseLabelColors: () -> Unit,
+    instanceUrl: String?,
+    onInstanceUrlChange: (String) -> Unit,
     token: String?,
     onTokenChange: (String) -> Unit,
     iterationCadenceId: String?,
@@ -199,6 +209,20 @@ fun SettingsScreen(
             Text("Use label colors")
             Switch(checked = useLabelColors, onCheckedChange = { toggleUseLabelColors() })
         }
+        val parsedInstanceUrl = instanceUrl?.let { Url(instanceUrl) }
+        OutlinedTextField(
+            value = instanceUrl.orEmpty(),
+            onValueChange = onInstanceUrlChange,
+            modifier = Modifier
+                .fillMaxWidth()
+                .disableGlobalSearchIfFocused()
+                .padding(vertical = 8.dp)
+                .padding(horizontal = 12.dp),
+            isError = !instanceUrl.isNullOrEmpty() && parsedInstanceUrl == null,
+            label = { Text("GitLab Instance Url") },
+            placeholder = { Text("https://gitlab.com") },
+            supportingText = { Text("Requires GitLab version 18.6 or higher.") },
+        )
         val uriHandler = LocalUriHandler.current
         OutlinedTextField(
             value = token.orEmpty(),
@@ -212,12 +236,25 @@ fun SettingsScreen(
             label = { Text("GitLab Token") },
             supportingText = { Text("Needs API read & write access.") },
             trailingIcon = {
-                SimpleTooltip("Create new GitLab token") {
-                    IconButton(onClick = {
-                        uriHandler.openUri("https://gitlab.ci.youniqx.com/-/user_settings/personal_access_tokens" +
-                                "?name=Time&scopes=api&" +
-                                "description=https%3A%2F%2Fgitlab.ci.youniqx.com%2Fyouniqx%2Fmobile_chapter%2Ftime")
-                    }) {
+                SimpleTooltip("Create new GitLab token" + if (instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "") {
+                    IconButton(
+                        modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                        enabled = !instanceUrl.isNullOrEmpty(),
+                        onClick = {
+                            parsedInstanceUrl?.let {
+                                val tokenUrl = buildUrl {
+                                    takeFrom(parsedInstanceUrl)
+                                    appendPathSegments("-", "user_settings", "personal_access_tokens")
+                                    parameters.append("name", "Time")
+                                    parameters.append("scopes", "api")
+                                    parameters.append(
+                                        "description",
+                                        "Token used by the Time app to help you track time on GitLab."
+                                    )
+                                }
+                                uriHandler.openUri(tokenUrl.toString())
+                            }
+                        }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                             contentDescription = "Create new GitLab token"
@@ -282,7 +319,7 @@ fun IterationCadenceSelection(
     }
 }
 
-@Preview
+@Preview(showBackground = true)
 @Composable
 fun SettingsPreview() {
     AppTheme {
@@ -297,6 +334,8 @@ fun SettingsPreview() {
             toggleShowLabelsByDefault = {},
             useLabelColors = true,
             toggleUseLabelColors = {},
+            instanceUrl = null,
+            onInstanceUrlChange = {},
             token = "𐂂",
             onTokenChange = {},
             iterationCadenceId = null,

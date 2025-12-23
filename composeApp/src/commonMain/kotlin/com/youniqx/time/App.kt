@@ -173,6 +173,9 @@ import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
+import io.ktor.http.appendPathSegments
+import io.ktor.http.buildUrl
+import io.ktor.http.takeFrom
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -234,7 +237,9 @@ fun App(
             onFocusChanged { disableGlobalSearch = it.hasFocus }
         }
         val isPreview = LocalInspectionMode.current
-        val apolloClient = remember(settingsUiState.token) {
+        val apolloClient = remember(settingsUiState.instanceUrl, settingsUiState.token) {
+            val instanceUrl = settingsUiState.instanceUrl ?: return@remember null
+            val token = settingsUiState.token ?: return@remember null
             val cacheFactory = MemoryCacheFactory(maxSizeBytes = 30 * 1024 * 1024)
             val cacheKeyGenerator = object : CacheKeyGenerator {
                 override fun cacheKeyForObject(obj: Map<String, Any?>, context: CacheKeyGeneratorContext): CacheKey? {
@@ -243,8 +248,13 @@ fun App(
                 }
             }
             ApolloClient.Builder()
-                .serverUrl("https://gitlab.ci.youniqx.com/api/graphql")
-                .addHttpHeader("Authorization", "Bearer ${settingsUiState.token}")
+                .serverUrl(
+                    buildUrl {
+                        takeFrom(instanceUrl)
+                        appendPathSegments("api", "graphql")
+                    }.toString()
+                )
+                .addHttpHeader("Authorization", "Bearer ${token}")
                 .normalizedCache(
                     normalizedCacheFactory = cacheFactory,
                     cacheKeyGenerator = cacheKeyGenerator
@@ -256,6 +266,7 @@ fun App(
                 iterationCadences = previewIterationCadences
                 return@LaunchedEffect
             }
+            if (apolloClient == null) return@LaunchedEffect
             val response = apolloClient.query(IterationCadencesQuery()).execute()
             iterationCadences = response.data?.group?.iterationCadences?.nodes?.filterNotNull().orEmpty()
         }
@@ -271,6 +282,7 @@ fun App(
                 issues = previewIssues
                 return@LaunchedEffect
             }
+            if (apolloClient == null) return@LaunchedEffect
             loading = true
             if (search.isNotEmpty()) delay(300)
             val pinnedPlusOpen = settingsUiState.pinnedIssues +
@@ -434,6 +446,10 @@ fun App(
                                         commitTimeTrackingEnabled = commitTimeTrackingEnabled,
                                         commitTimeTracking = commitTimeTracking@ {
                                             if (!commitTimeTrackingEnabled) return@commitTimeTracking
+                                            if (apolloClient == null) {
+                                                commitTimeTrackingErrors = listOf("Please check your settings.")
+                                                return@commitTimeTracking
+                                            }
                                             commitTimeTrackingEnabled = false
                                             commitTimeTrackingErrors = null
                                             coroutineScope.launch {
