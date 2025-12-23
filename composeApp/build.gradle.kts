@@ -119,6 +119,12 @@ compose.desktop {
             targetFormats(TargetFormat.Dmg, TargetFormat.AppImage)
             packageName = "com.youniqx.time"
             packageVersion = System.getenv("PKG_VERSION") ?: "1.0.0"
+            macOS {
+                iconFile.set(project.file("${projectDir}/raw/time.icns"))
+            }
+            linux {
+                iconFile.set(project.file("${projectDir}/raw/time.png"))
+            }
         }
     }
 }
