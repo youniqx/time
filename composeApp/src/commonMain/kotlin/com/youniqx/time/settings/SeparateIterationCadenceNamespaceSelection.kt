@@ -28,7 +28,7 @@ fun SeparateIterationCadenceNamespaceSelection(
     var showSelection by remember { mutableStateOf(false) }
     if (showSelection) {
         NamespaceSelection(
-            namespaceFullPath = null,
+            selected = null,
             namespaces = namespaces,
             onNamespaceChange = { },
             state = rememberNamespaceSelectionState(),

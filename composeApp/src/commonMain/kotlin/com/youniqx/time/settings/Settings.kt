@@ -309,14 +309,24 @@ fun SettingsScreen(
                     it.name.contains(namespaceSelectionState.search, ignoreCase = true)
         }
         NamespaceSelection(
-            namespaceFullPath = namespaceFullPath,
+            selected = namespaceFullPath?.let {
+                namespaces?.getNameByFullPath(fullPath = namespaceFullPath)?.let {
+                    { NamespaceItem(fullPath = namespaceFullPath, name = it) }
+                }
+            },
             namespaces = namespaces,
             onNamespaceChange = onNamespaceChange,
             state = namespaceSelectionState,
             label = { Text("Namespace") },
             supportingText = { Text("Search scope (decedent namespaces included).") },
             additionalOptions = filteredUserNamespace?.let {
-                { UserNamespace(namespace = it, state = namespaceSelectionState) }
+                {
+                    UserNamespace(
+                        namespace = it,
+                        state = namespaceSelectionState,
+                        onNamespaceChange = onNamespaceChange
+                    )
+                }
             },
         )
         if (namespaceSelectionState.search.isEmpty() && !(namespaces?.groups?.pageInfo?.containsAllResults ?: false)) {

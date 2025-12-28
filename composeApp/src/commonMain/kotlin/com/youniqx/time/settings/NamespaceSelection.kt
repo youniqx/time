@@ -36,10 +36,23 @@ class NamespaceSelectionState {
 @Composable
 fun rememberNamespaceSelectionState() = remember { NamespaceSelectionState() }
 
+fun NamespaceQuery.Data.getNameByFullPath(fullPath: String?): String? {
+    frecentGroups?.forEach {
+        it.groupWithIterationCadences.let { namespace -> if (namespace.fullPath == fullPath) return namespace.name }
+    }
+    currentUser?.namespace?.let { namespace ->
+        if (namespace.fullPath == fullPath) return namespace.name
+    }
+    groups?.nodes?.forEach {
+        it?.groupWithIterationCadences?.let { namespace -> if (namespace.fullPath == fullPath) return namespace.name }
+    }
+    return null
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NamespaceSelection(
-    namespaceFullPath: String?,
+    selected: @Composable (() -> Unit)? = null,
     namespaces: NamespaceQuery.Data?,
     onNamespaceChange: (id: String) -> Unit,
     state: NamespaceSelectionState = rememberNamespaceSelectionState(),
@@ -55,11 +68,14 @@ fun NamespaceSelection(
         expanded = state.expanded,
         onExpandedChange = { state.expanded = it },
     ) {
+        val showSelectedNamespace = selected != null && !state.expanded
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
             modifier = Modifier.fillMaxWidth()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-            value = state.search,
+            value = if (showSelectedNamespace) " " else state.search,
+            readOnly = showSelectedNamespace,
+            prefix = selected.takeIf { showSelectedNamespace },
             onValueChange = {
                 state.search = it
                 state.expanded = true
@@ -97,18 +113,10 @@ fun NamespaceSelection(
             filteredFrecentGroups?.forEach {
                 DropdownMenuItem(
                     text = {
-                        Column {
-                            Text(
-                                it.fullPath,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = LocalContentColor.current.copy(alpha = 0.7f)
-                            )
-                            it.name?.let { name -> Text(name) }
-                        }
+                        NamespaceItem(fullPath = it.fullPath, name = it.name)
                     },
                     onClick = onClick@ {
                         onNamespaceChange(it.fullPath)
-                        state.search = it.name.orEmpty()
                         state.expanded = false
                     },
                     trailingIcon = {
@@ -133,17 +141,10 @@ fun NamespaceSelection(
             filteredGroups?.forEach {
                 DropdownMenuItem(
                     text = {
-                        Column {
-                            Text(
-                                it.fullPath,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = LocalContentColor.current.copy(alpha = 0.7f)
-                            )
-                            it.name?.let { name -> Text(name) }
-                        }
+                        NamespaceItem(fullPath = it.fullPath, name = it.name)
                     },
                     onClick = {
-                        state.search = it.name.orEmpty()
+                        onNamespaceChange(it.fullPath)
                         state.expanded = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
@@ -159,5 +160,17 @@ fun NamespaceSelection(
                 )
             }
         }
+    }
+}
+
+@Composable
+fun NamespaceItem(fullPath: String, name: String?) {
+    Column {
+        Text(
+            fullPath,
+            style = MaterialTheme.typography.labelSmall,
+            color = LocalContentColor.current.copy(alpha = 0.7f)
+        )
+        name?.let { Text(name) }
     }
 }

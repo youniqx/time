@@ -7,28 +7,24 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import com.youniqx.time.gitlab.models.NamespaceQuery
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserNamespace(namespace: NamespaceQuery.Namespace, state: NamespaceSelectionState) {
+fun UserNamespace(
+    namespace: NamespaceQuery.Namespace,
+    state: NamespaceSelectionState,
+    onNamespaceChange: (String) -> Unit
+) {
     DropdownMenuItem(
         text = {
             Column {
-                Text(
-                    namespace.fullPath,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = LocalContentColor.current.copy(alpha = 0.7f)
-                )
-                Text(namespace.name)
+                NamespaceItem(fullPath = namespace.fullPath, name = namespace.name)
             }
         },
         onClick = {
-            state.search = namespace.name
+            onNamespaceChange(namespace.fullPath)
             state.expanded = false
         },
         trailingIcon = {
