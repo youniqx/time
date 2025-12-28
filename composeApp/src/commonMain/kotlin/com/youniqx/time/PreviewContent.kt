@@ -98,7 +98,8 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
             },
             pageInfo = NamespaceQuery.PageInfo(
                 __typename = "",
-                hasNextPage = true
+                hasPreviousPage = true,
+                hasNextPage = true,
             )
         )
     )
