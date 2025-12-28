@@ -20,6 +20,7 @@ data class UiState(
     val settingsLoaded: Boolean,
     val instanceUrl: String?,
     val token: String?,
+    val namespaceFullPath: String?,
     val iterationCadenceId: String?,
     val darkTheme: Boolean,
     val highContrastColors: Boolean,
@@ -44,6 +45,7 @@ data class OpenTracking(
 private enum class SettingKey {
     InstanceUrl,
     Token,
+    NamespaceFullPath,
     IterationCadenceId,
     DarkTheme,
     HighContrastColors,
@@ -64,6 +66,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
                 settingsLoaded = false,
                 instanceUrl = null,
                 token = null,
+                namespaceFullPath = null,
                 iterationCadenceId = null,
                 darkTheme = systemInDarkTheme,
                 highContrastColors = false,
@@ -82,6 +85,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
     init {
         settings.getStringOrNullFlow(SettingKey.InstanceUrl.name).loadInto { copy(settingsLoaded = true, instanceUrl = it) }
         settings.getStringOrNullFlow(SettingKey.Token.name).loadInto { copy(token = it) }
+        settings.getStringOrNullFlow(SettingKey.NamespaceFullPath.name).loadInto { copy(namespaceFullPath = it) }
         settings.getStringOrNullFlow(SettingKey.IterationCadenceId.name).loadInto { copy(iterationCadenceId = it) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).loadInto { copy(darkTheme = it) }
         settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).loadInto { copy(highContrastColors = it) }
@@ -147,7 +151,15 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         }
     }
 
+    fun setNamespaceFullPath(fullPath: String) {
+        _uiState.update { it.copy(namespaceFullPath = fullPath) } // optimistic ui
+        viewModelScope.launch {
+            settings.putString(SettingKey.NamespaceFullPath.name, fullPath)
+        }
+    }
+
     fun setIterationCadenceId(id: String) {
+        _uiState.update { it.copy(iterationCadenceId = id) } // optimistic ui
         viewModelScope.launch {
             settings.putString(SettingKey.IterationCadenceId.name, id)
         }

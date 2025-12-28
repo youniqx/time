@@ -39,7 +39,7 @@ fun rememberNamespaceSelectionState() = remember { NamespaceSelectionState() }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NamespaceSelection(
-    namespaceId: String?,
+    namespaceFullPath: String?,
     namespaces: NamespaceQuery.Data?,
     onNamespaceChange: (id: String) -> Unit,
     state: NamespaceSelectionState = rememberNamespaceSelectionState(),
@@ -106,7 +106,8 @@ fun NamespaceSelection(
                             it.name?.let { name -> Text(name) }
                         }
                     },
-                    onClick = {
+                    onClick = onClick@ {
+                        onNamespaceChange(it.fullPath)
                         state.search = it.name.orEmpty()
                         state.expanded = false
                     },

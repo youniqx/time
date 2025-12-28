@@ -1,6 +1,6 @@
 query IssuesQuery(
-  $group: ID = "youniqx/mia",
-  $iterationCadenceId: [IterationsCadenceID!] = "gid://gitlab/Iterations::Cadence/9",
+  $namespaceFullPath: ID!,
+  $iterationCadenceId: [IterationsCadenceID!],
   $pinnedIds: [WorkItemID!] = [],
   $search: String = "",
   $doPinnedSearch: Boolean! = false,
@@ -9,7 +9,7 @@ query IssuesQuery(
   currentUser {
     id
   }
-  namespace(fullPath: $group) {
+  namespace(fullPath: $namespaceFullPath) {
     sprint: workItems(
       iterationWildcardId: CURRENT
       iterationCadenceId: $iterationCadenceId

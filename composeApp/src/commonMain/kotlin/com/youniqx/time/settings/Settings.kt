@@ -80,6 +80,8 @@ fun Settings(
         onTokenChange = viewModel::setToken,
         iterationCadenceId = uiState.iterationCadenceId,
         namespaces = namespaces,
+        namespaceFullPath = uiState.namespaceFullPath,
+        onNamespaceChange = viewModel::setNamespaceFullPath,
         onIterationCadenceChange = viewModel::setIterationCadenceId,
         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
     )
@@ -107,6 +109,8 @@ fun SettingsScreen(
     onTokenChange: (String) -> Unit,
     iterationCadenceId: String?,
     namespaces: NamespaceQuery.Data?,
+    namespaceFullPath: String?,
+    onNamespaceChange: (id: String) -> Unit,
     onIterationCadenceChange: (id: String) -> Unit,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
 ) {
@@ -305,9 +309,9 @@ fun SettingsScreen(
                     it.name.contains(namespaceSelectionState.search, ignoreCase = true)
         }
         NamespaceSelection(
-            namespaceId = iterationCadenceId,
+            namespaceFullPath = namespaceFullPath,
             namespaces = namespaces,
-            onNamespaceChange = onIterationCadenceChange,
+            onNamespaceChange = onNamespaceChange,
             state = namespaceSelectionState,
             label = { Text("Namespace") },
             supportingText = { Text("Search scope (decedent namespaces included).") },
@@ -353,6 +357,8 @@ fun SettingsPreview() {
             onTokenChange = {},
             iterationCadenceId = null,
             namespaces = null,
+            namespaceFullPath = null,
+            onNamespaceChange = {},
             onIterationCadenceChange = {},
             disableGlobalSearchIfFocused = { this },
         )

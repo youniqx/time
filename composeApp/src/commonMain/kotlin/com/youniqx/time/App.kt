@@ -298,6 +298,7 @@ fun App(
         }
         LaunchedEffect(
             search,
+            settingsUiState.namespaceFullPath,
             settingsUiState.iterationCadenceId,
             settingsUiState.pinnedIssues,
             settingsUiState.groupSprintInEpics,
@@ -310,11 +311,13 @@ fun App(
                 return@LaunchedEffect
             }
             if (apolloClient == null) return@LaunchedEffect
+            val namespaceFullPath = settingsUiState.namespaceFullPath ?: return@LaunchedEffect
             if (!isRefreshing) loading = true
             if (search.isNotEmpty()) delay(300)
             val pinnedPlusOpen = settingsUiState.pinnedIssues +
                     (settingsUiState.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
             val query = IssuesQuery.Builder()
+                .namespaceFullPath(namespaceFullPath)
                 .iterationCadenceId((settingsUiState.iterationCadenceId?.let { listOf(it) } ?: emptyList()))
                 .pinnedIds(pinnedPlusOpen)
                 // skip when searching to reduce query complexity
@@ -629,6 +632,8 @@ fun App(
                                         togglePinned = togglePinned,
                                         commitTimeTrackingEnabled = commitTimeTrackingEnabled,
                                         commitTimeTracking = commitTimeTracking@{
+                                            val namespaceFullPath = settingsUiState.namespaceFullPath
+                                                ?: return@commitTimeTracking
                                             if (!commitTimeTrackingEnabled) return@commitTimeTracking
                                             if (apolloClient == null) {
                                                 commitTimeTrackingErrors = listOf("Please check your settings.")
@@ -646,6 +651,7 @@ fun App(
                                                         val manualRefreshResult =
                                                             apolloClient.query(
                                                                 RefreshIssuesQuery.Builder()
+                                                                    .namespaceFullPath(namespaceFullPath)
                                                                     .ids(listOf(id)).build()
                                                             ).execute()
                                                         if (manualRefreshResult.exception != null) {
