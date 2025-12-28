@@ -99,25 +99,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Transparent
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isCtrlPressed
-import androidx.compose.ui.input.key.isMetaPressed
-import androidx.compose.ui.input.key.isShiftPressed
-import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
@@ -170,7 +160,9 @@ import com.youniqx.time.history.TimeHistoryScreen
 import com.youniqx.time.history.TimeRange
 import com.youniqx.time.history.TimelogEntry
 import com.youniqx.time.modifier.adaptivePadding
+import com.youniqx.time.modifier.changeFocusOnTab
 import com.youniqx.time.modifier.clip
+import com.youniqx.time.modifier.onCtrlOrMetaEnter
 import com.youniqx.time.onboarding.OnboardingScreen
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
@@ -1235,27 +1227,3 @@ fun Issue(
         }
     }
 }
-
-@Composable
-fun Modifier.changeFocusOnTab(): Modifier {
-    val focusManager = LocalFocusManager.current
-    return onPreviewKeyEvent {
-        if (it.key == Key.Tab && it.type == KeyEventType.KeyDown) {
-            val direction = if (it.isShiftPressed) FocusDirection.Previous else FocusDirection.Next
-            focusManager.moveFocus(direction)
-            true
-        } else {
-            false
-        }
-    }
-}
-
-fun Modifier.onCtrlOrMetaEnter(block: () -> Unit) = onPreviewKeyEvent {
-    if (it.key == Key.Enter && (it.isMetaPressed || it.isCtrlPressed) && it.type == KeyEventType.KeyUp) {
-        block()
-        true
-    } else {
-        false
-    }
-}
-
