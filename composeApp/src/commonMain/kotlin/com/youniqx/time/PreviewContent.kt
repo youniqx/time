@@ -1,6 +1,5 @@
 package com.youniqx.time
 
-import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
