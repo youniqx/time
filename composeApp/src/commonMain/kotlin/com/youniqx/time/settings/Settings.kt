@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -34,11 +35,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,9 +51,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -98,6 +107,7 @@ fun Settings(
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     onBack: (() -> Unit)? = null,
@@ -311,10 +321,24 @@ fun SettingsScreen(
                 }
             }
         )
+        val namespaceSelectionState = rememberNamespaceSelectionState()
+        val filteredUserNamespace = namespaces?.currentUser?.namespace?.takeIf {
+            it.fullPath.contains(namespaceSelectionState.search, ignoreCase = true) ||
+                    it.name.contains(namespaceSelectionState.search, ignoreCase = true)
+        }
         NamespaceSelection(
             namespaceId = iterationCadenceId,
             namespaces = namespaces,
-            onNamespaceChange = onIterationCadenceChange
+            onNamespaceChange = onIterationCadenceChange,
+            state = namespaceSelectionState,
+            label = { Text("Namespace") },
+            supportingText = { Text("Search scope (decedent namespaces included).") },
+            additionalOptions = filteredUserNamespace?.let {
+                { UserNamespace(namespace = it, state = namespaceSelectionState) }
+            },
+        )
+        SeparateIterationCadenceNamespaceSelection(
+            namespaces = namespaces
         )
         IterationCadenceSelection(
             iterationCadenceId = iterationCadenceId,
@@ -322,6 +346,34 @@ fun SettingsScreen(
             onIterationCadenceChange = onIterationCadenceChange
         )
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UserNamespace(namespace: NamespaceQuery.Namespace, state: NamespaceSelectionState) {
+    DropdownMenuItem(
+        text = {
+            Column {
+                Text(
+                    namespace.fullPath,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = LocalContentColor.current.copy(alpha = 0.7f)
+                )
+                Text(namespace.name)
+            }
+        },
+        onClick = {
+            state.search = namespace.name
+            state.expanded = false
+        },
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.AccountCircle,
+                contentDescription = "Frequently visited"
+            )
+        },
+        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -375,62 +427,118 @@ fun IterationCadenceSelection(
     }
 }
 
+@Composable
+fun SeparateIterationCadenceNamespaceSelection(
+    namespaces: NamespaceQuery.Data?,
+) {
+    var showSelection by remember { mutableStateOf(false) }
+    if (showSelection) {
+        NamespaceSelection(
+            namespaceId = null,
+            namespaces = namespaces,
+            onNamespaceChange = { },
+            state = rememberNamespaceSelectionState(),
+            label = { Text("Iteration Cadence Namespace") },
+            supportingText = { Text("Exact namespace of the iteration cadence.") },
+        )
+        return
+    }
+    val linkStyle = SpanStyle(
+        color = MaterialTheme.colorScheme.primary,
+    )
+    Text(
+        modifier = Modifier
+            .padding(
+                horizontal = TextFieldDefaults.contentPaddingWithLabel()
+                    .calculateStartPadding(LocalLayoutDirection.current)
+            )
+            .padding(bottom = 8.dp)
+            .padding(horizontal = 12.dp),
+        text = buildAnnotatedString {
+        withLink(
+            LinkAnnotation.Clickable(
+                tag = "IterationInDifferentNamespace",
+                styles = TextLinkStyles(
+                    style = SpanStyle(color = OutlinedTextFieldDefaults.colors().unfocusedLabelColor),
+                    focusedStyle = linkStyle,
+                    hoveredStyle = linkStyle,
+                    pressedStyle = linkStyle,
+                ),
+                linkInteractionListener = {
+                    showSelection = true
+                }
+            )
+        ) {
+            append("Click if iteration cadence is not in this exact namespace.")
+        }
+    },
+        style = MaterialTheme.typography.bodySmall
+    )
+}
+
+class NamespaceSelectionState {
+    var expanded: Boolean by mutableStateOf(false)
+    var search: String by mutableStateOf("")
+}
+
+@Composable
+fun rememberNamespaceSelectionState() = remember { NamespaceSelectionState() }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NamespaceSelection(
     namespaceId: String?,
     namespaces: NamespaceQuery.Data?,
     onNamespaceChange: (id: String) -> Unit,
+    state: NamespaceSelectionState = rememberNamespaceSelectionState(),
+    label: @Composable (() -> Unit)? = null,
+    placeholder: @Composable (() -> Unit)? = { Text("Type to filter...") },
+    supportingText: @Composable (() -> Unit)? = null,
+    additionalOptions: @Composable (() -> Unit)? = null,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    var selectedOptionText by remember { mutableStateOf("") }
     ExposedDropdownMenuBox(
         modifier = Modifier
             .padding(vertical = 8.dp)
             .padding(horizontal = 12.dp),
-        expanded = expanded,
-        onExpandedChange = { expanded = it },
+        expanded = state.expanded,
+        onExpandedChange = { state.expanded = it },
     ) {
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
             modifier = Modifier.fillMaxWidth()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-            value = selectedOptionText,
+            value = state.search,
             onValueChange = {
-                selectedOptionText = it
-                expanded = true
+                state.search = it
+                state.expanded = true
             },
-            label = { Text("Namespace") },
-            placeholder = { Text("Type to filter...") },
-            supportingText = { Text("Search scope (decedent namespaces included)") },
+            label = label,
+            placeholder = placeholder,
+            supportingText = supportingText,
             maxLines = 1,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = state.expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
         )
         DropdownMenu(
             modifier = Modifier
                 .exposedDropdownSize(true),
             properties = PopupProperties(focusable = false),
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
+            expanded = state.expanded,
+            onDismissRequest = { state.expanded = false },
         ) {
             val filteredFrecentGroups = namespaces?.frecentGroups?.mapNotNull {
                 it.groupWithIterationCadences.let { group ->
                     group.takeIf {
-                        group.fullPath.contains(selectedOptionText, ignoreCase = true) ||
-                                group.name?.contains(selectedOptionText, ignoreCase = true) == true
+                        group.fullPath.contains(state.search, ignoreCase = true) ||
+                                group.name?.contains(state.search, ignoreCase = true) == true
                     }
                 }
-            }
-            val filteredUserNamespace = namespaces?.currentUser?.namespace?.takeIf {
-                it.fullPath.contains(selectedOptionText, ignoreCase = true) ||
-                        it.name.contains(selectedOptionText, ignoreCase = true)
             }
             val filteredGroups = namespaces?.groups?.nodes?.mapNotNull {
                 it?.groupWithIterationCadences.let { group ->
                     group.takeIf {
-                        group?.fullPath?.contains(selectedOptionText, ignoreCase = true) == true ||
-                                group?.name?.contains(selectedOptionText, ignoreCase = true) == true
+                        group?.fullPath?.contains(state.search, ignoreCase = true) == true ||
+                                group?.name?.contains(state.search, ignoreCase = true) == true
                     }
                 }
             }
@@ -447,8 +555,8 @@ fun NamespaceSelection(
                         }
                     },
                     onClick = {
-                        selectedOptionText = it.name.orEmpty()
-                        expanded = false
+                        state.search = it.name.orEmpty()
+                        state.expanded = false
                     },
                     trailingIcon = {
                         SimpleTooltip(text = "frequently visited") {
@@ -463,33 +571,10 @@ fun NamespaceSelection(
             }
             if (
                 !filteredFrecentGroups.isNullOrEmpty() &&
-                (filteredUserNamespace != null || !filteredGroups.isNullOrEmpty())
+                (additionalOptions != null || !filteredGroups.isNullOrEmpty())
             ) HorizontalDivider()
-
-            filteredUserNamespace?.let {
-                DropdownMenuItem(
-                    text = {
-                        Column {
-                            Text(
-                                it.fullPath,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = LocalContentColor.current.copy(alpha = 0.7f)
-                            )
-                            Text(it.name)
-                        }
-                    },
-                    onClick = {
-                        selectedOptionText = it.name
-                        expanded = false
-                    },
-                    trailingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.AccountCircle,
-                            contentDescription = "Frequently visited"
-                        )
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                )
+            additionalOptions?.let {
+                additionalOptions()
                 if (!filteredGroups.isNullOrEmpty()) HorizontalDivider()
             }
             filteredGroups?.forEach {
@@ -505,8 +590,8 @@ fun NamespaceSelection(
                         }
                     },
                     onClick = {
-                        selectedOptionText = it.name.orEmpty()
-                        expanded = false
+                        state.search = it.name.orEmpty()
+                        state.expanded = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                 )
