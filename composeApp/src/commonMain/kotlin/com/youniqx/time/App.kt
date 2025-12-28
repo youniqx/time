@@ -159,7 +159,7 @@ import com.youniqx.time.components.SwipeableIssueCard
 import com.youniqx.time.components.SwitchTrackingDialog
 import com.youniqx.time.components.TimeBadge
 import com.youniqx.time.gitlab.models.IssuesQuery
-import com.youniqx.time.gitlab.models.IterationCadencesQuery
+import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.RefreshIssuesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
@@ -258,7 +258,7 @@ fun App(
 
         var currentUserId: String? by remember { mutableStateOf(null) }
         var issues: List<BareWorkItem>? by remember { mutableStateOf(null) }
-        var iterationCadences: List<IterationCadencesQuery.Node>? by remember { mutableStateOf(null) }
+        var namespaces: NamespaceQuery.Data? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
         var loading: Boolean by remember { mutableStateOf(false) }
@@ -297,12 +297,12 @@ fun App(
         }
         LaunchedEffect(apolloClient) {
             if (isPreview) {
-                iterationCadences = previewIterationCadences
+                namespaces = previewNamespaces
                 return@LaunchedEffect
             }
             if (apolloClient == null) return@LaunchedEffect
-            val response = apolloClient.query(IterationCadencesQuery()).execute()
-            iterationCadences = response.data?.group?.iterationCadences?.nodes?.filterNotNull().orEmpty()
+            val response = apolloClient.query(NamespaceQuery()).execute()
+            namespaces = response.data
         }
         LaunchedEffect(
             search,
@@ -397,7 +397,7 @@ fun App(
                     AnimatedPane(Modifier.clip(align = Alignment.Start, minWidth = 290.dp)) {
                         Settings(
                             viewModel = settingsViewModel,
-                            iterationCadences = iterationCadences,
+                            namespaces = namespaces,
                             disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
                             onBack = if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
                                 {

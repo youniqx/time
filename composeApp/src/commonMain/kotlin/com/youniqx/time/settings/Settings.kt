@@ -15,18 +15,23 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
@@ -47,9 +52,10 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youniqx.time.components.SimpleTooltip
-import com.youniqx.time.gitlab.models.IterationCadencesQuery
+import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.LocalSpacing
@@ -62,7 +68,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 fun Settings(
     viewModel: SettingsViewModel,
-    iterationCadences: List<IterationCadencesQuery.Node>?,
+    namespaces: NamespaceQuery.Data?,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
     onBack: (() -> Unit)? = null
 ) {
@@ -86,7 +92,7 @@ fun Settings(
         token = uiState.token,
         onTokenChange = viewModel::setToken,
         iterationCadenceId = uiState.iterationCadenceId,
-        iterationCadences = iterationCadences,
+        namespaces = namespaces,
         onIterationCadenceChange = viewModel::setIterationCadenceId,
         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
     )
@@ -112,7 +118,7 @@ fun SettingsScreen(
     token: String?,
     onTokenChange: (String) -> Unit,
     iterationCadenceId: String?,
-    iterationCadences: List<IterationCadencesQuery.Node>?,
+    namespaces: NamespaceQuery.Data?,
     onIterationCadenceChange: (id: String) -> Unit,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
 ) {
@@ -305,9 +311,14 @@ fun SettingsScreen(
                 }
             }
         )
+        NamespaceSelection(
+            namespaceId = iterationCadenceId,
+            namespaces = namespaces,
+            onNamespaceChange = onIterationCadenceChange
+        )
         IterationCadenceSelection(
             iterationCadenceId = iterationCadenceId,
-            iterationCadences = iterationCadences,
+            namespaces = namespaces,
             onIterationCadenceChange = onIterationCadenceChange
         )
     }
@@ -317,11 +328,13 @@ fun SettingsScreen(
 @Composable
 fun IterationCadenceSelection(
     iterationCadenceId: String?,
-    iterationCadences: List<IterationCadencesQuery.Node>?,
+    namespaces: NamespaceQuery.Data?,
     onIterationCadenceChange: (id: String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-
+    val iterationCadences = namespaces?.frecentGroups.orEmpty().flatMap {
+        it.groupWithIterationCadences.iterationCadences?.nodes?.filterNotNull().orEmpty()
+    }
     ExposedDropdownMenuBox(
         modifier = Modifier
             .padding(vertical = 8.dp)
@@ -335,7 +348,7 @@ fun IterationCadenceSelection(
             // the anchor type `PrimaryNotEditable`.
             modifier = Modifier.fillMaxWidth()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-            value = iterationCadences?.firstOrNull { it.id == iterationCadenceId }?.title.orEmpty(),
+            value = iterationCadences.firstOrNull { it.id == iterationCadenceId }?.title.orEmpty(),
             onValueChange = {},
             readOnly = true,
             maxLines = 1,
@@ -347,7 +360,8 @@ fun IterationCadenceSelection(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            iterationCadences?.forEach {
+            if (namespaces == null) CircularProgressIndicator()
+            iterationCadences.forEach {
                 DropdownMenuItem(
                     text = { Text(it.title) },
                     onClick = {
@@ -356,7 +370,156 @@ fun IterationCadenceSelection(
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                 )
-            } ?: CircularProgressIndicator()
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NamespaceSelection(
+    namespaceId: String?,
+    namespaces: NamespaceQuery.Data?,
+    onNamespaceChange: (id: String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var selectedOptionText by remember { mutableStateOf("") }
+    ExposedDropdownMenuBox(
+        modifier = Modifier
+            .padding(vertical = 8.dp)
+            .padding(horizontal = 12.dp),
+        expanded = expanded,
+        onExpandedChange = { expanded = it },
+    ) {
+        OutlinedTextField(
+            // The `menuAnchor` modifier must be passed to the text field for correctness.
+            modifier = Modifier.fillMaxWidth()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+            value = selectedOptionText,
+            onValueChange = {
+                selectedOptionText = it
+                expanded = true
+            },
+            label = { Text("Namespace") },
+            placeholder = { Text("Type to filter...") },
+            supportingText = { Text("Search scope (decedent namespaces included)") },
+            maxLines = 1,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+        )
+        DropdownMenu(
+            modifier = Modifier
+                .exposedDropdownSize(true),
+            properties = PopupProperties(focusable = false),
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            val filteredFrecentGroups = namespaces?.frecentGroups?.mapNotNull {
+                it.groupWithIterationCadences.let { group ->
+                    group.takeIf {
+                        group.fullPath.contains(selectedOptionText, ignoreCase = true) ||
+                                group.name?.contains(selectedOptionText, ignoreCase = true) == true
+                    }
+                }
+            }
+            val filteredUserNamespace = namespaces?.currentUser?.namespace?.takeIf {
+                it.fullPath.contains(selectedOptionText, ignoreCase = true) ||
+                        it.name.contains(selectedOptionText, ignoreCase = true)
+            }
+            val filteredGroups = namespaces?.groups?.nodes?.mapNotNull {
+                it?.groupWithIterationCadences.let { group ->
+                    group.takeIf {
+                        group?.fullPath?.contains(selectedOptionText, ignoreCase = true) == true ||
+                                group?.name?.contains(selectedOptionText, ignoreCase = true) == true
+                    }
+                }
+            }
+            filteredFrecentGroups?.forEach {
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                it.fullPath,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LocalContentColor.current.copy(alpha = 0.7f)
+                            )
+                            it.name?.let { name -> Text(name) }
+                        }
+                    },
+                    onClick = {
+                        selectedOptionText = it.name.orEmpty()
+                        expanded = false
+                    },
+                    trailingIcon = {
+                        SimpleTooltip(text = "frequently visited") {
+                            Icon(
+                                imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                                contentDescription = "Frequently visited"
+                            )
+                        }
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
+            }
+            if (
+                !filteredFrecentGroups.isNullOrEmpty() &&
+                (filteredUserNamespace != null || !filteredGroups.isNullOrEmpty())
+            ) HorizontalDivider()
+
+            filteredUserNamespace?.let {
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                it.fullPath,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LocalContentColor.current.copy(alpha = 0.7f)
+                            )
+                            Text(it.name)
+                        }
+                    },
+                    onClick = {
+                        selectedOptionText = it.name
+                        expanded = false
+                    },
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.AccountCircle,
+                            contentDescription = "Frequently visited"
+                        )
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
+                if (!filteredGroups.isNullOrEmpty()) HorizontalDivider()
+            }
+            filteredGroups?.forEach {
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                it.fullPath,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = LocalContentColor.current.copy(alpha = 0.7f)
+                            )
+                            it.name?.let { name -> Text(name) }
+                        }
+                    },
+                    onClick = {
+                        selectedOptionText = it.name.orEmpty()
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
+            }
+            if (namespaces?.groups?.pageInfo?.hasNextPage == true) {
+                DropdownMenuItem(
+                    text = { Text("Load more items") },
+                    onClick = {
+
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
+            }
         }
     }
 }
@@ -383,7 +546,7 @@ fun SettingsPreview() {
             token = "𐂂",
             onTokenChange = {},
             iterationCadenceId = null,
-            iterationCadences = null,
+            namespaces = null,
             onIterationCadenceChange = {},
             disableGlobalSearchIfFocused = { this },
         )

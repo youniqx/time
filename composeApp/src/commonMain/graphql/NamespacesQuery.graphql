@@ -1,0 +1,33 @@
+query NamespaceQuery {
+  frecentGroups {
+    ...groupWithIterationCadences
+  }
+  groups(allAvailable: true) {
+    nodes {
+      ...groupWithIterationCadences
+    }
+    pageInfo {
+      hasNextPage
+    }
+  }
+  currentUser {
+    namespace {
+      id
+      name
+      fullPath
+    }
+  }
+}
+
+fragment groupWithIterationCadences on Group {
+  id
+  name
+  archived
+  fullPath
+  iterationCadences {
+    nodes {
+      title
+      id
+    }
+  }
+}

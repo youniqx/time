@@ -1,17 +1,106 @@
 package com.youniqx.time
 
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
+import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.gitlab.models.fragment.GroupWithIterationCadences
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import kotlin.random.Random
 
 val previewUserId by lazy { "gid://gitlab/User/123" }
 
-val previewIterationCadences: List<IterationCadencesQuery.Node>? by lazy {
-    listOf(
-        IterationCadencesQuery.Node(__typename = "", title = "Awesome Team Sprint", id = "123"),
-        IterationCadencesQuery.Node(__typename = "", title = "Performing Team Sprint", id = "435"),
+val previewNamespaces: NamespaceQuery.Data by lazy {
+
+    val groups = listOf(
+        GroupWithIterationCadences(
+            __typename = "",
+            id = "834",
+            name = "Lovely Group",
+            archived = false,
+            fullPath = "lovely-group",
+            iterationCadences = GroupWithIterationCadences.IterationCadences(
+                __typename = "",
+                nodes = listOf(
+                    GroupWithIterationCadences.Node(__typename = "", title = "Awesome Team Sprint", id = "123"),
+                    GroupWithIterationCadences.Node(__typename = "", title = "Performing Team Sprint", id = "435"),
+                )
+            )
+        ),
+        GroupWithIterationCadences(
+            __typename = "",
+            id = "368",
+            name = "Archived Group",
+            archived = true,
+            fullPath = "archived-group",
+            iterationCadences = GroupWithIterationCadences.IterationCadences(
+                __typename = "",
+                nodes = listOf()
+            )
+        ),
+        GroupWithIterationCadences(
+            __typename = "",
+            id = "109",
+            name = "Fancy Group",
+            archived = false,
+            fullPath = "lovely-group/fancy-group",
+            iterationCadences = GroupWithIterationCadences.IterationCadences(
+                __typename = "",
+                nodes = listOf()
+            )
+        ),
+        GroupWithIterationCadences(
+            __typename = "",
+            id = "273",
+            name = "Obscure Group",
+            archived = false,
+            fullPath = "obscure-group",
+            iterationCadences = GroupWithIterationCadences.IterationCadences(
+                __typename = "",
+                nodes = listOf()
+            )
+        ),
+        GroupWithIterationCadences(
+            __typename = "",
+            id = "194",
+            name = "Hidden Group",
+            archived = false,
+            fullPath = "hidden-group",
+            iterationCadences = GroupWithIterationCadences.IterationCadences(
+                __typename = "",
+                nodes = listOf()
+            )
+        )
+    )
+    NamespaceQuery.Data(
+        currentUser = NamespaceQuery.CurrentUser(
+            __typename = "",
+            namespace = NamespaceQuery.Namespace(
+                __typename = "",
+                id = "gid://gitlab/Namespaces::UserNamespace/832",
+                name = "Diar User",
+                fullPath = "diar"
+            )
+        ),
+        frecentGroups = groups.shuffled().take(5).map {
+            NamespaceQuery.FrecentGroup(
+                __typename = "",
+                groupWithIterationCadences = it
+            )
+        },
+        groups = NamespaceQuery.Groups(
+            __typename = "",
+            nodes = groups.map {
+                NamespaceQuery.Node(
+                    __typename = "",
+                    groupWithIterationCadences = it
+                )
+            },
+            pageInfo = NamespaceQuery.PageInfo(
+                __typename = "",
+                hasNextPage = true
+            )
+        )
     )
 }
 
