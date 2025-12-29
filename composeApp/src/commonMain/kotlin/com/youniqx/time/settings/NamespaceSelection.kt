@@ -3,6 +3,9 @@ package com.youniqx.time.settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
 import androidx.compose.material3.DropdownMenu
@@ -17,24 +20,31 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldLabelScope
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.NamespaceQuery
+import kotlinx.coroutines.flow.drop
 
-class NamespaceSelectionState {
+class NamespaceSelectionState(val textFieldState: TextFieldState) {
     var expanded: Boolean by mutableStateOf(false)
-    var search: String by mutableStateOf("")
+    val search: String get() = textFieldState.text.toString()
 }
 
 @Composable
-fun rememberNamespaceSelectionState() = remember { NamespaceSelectionState() }
+fun rememberNamespaceSelectionState(): NamespaceSelectionState {
+    val textFieldState = rememberTextFieldState()
+    return remember { NamespaceSelectionState(textFieldState) }
+}
 
 fun NamespaceQuery.Data.getNameByFullPath(fullPath: String?): String? {
     frecentGroups?.forEach {
@@ -56,7 +66,7 @@ fun NamespaceSelection(
     namespaces: NamespaceQuery.Data?,
     onNamespaceChange: (id: String) -> Unit,
     state: NamespaceSelectionState = rememberNamespaceSelectionState(),
-    label: @Composable (() -> Unit)? = null,
+    label: @Composable (TextFieldLabelScope.() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = { Text("Type to filter...") },
     supportingText: @Composable (() -> Unit)? = null,
     additionalOptions: @Composable (() -> Unit)? = null,
@@ -69,21 +79,25 @@ fun NamespaceSelection(
         onExpandedChange = { state.expanded = it },
     ) {
         val showSelectedNamespace = selected != null && !state.expanded
+        val emptyTextFieldState = rememberTextFieldState(" ")
+        LaunchedEffect(state.textFieldState) {
+            snapshotFlow { state.textFieldState.selection }.drop(1).collect {
+                // we just set expanded again to true to prevent the popup from closing
+                // when the user actually only wants to change the selection
+                state.expanded = true
+            }
+        }
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
             modifier = Modifier.fillMaxWidth()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-            value = if (showSelectedNamespace) " " else state.search,
+            state = if (showSelectedNamespace) emptyTextFieldState else state.textFieldState,
             readOnly = showSelectedNamespace,
             prefix = selected.takeIf { showSelectedNamespace },
-            onValueChange = {
-                state.search = it
-                state.expanded = true
-            },
             label = label,
             placeholder = placeholder,
             supportingText = supportingText,
-            maxLines = 1,
+            lineLimits = TextFieldLineLimits.SingleLine,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = state.expanded) },
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
         )
@@ -92,7 +106,10 @@ fun NamespaceSelection(
                 .exposedDropdownSize(true),
             properties = PopupProperties(focusable = false),
             expanded = state.expanded,
-            onDismissRequest = { state.expanded = false },
+            onDismissRequest = {
+                println("onDismissRequest")
+                state.expanded = false
+            },
         ) {
             val filteredFrecentGroups = namespaces?.frecentGroups?.mapNotNull {
                 it.groupWithIterationCadences.let { group ->
