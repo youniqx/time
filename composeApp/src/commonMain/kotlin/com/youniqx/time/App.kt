@@ -3,6 +3,7 @@
 package com.youniqx.time
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
@@ -12,6 +13,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
@@ -61,6 +63,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -169,10 +173,24 @@ import com.youniqx.time.modifier.adaptivePadding
 import com.youniqx.time.modifier.clip
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
+import com.youniqx.time.animation.FadeInItem
+import com.youniqx.time.components.LoadingIssuesList
+import com.youniqx.time.components.NoIssuesEmptyState
+import com.youniqx.time.components.NoSearchResultsEmptyState
+import com.youniqx.time.components.QuickFilter
+import com.youniqx.time.components.QuickFilters
+import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.components.SwipeableIssueCard
+import com.youniqx.time.history.TimeHistoryScreen
+import com.youniqx.time.history.TimeRange
+import com.youniqx.time.history.TimelogEntry
+import com.youniqx.time.onboarding.OnboardingScreen
 import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
+import com.youniqx.time.theme.LocalSpacing
+import com.youniqx.time.theme.TimerActiveColor
 import io.ktor.http.appendPathSegments
 import io.ktor.http.buildUrl
 import io.ktor.http.takeFrom
@@ -183,6 +201,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.text.Typography.nbsp
 import kotlin.time.Clock
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -227,11 +246,29 @@ fun App(
                 }
             }
         }
+
+        // Show onboarding for new users
+        if (!settingsUiState.onboardingCompleted) {
+            OnboardingScreen(
+                instanceUrl = settingsUiState.instanceUrl.orEmpty(),
+                onInstanceUrlChange = settingsViewModel::setInstanceUrl,
+                token = settingsUiState.token.orEmpty(),
+                onTokenChange = settingsViewModel::setToken,
+                onComplete = settingsViewModel::completeOnboarding
+            )
+            return@AppTheme
+        }
+
         var currentUserId: String? by remember { mutableStateOf(null) }
         var issues: List<BareWorkItem>? by remember { mutableStateOf(null) }
         var iterationCadences: List<IterationCadencesQuery.Node>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
+        var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
         var loading: Boolean by remember { mutableStateOf(false) }
+        var showHistory by remember { mutableStateOf(false) }
+        var selectedTimeRange by remember { mutableStateOf(TimeRange.Week) }
+        var isRefreshing by remember { mutableStateOf(false) }
+        var refreshTrigger by remember { mutableStateOf(0) }
         var disableGlobalSearch by remember { mutableStateOf(false) }
         val disableGlobalSearchIfFocused: Modifier.() -> Modifier = {
             onFocusChanged { disableGlobalSearch = it.hasFocus }
@@ -275,7 +312,8 @@ fun App(
             settingsUiState.iterationCadenceId,
             settingsUiState.pinnedIssues,
             settingsUiState.groupSprintInEpics,
-            apolloClient
+            apolloClient,
+            refreshTrigger
         ) {
             if (isPreview) {
                 currentUserId = previewUserId
@@ -283,7 +321,7 @@ fun App(
                 return@LaunchedEffect
             }
             if (apolloClient == null) return@LaunchedEffect
-            loading = true
+            if (!isRefreshing) loading = true
             if (search.isNotEmpty()) delay(300)
             val pinnedPlusOpen = settingsUiState.pinnedIssues +
                     (settingsUiState.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
@@ -301,6 +339,7 @@ fun App(
                     groupSprintInEpics = settingsUiState.groupSprintInEpics,
                 )
                 loading = false
+                isRefreshing = false
             }
         }
         val singlePaneDirective = remember { PaneScaffoldDirective.Default }
@@ -376,58 +415,152 @@ fun App(
                         val extraPadding = if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
                                 WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
                             )) PaddingValues(vertical = 20.dp) else PaddingValues()
-                        val filteredIssues = issues.orEmpty().filter {
-                            it.title.contains(search, ignoreCase = true) ||
-                                    it.id.toString().contains(search, ignoreCase = true) ||
-                                    it.id == settingsUiState.openTracking?.workItemId ||
-                                    it.iid.contains(search, ignoreCase = true) ||
-                                    it.webUrl.orEmpty().contains(search, ignoreCase = true) ||
-                                    it.assignees?.nodes.orEmpty().filterNotNull().any {
+                        val filteredIssues = issues.orEmpty().filter { issue ->
+                            // Text search filter
+                            val matchesSearch = search.isEmpty() ||
+                                    issue.title.contains(search, ignoreCase = true) ||
+                                    issue.id.toString().contains(search, ignoreCase = true) ||
+                                    issue.id == settingsUiState.openTracking?.workItemId ||
+                                    issue.iid.contains(search, ignoreCase = true) ||
+                                    issue.webUrl.orEmpty().contains(search, ignoreCase = true) ||
+                                    issue.assignees?.nodes.orEmpty().filterNotNull().any {
                                         it.name.contains(search, ignoreCase = true) ||
                                                 it.username.contains(search, ignoreCase = true)
                                     } ||
-                                    it.labels?.nodes.orEmpty().filterNotNull().any {
+                                    issue.labels?.nodes.orEmpty().filterNotNull().any {
                                         it.title.contains(search, ignoreCase = true)
                                     }
+
+                            // Quick filters
+                            val matchesQuickFilters = activeFilters.isEmpty() || activeFilters.all { filter ->
+                                when (filter) {
+                                    QuickFilter.MyIssues -> issue.assignees?.nodes.orEmpty()
+                                        .filterNotNull().any { it.id == currentUserId }
+                                    QuickFilter.HasTimeLogged -> issue.timelogs.isNotEmpty()
+                                    QuickFilter.Pinned -> issue.id in settingsUiState.pinnedIssues
+                                    QuickFilter.RecentlyTracked -> issue.timelogs.any {
+                                        it.user.id == currentUserId
+                                    }
+                                }
+                            }
+
+                            matchesSearch && matchesQuickFilters
                         }
+                        // Aggregate timelogs from all issues for history view
+                        val allTimelogs = remember(issues, currentUserId, selectedTimeRange) {
+                            val now = Clock.System.now()
+                            val cutoff = now - selectedTimeRange.daysBack.days
+                            issues.orEmpty()
+                                .flatMap { issue ->
+                                    issue.timelogs
+                                        .filter { timelog -> timelog.user.id == currentUserId }
+                                        .mapNotNull { timelog ->
+                                            val spentAt = timelog.spentAt?.let { Instant.parseOrNull(it.toString()) }
+                                            if (spentAt != null && spentAt >= cutoff) {
+                                                TimelogEntry(
+                                                    id = timelog.id,
+                                                    spentAt = spentAt,
+                                                    summary = timelog.summary,
+                                                    timeSpent = timelog.timeSpent,
+                                                    issueTitle = issue.title,
+                                                    issueUrl = issue.webUrl,
+                                                    issueIid = issue.iid
+                                                )
+                                            } else null
+                                        }
+                                }
+                                .sortedByDescending { it.spentAt }
+                        }
+
+                        if (showHistory) {
+                            TimeHistoryScreen(
+                                timelogs = allTimelogs,
+                                isLoading = loading,
+                                selectedRange = selectedTimeRange,
+                                onRangeChange = { selectedTimeRange = it },
+                                onBack = { showHistory = false }
+                            )
+                        } else {
                         val lazyListState = rememberLazyListState()
                         var openTrackingWarningOn by remember { mutableStateOf<String?>(null) }
                         val openSections = remember { mutableStateListOf(Section.Pinned, Section.Open) }
+                        PullToRefreshBox(
+                            isRefreshing = isRefreshing,
+                            onRefresh = {
+                                isRefreshing = true
+                                refreshTrigger++
+                            },
+                            modifier = Modifier.onConsumedWindowInsetsChanged {
+                                consumedWindowInsets.insets = it
+                            }
+                        ) {
                         LazyColumn(
-                            modifier =
-                                Modifier
-                                    .onConsumedWindowInsetsChanged {
-                                        consumedWindowInsets.insets = it
-                                    },
                             state = lazyListState,
                             contentPadding = insets + extraPadding,
                         ) {
                             stickyHeader {
-                                Search(
-                                    search = search,
-                                    onSearchChange = { search = it },
-                                    show = (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
-                                    modifier = Modifier
-                                        .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                                        .focusRequester(focusRequester)
-                                        .focusProperties { canFocus = !disableGlobalSearch },
-                                    onPress = { disableGlobalSearch = false }
-                                )
+                                Column(
+                                    modifier = Modifier.background(MaterialTheme.colorScheme.background)
+                                ) {
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Search(
+                                            search = search,
+                                            onSearchChange = { search = it },
+                                            show = alwaysShowSearch || search.isNotEmpty() || !lazyListState.canScrollBackward,
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .focusRequester(focusRequester)
+                                                .focusProperties { canFocus = !disableGlobalSearch },
+                                            onPress = { disableGlobalSearch = false }
+                                        )
+                                        SimpleTooltip("Time History") {
+                                            IconButton(onClick = { showHistory = true }) {
+                                                Icon(
+                                                    imageVector = Icons.Default.History,
+                                                    contentDescription = "View time history"
+                                                )
+                                            }
+                                        }
+                                    }
+                                    QuickFilters(
+                                        activeFilters = activeFilters,
+                                        onFilterToggle = { filter ->
+                                            activeFilters = if (filter in activeFilters) {
+                                                activeFilters - filter
+                                            } else {
+                                                activeFilters + filter
+                                            }
+                                        },
+                                        modifier = Modifier.adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                    )
+                                }
                             }
 
                             @Composable
                             operator fun BareWorkItem.invoke() {
                                 val showOpenTrackingWarning = openTrackingWarningOn == id
-                                val open = id == settingsUiState.openTracking?.workItemId
+                                val isTracking = id == settingsUiState.openTracking?.workItemId
+                                val pinned = id in settingsUiState.pinnedIssues
+                                val togglePinned = { settingsViewModel.togglePinIssue(id.toString()) }
                                 fun startTracking() = settingsViewModel.setOpenTracking(
                                     OpenTracking(
                                         workItemId = id.toString(),
                                         timeOfOpen = Clock.System.now()
                                     )
                                 )
+                                SwipeableIssueCard(
+                                    isPinned = pinned,
+                                    isTracking = isTracking,
+                                    onStartTracking = { startTracking() },
+                                    onTogglePin = togglePinned
+                                ) {
                                 Column {
-                                    val pinned = id in settingsUiState.pinnedIssues
-                                    val togglePinned = { settingsViewModel.togglePinIssue(id.toString()) }
                                     var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
                                     var commitTimeTrackingErrors by remember {
                                         mutableStateOf<List<String>?>(null)
@@ -519,7 +652,7 @@ fun App(
                                         },
                                         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
                                         modifier = Modifier.clickable(
-                                            enabled = !open,
+                                            enabled = !isTracking,
                                             onClickLabel = "Work on issue",
                                             role = Role.Switch
                                         ) {
@@ -631,6 +764,7 @@ fun App(
                                         }
                                     }
                                 }
+                                }
                             }
 
                             val groupedIssues = filteredIssues.groupBy { issue ->
@@ -666,7 +800,11 @@ fun App(
 
 
                                     if (open) items(sectionIssues, key = { issue -> issue.id }) { sectionIssue ->
-                                        sectionIssue()
+                                        FadeInItem {
+                                            Box(modifier = Modifier.padding(vertical = 4.dp)) {
+                                                sectionIssue()
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -675,16 +813,48 @@ fun App(
                             section(Section.Open)
                             section(Section.Closed)
 
-                            if (loading) item {
+                            // Show shimmer loading when loading
+                            if (loading && filteredIssues.isEmpty()) {
+                                item {
+                                    LoadingIssuesList(
+                                        count = 5,
+                                        modifier = Modifier
+                                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                            .padding(horizontal = 12.dp)
+                                    )
+                                }
+                            }
+
+                            // Show empty state when no issues
+                            if (!loading && filteredIssues.isEmpty()) {
+                                item {
+                                    if (search.isNotEmpty()) {
+                                        NoSearchResultsEmptyState(
+                                            modifier = Modifier
+                                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                        )
+                                    } else {
+                                        NoIssuesEmptyState(
+                                            modifier = Modifier
+                                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Small loading indicator when refreshing with existing data
+                            if (loading && filteredIssues.isNotEmpty()) item {
                                 Box(
                                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                     contentAlignment = Alignment.Center
                                 ) {
-                                    CircularProgressIndicator()
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
                                 }
                             }
                         }
                     }
+                    }
+                }
                 },
                 paneExpansionState = key(anchorRefresher) {
                     rememberPaneExpansionState(
@@ -786,13 +956,43 @@ fun Issue(
     val myTimelogs = allTimelogs.filter { it.user.id == currentUserId }
     val myTotalTime = myTimelogs.fold(0) { acc, timelog -> acc + timelog.timeSpent }
     val myTotalTimeString = myTotalTime.seconds.inWholeMinutes.minutes.toString()
-    Column(
+    val spacing = LocalSpacing.current
+
+    // Hover state for visual feedback
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
+    // Animated surface color based on state
+    val surfaceColor by animateColorAsState(
+        targetValue = when {
+            open -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            isHovered -> MaterialTheme.colorScheme.surfaceContainerHigh
+            else -> MaterialTheme.colorScheme.surface
+        },
+        animationSpec = tween(150),
+        label = "issueSurfaceColor"
+    )
+
+    Surface(
         modifier = modifier
-            .heightIn(min = 48.dp)
             .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
             .padding(horizontal = 12.dp)
-            .padding(vertical = 8.dp)
+            .then(
+                if (open) Modifier.border(
+                    width = 2.dp,
+                    color = TimerActiveColor,
+                    shape = RoundedCornerShape(spacing.cardRadius)
+                ) else Modifier
+            ),
+        color = surfaceColor,
+        shape = RoundedCornerShape(spacing.cardRadius),
+        shadowElevation = if (open) 4.dp else 0.dp
     ) {
+        Column(
+            modifier = Modifier
+                .heightIn(min = 48.dp)
+                .padding(spacing.cardPadding)
+        ) {
         val labels = if (showLabelsByDefault) issue.labels?.nodes else null
         Row(
             modifier = Modifier.fillMaxWidth().heightIn(min = if (labels.isNullOrEmpty()) 48.dp else 0.dp),
@@ -1039,6 +1239,7 @@ fun Issue(
             }
         }
         additionalContent?.invoke()
+        }
     }
 }
 
@@ -1065,40 +1266,3 @@ fun Modifier.onCtrlOrMetaEnter(block: () -> Unit) = onPreviewKeyEvent {
     }
 }
 
-fun String.toColorInt(): Int {
-    if (this[0] == '#') {
-        var color = substring(1).toLong(16)
-        if (length == 7) {
-            color = color or 0x00000000ff000000L
-        } else if (length != 9) {
-            throw IllegalArgumentException("Unknown color")
-        }
-        return color.toInt()
-    }
-    throw IllegalArgumentException("Unknown color")
-}
-
-/**
- * Returns either Black or White as a high-contrast text color
- * for this background color.
- *
- * @param threshold The luminance value to check against.
- * WCAG suggests a threshold of 0.179 for true sRGB.
- * You can adjust this value to fine-tune the results.
- * @return `Color.Black` if the background is light, or `Color.White` if it's dark.
- */
-fun Color.contrastingTextColor(threshold: Double = 0.25): Color {
-    return if (luminance() > threshold) Color.Black else Color.White
-}
-
-@Composable
-fun SimpleTooltip(text: String, content: @Composable () -> Unit) {
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = {
-            PlainTooltip { Text(text) }
-        },
-        state = rememberTooltipState(),
-        content = content
-    )
-}

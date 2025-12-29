@@ -73,6 +73,7 @@ fragment bareWorkItemWidgets on WorkItemWidget {
   ... on WorkItemWidgetAssignees {
     assignees {
       nodes {
+        id
         avatarUrl
         name
         username

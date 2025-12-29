@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
+import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import kotlinx.coroutines.launch
 

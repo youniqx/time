@@ -23,7 +23,7 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.components.SimpleTooltip
 
 @Composable
 fun WorkItemTypeIcon(type: String, text: String = type) {

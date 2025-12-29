@@ -1,0 +1,28 @@
+query TimelogsQuery(
+  $startDate: Time!,
+  $endDate: Time!
+) {
+  currentUser {
+    id
+    timelogs(startDate: $startDate, endDate: $endDate, sort: SPENT_AT_DESC) {
+      nodes {
+        id
+        spentAt
+        summary
+        timeSpent
+        issue {
+          id
+          iid
+          title
+          webUrl
+        }
+        mergeRequest {
+          id
+          iid
+          title
+          webUrl
+        }
+      }
+    }
+  }
+}

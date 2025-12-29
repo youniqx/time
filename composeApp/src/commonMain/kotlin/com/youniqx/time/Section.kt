@@ -24,19 +24,23 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun Section(title: @Composable () -> Unit, open: Boolean, count: Int, modifier: Modifier = Modifier) {
-    val mergedStyle = LocalTextStyle.current.merge(MaterialTheme.typography.labelLarge)
+    val mergedStyle = LocalTextStyle.current.merge(MaterialTheme.typography.titleSmall)
     CompositionLocalProvider(
         LocalContentColor provides MaterialTheme.colorScheme.primary,
         LocalTextStyle provides mergedStyle,
     ) {
-        Row(modifier.padding(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            modifier = modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             if (open) OpenSectionIcon() else ClosedSectionIcon()
             title()
             Badge(
                 modifier = Modifier
-                    .padding(start = 4.dp)
-                    .border(0.5.dp, LocalContentColor.current, CircleShape),
-                containerColor = Transparent
+                    .padding(start = 8.dp)
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), CircleShape),
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
             ) { Text(count.toString()) }
         }
     }

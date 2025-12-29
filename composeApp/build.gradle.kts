@@ -116,7 +116,13 @@ compose.desktop {
         mainClass = "com.youniqx.time.MainKt"
 
         nativeDistributions {
-            targetFormats(TargetFormat.Dmg, TargetFormat.AppImage)
+            targetFormats(
+                *when {
+                    System.getProperty("os.name").contains("Mac", ignoreCase = true) -> arrayOf(TargetFormat.Dmg)
+                    System.getProperty("os.name").contains("Linux", ignoreCase = true) -> arrayOf(TargetFormat.AppImage)
+                    else -> arrayOf(TargetFormat.Dmg, TargetFormat.AppImage)
+                }
+            )
             packageName = "Time"
             packageVersion = System.getenv("PKG_VERSION") ?: "1.0.0"
             macOS {

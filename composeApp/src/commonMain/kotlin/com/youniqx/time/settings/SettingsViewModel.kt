@@ -27,6 +27,7 @@ data class UiState(
     val useLabelColors: Boolean,
     val pinnedIssues: List<String>,
     val openTracking: OpenTracking?,
+    val onboardingCompleted: Boolean,
 )
 
 @OptIn(ExperimentalTime::class)
@@ -49,6 +50,7 @@ private enum class SettingKey {
     UseLabelColors,
     PinnedIssues,
     OpenTracking,
+    OnboardingCompleted,
 }
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -66,6 +68,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
                 useLabelColors = false,
                 pinnedIssues = emptyList(),
                 openTracking = null,
+                onboardingCompleted = false,
             )
         )
     val uiState = _uiState.asStateFlow()
@@ -87,6 +90,8 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         ).loadInto { copy(pinnedIssues = json.decodeFromString<List<String>>(it).filter(isGlobalId)) }
         settings.getStringOrNullFlow(SettingKey.OpenTracking.name)
             .loadInto { copy(openTracking = it?.let { json.decodeFromString(it) }) }
+        settings.getBooleanFlow(SettingKey.OnboardingCompleted.name, false)
+            .loadInto { copy(onboardingCompleted = it) }
     }
 
     fun toggleDarkTheme() {
@@ -159,6 +164,12 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
             } else {
                 settings.putString(SettingKey.OpenTracking.name, json.encodeToString(openTracking))
             }
+        }
+    }
+
+    fun completeOnboarding() {
+        viewModelScope.launch {
+            settings.putBoolean(SettingKey.OnboardingCompleted.name, true)
         }
     }
 

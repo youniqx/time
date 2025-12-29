@@ -46,10 +46,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.youniqx.time.SimpleTooltip
+import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
+import com.youniqx.time.theme.LocalSpacing
 import io.ktor.http.Url
 import io.ktor.http.appendPathSegments
 import io.ktor.http.buildUrl

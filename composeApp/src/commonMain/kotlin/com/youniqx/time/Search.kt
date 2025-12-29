@@ -39,6 +39,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.components.SimpleTooltip
 
 @Composable
 fun Search(
@@ -77,7 +78,7 @@ fun Search(
             .fillMaxWidth()
             .then(
                 if (show) {
-                    Modifier.padding(horizontal = 12.dp).padding(vertical = 4.dp)
+                    Modifier.padding(vertical = 4.dp)
                 } else {
                     Modifier.height(0.dp).alpha(0f)
                 }
