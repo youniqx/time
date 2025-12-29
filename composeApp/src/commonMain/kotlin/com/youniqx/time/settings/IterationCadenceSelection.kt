@@ -24,13 +24,14 @@ import kotlin.collections.orEmpty
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IterationCadenceSelection(
-    iterationCadenceId: String?,
+    iterationCadence: IterationCadence?,
     namespaces: NamespaceQuery.Data?,
-    onIterationCadenceChange: (id: String) -> Unit,
+    onIterationCadenceChange: (iterationCadence: IterationCadence?) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     val iterationCadences = namespaces?.frecentGroups.orEmpty().flatMap {
-        it.groupWithIterationCadences.iterationCadences?.nodes?.filterNotNull().orEmpty()
+        it.groupWithIterationCadences.iterationCadences?.nodes?.filterNotNull()
+            ?.map { iterationCadence -> iterationCadence to it.groupWithIterationCadences.fullPath }.orEmpty()
     }
     ExposedDropdownMenuBox(
         modifier = Modifier
@@ -45,7 +46,7 @@ fun IterationCadenceSelection(
             // the anchor type `PrimaryNotEditable`.
             modifier = Modifier.fillMaxWidth()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-            value = iterationCadences.firstOrNull { it.id == iterationCadenceId }?.title.orEmpty(),
+            value = iterationCadences.firstOrNull { it.first.id == iterationCadence?.id }?.first?.title.orEmpty(),
             onValueChange = {},
             readOnly = true,
             maxLines = 1,
@@ -60,9 +61,14 @@ fun IterationCadenceSelection(
             if (namespaces == null) CircularProgressIndicator()
             iterationCadences.forEach {
                 DropdownMenuItem(
-                    text = { Text(it.title) },
+                    text = { Text(it.first.title) },
                     onClick = {
-                        onIterationCadenceChange(it.id.toString())
+                        onIterationCadenceChange(
+                             IterationCadence(
+                                namespaceFullPath = it.second,
+                                id = it.first.id.toString()
+                            )
+                        )
                         expanded = false
                     },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,

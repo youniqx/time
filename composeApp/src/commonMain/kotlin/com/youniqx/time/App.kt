@@ -299,7 +299,7 @@ fun App(
         LaunchedEffect(
             search,
             settingsUiState.namespaceFullPath,
-            settingsUiState.iterationCadenceId,
+            settingsUiState.iterationCadence,
             settingsUiState.pinnedIssues,
             settingsUiState.groupSprintInEpics,
             apolloClient,
@@ -312,13 +312,16 @@ fun App(
             }
             if (apolloClient == null) return@LaunchedEffect
             val namespaceFullPath = settingsUiState.namespaceFullPath ?: return@LaunchedEffect
+            val iterationCadenceNamespaceFullPath = settingsUiState.iterationCadence?.namespaceFullPath
+                ?: return@LaunchedEffect
             if (!isRefreshing) loading = true
             if (search.isNotEmpty()) delay(300)
             val pinnedPlusOpen = settingsUiState.pinnedIssues +
                     (settingsUiState.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
             val query = IssuesQuery.Builder()
                 .namespaceFullPath(namespaceFullPath)
-                .iterationCadenceId((settingsUiState.iterationCadenceId?.let { listOf(it) } ?: emptyList()))
+                .iterationCadenceNamespaceFullPath(iterationCadenceNamespaceFullPath)
+                .iterationCadenceId(settingsUiState.iterationCadence?.id?.let { listOf(it) } ?: emptyList())
                 .pinnedIds(pinnedPlusOpen)
                 // skip when searching to reduce query complexity
                 .doPinnedSearch(pinnedPlusOpen.isNotEmpty() && search.isBlank())
@@ -880,18 +883,18 @@ val BareWorkItem.timelogs get() = widgets?.firstOrNull { it.bareWorkItemWidgets.
 private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
     groupSprintInEpics: Boolean,
 ): List<BareWorkItem> {
-    val namespace = data?.namespace
+    val searchNamespace = data?.searchNamespace
     return buildList {
-        addAll(namespace?.sprint?.nodes?.map {
+        addAll(data?.iterationCadenceNamespace?.workItems?.nodes?.map {
             if (groupSprintInEpics) {
                 it?.parent ?: it?.bareWorkItem
             } else {
                 it?.bareWorkItem
             }
         }.orEmpty())
-        addAll(namespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(namespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(namespace?.searchIid?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(searchNamespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(searchNamespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(searchNamespace?.searchIid?.nodes?.map { it?.bareWorkItem }.orEmpty())
     }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
 }
 

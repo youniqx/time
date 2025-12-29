@@ -21,7 +21,7 @@ data class UiState(
     val instanceUrl: String?,
     val token: String?,
     val namespaceFullPath: String?,
-    val iterationCadenceId: String?,
+    val iterationCadence: IterationCadence?,
     val darkTheme: Boolean,
     val highContrastColors: Boolean,
     val groupSprintInEpics: Boolean,
@@ -42,11 +42,17 @@ data class OpenTracking(
     val customTimeSpent: String? = null,
 )
 
+@Serializable
+data class IterationCadence(
+    val namespaceFullPath: String,
+    val id: String? = null,
+)
+
 private enum class SettingKey {
     InstanceUrl,
     Token,
     NamespaceFullPath,
-    IterationCadenceId,
+    IterationCadence,
     DarkTheme,
     HighContrastColors,
     GroupSprintInEpics,
@@ -67,7 +73,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
                 instanceUrl = null,
                 token = null,
                 namespaceFullPath = null,
-                iterationCadenceId = null,
+                iterationCadence = null,
                 darkTheme = systemInDarkTheme,
                 highContrastColors = false,
                 groupSprintInEpics = false,
@@ -86,7 +92,8 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         settings.getStringOrNullFlow(SettingKey.InstanceUrl.name).loadInto { copy(settingsLoaded = true, instanceUrl = it) }
         settings.getStringOrNullFlow(SettingKey.Token.name).loadInto { copy(token = it) }
         settings.getStringOrNullFlow(SettingKey.NamespaceFullPath.name).loadInto { copy(namespaceFullPath = it) }
-        settings.getStringOrNullFlow(SettingKey.IterationCadenceId.name).loadInto { copy(iterationCadenceId = it) }
+        settings.getStringOrNullFlow(SettingKey.IterationCadence.name)
+            .loadInto { copy(iterationCadence = it?.let { json.decodeFromString(it) }) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).loadInto { copy(darkTheme = it) }
         settings.getBooleanFlow(SettingKey.HighContrastColors.name, false).loadInto { copy(highContrastColors = it) }
         settings.getBooleanFlow(SettingKey.GroupSprintInEpics.name, false).loadInto { copy(groupSprintInEpics = it) }
@@ -158,10 +165,14 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         }
     }
 
-    fun setIterationCadenceId(id: String) {
-        _uiState.update { it.copy(iterationCadenceId = id) } // optimistic ui
+    fun setIterationCadence(iterationCadence: IterationCadence?) {
+        _uiState.update { it.copy(iterationCadence = iterationCadence) } // optimistic ui
         viewModelScope.launch {
-            settings.putString(SettingKey.IterationCadenceId.name, id)
+            if (iterationCadence == null) {
+                settings.remove(SettingKey.IterationCadence.name)
+            } else {
+                settings.putString(SettingKey.IterationCadence.name, json.encodeToString(iterationCadence))
+            }
         }
     }
 

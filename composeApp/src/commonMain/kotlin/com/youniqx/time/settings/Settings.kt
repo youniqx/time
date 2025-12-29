@@ -78,11 +78,11 @@ fun Settings(
         onInstanceUrlChange = viewModel::setInstanceUrl,
         token = uiState.token,
         onTokenChange = viewModel::setToken,
-        iterationCadenceId = uiState.iterationCadenceId,
+        iterationCadence = uiState.iterationCadence,
         namespaces = namespaces,
         namespaceFullPath = uiState.namespaceFullPath,
         onNamespaceChange = viewModel::setNamespaceFullPath,
-        onIterationCadenceChange = viewModel::setIterationCadenceId,
+        onIterationCadenceChange = viewModel::setIterationCadence,
         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
     )
 }
@@ -107,11 +107,11 @@ fun SettingsScreen(
     onInstanceUrlChange: (String) -> Unit,
     token: String?,
     onTokenChange: (String) -> Unit,
-    iterationCadenceId: String?,
+    iterationCadence: IterationCadence?,
     namespaces: NamespaceQuery.Data?,
     namespaceFullPath: String?,
     onNamespaceChange: (id: String) -> Unit,
-    onIterationCadenceChange: (id: String) -> Unit,
+    onIterationCadenceChange: (iterationCadence: IterationCadence?) -> Unit,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
 ) {
     Column(
@@ -338,7 +338,7 @@ fun SettingsScreen(
             )
         }
         IterationCadenceSelection(
-            iterationCadenceId = iterationCadenceId,
+            iterationCadence = iterationCadence,
             namespaces = namespaces,
             onIterationCadenceChange = onIterationCadenceChange
         )
@@ -368,10 +368,10 @@ fun SettingsPreview() {
             onInstanceUrlChange = {},
             token = "𐂂",
             onTokenChange = {},
-            iterationCadenceId = null,
             namespaces = null,
             namespaceFullPath = null,
             onNamespaceChange = {},
+            iterationCadence = null,
             onIterationCadenceChange = {},
             disableGlobalSearchIfFocused = { this },
         )

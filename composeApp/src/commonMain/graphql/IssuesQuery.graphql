@@ -1,5 +1,6 @@
 query IssuesQuery(
   $namespaceFullPath: ID!,
+  $iterationCadenceNamespaceFullPath: ID!,
   $iterationCadenceId: [IterationsCadenceID!],
   $pinnedIds: [WorkItemID!] = [],
   $search: String = "",
@@ -9,12 +10,10 @@ query IssuesQuery(
   currentUser {
     id
   }
-  namespace(fullPath: $namespaceFullPath) {
-    sprint: workItems(
-      iterationWildcardId: CURRENT
-      iterationCadenceId: $iterationCadenceId
-      includeDescendants: true
-    ) {
+  iterationCadenceNamespace: namespace(
+    fullPath: $iterationCadenceNamespaceFullPath
+  ) {
+    workItems(iterationWildcardId: CURRENT, iterationCadenceId: $iterationCadenceId, includeDescendants: true) {
       nodes {
         ...bareWorkItem
         widgets {
@@ -26,6 +25,8 @@ query IssuesQuery(
         }
       }
     }
+  }
+  searchNamespace: namespace(fullPath: $namespaceFullPath) {
     pinned: workItems(ids: $pinnedIds, sort: UPDATED_DESC, includeDescendants: true) @include(if: $doPinnedSearch) {
       nodes {
         ...bareWorkItem
