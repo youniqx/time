@@ -16,7 +16,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -64,7 +63,7 @@ fun NamespaceQuery.Data.getNameByFullPath(fullPath: String?): String? {
 fun NamespaceSelection(
     selected: @Composable (() -> Unit)? = null,
     namespaces: NamespaceQuery.Data?,
-    onNamespaceChange: (id: String) -> Unit,
+    onNamespaceChange: (fullPath: String) -> Unit,
     state: NamespaceSelectionState = rememberNamespaceSelectionState(),
     label: @Composable (TextFieldLabelScope.() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = { Text("Type to filter...") },
@@ -107,7 +106,6 @@ fun NamespaceSelection(
             properties = PopupProperties(focusable = false),
             expanded = state.expanded,
             onDismissRequest = {
-                println("onDismissRequest")
                 state.expanded = false
             },
         ) {
@@ -185,8 +183,8 @@ fun NamespaceItem(fullPath: String, name: String?) {
     Column {
         Text(
             fullPath,
-            style = MaterialTheme.typography.labelSmall,
-            color = LocalContentColor.current.copy(alpha = 0.7f)
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         name?.let { Text(name) }
     }

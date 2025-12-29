@@ -308,11 +308,12 @@ fun SettingsScreen(
             it.fullPath.contains(namespaceSelectionState.search, ignoreCase = true) ||
                     it.name.contains(namespaceSelectionState.search, ignoreCase = true)
         }
+        val namespaceName = namespaceFullPath?.let {
+            namespaces?.getNameByFullPath(fullPath = namespaceFullPath)
+        }
         NamespaceSelection(
-            selected = namespaceFullPath?.let {
-                namespaces?.getNameByFullPath(fullPath = namespaceFullPath)?.let {
-                    { NamespaceItem(fullPath = namespaceFullPath, name = it) }
-                }
+            selected = namespaceName?.let {
+                { NamespaceItem(fullPath = namespaceFullPath, name = it) }
             },
             namespaces = namespaces,
             onNamespaceChange = onNamespaceChange,
@@ -331,6 +332,8 @@ fun SettingsScreen(
         )
         if (namespaceSelectionState.search.isEmpty() && !(namespaces?.groups?.pageInfo?.containsAllResults ?: false)) {
             SeparateIterationCadenceNamespaceSelection(
+                searchScopeNamespaceFullPath = namespaceFullPath,
+                searchScopeNamespaceName = namespaceName,
                 namespaces = namespaces
             )
         }

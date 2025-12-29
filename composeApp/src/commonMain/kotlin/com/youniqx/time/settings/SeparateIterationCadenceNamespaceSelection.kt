@@ -23,17 +23,33 @@ import com.youniqx.time.gitlab.models.NamespaceQuery
 
 @Composable
 fun SeparateIterationCadenceNamespaceSelection(
+    searchScopeNamespaceFullPath: String?,
+    searchScopeNamespaceName: String?,
     namespaces: NamespaceQuery.Data?,
 ) {
     var showSelection by remember { mutableStateOf(false) }
     if (showSelection) {
+        val namespaceSelectionState = rememberNamespaceSelectionState()
+        val onNamespaceChange = { fullPath: String ->
+            if (fullPath == searchScopeNamespaceFullPath) showSelection = false
+        }
         NamespaceSelection(
             selected = null,
             namespaces = namespaces,
-            onNamespaceChange = { },
-            state = rememberNamespaceSelectionState(),
+            onNamespaceChange = onNamespaceChange,
+            state = namespaceSelectionState,
             label = { Text("Iteration Cadence Namespace") },
             supportingText = { Text("Exact namespace of the iteration cadence.") },
+            additionalOptions = searchScopeNamespaceFullPath?.let {
+                {
+                    SearchScopeNamespace(
+                        namespaceFullPath = searchScopeNamespaceFullPath,
+                        namespaceName = searchScopeNamespaceName.orEmpty(),
+                        state = namespaceSelectionState,
+                        onNamespaceChange = onNamespaceChange
+                    )
+                }
+            },
         )
         return
     }

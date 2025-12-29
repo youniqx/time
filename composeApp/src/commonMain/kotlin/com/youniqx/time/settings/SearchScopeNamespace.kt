@@ -3,35 +3,41 @@ package com.youniqx.time.settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import com.youniqx.time.SimpleTooltip
 import com.youniqx.time.gitlab.models.NamespaceQuery
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserNamespace(
-    namespace: NamespaceQuery.Namespace,
+fun SearchScopeNamespace(
+    namespaceFullPath: String,
+    namespaceName: String,
     state: NamespaceSelectionState,
     onNamespaceChange: (String) -> Unit
 ) {
     DropdownMenuItem(
         text = {
             Column {
-                NamespaceItem(fullPath = namespace.fullPath, name = namespace.name)
+                NamespaceItem(fullPath = namespaceFullPath, name = namespaceName)
             }
         },
         onClick = {
-            onNamespaceChange(namespace.fullPath)
+            onNamespaceChange(namespaceFullPath)
             state.expanded = false
         },
         trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "Account namespace"
-            )
+            val text = "Set to search scope namespace"
+            SimpleTooltip(text = text) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = text
+                )
+            }
         },
         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
     )
