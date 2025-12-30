@@ -332,15 +332,17 @@ fun SettingsScreen(
         )
         if (namespaceSelectionState.search.isEmpty() && !(namespaces?.groups?.pageInfo?.containsAllResults ?: false)) {
             SeparateIterationCadenceNamespaceSelection(
+                iterationCadence = iterationCadence,
                 searchScopeNamespaceFullPath = namespaceFullPath,
                 searchScopeNamespaceName = namespaceName,
-                namespaces = namespaces
+                namespaces = namespaces,
+                onIterationCadenceChange = onIterationCadenceChange,
             )
         }
         IterationCadenceSelection(
             iterationCadence = iterationCadence,
             namespaces = namespaces,
-            onIterationCadenceChange = onIterationCadenceChange
+            onIterationCadenceChange = onIterationCadenceChange,
         )
     }
 }
