@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,6 +25,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -65,7 +68,15 @@ import kotlin.time.Instant
 enum class TimeRange(val label: String, val daysBack: Int) {
     Today("Today", 1),
     Week("Week", 7),
-    Month("Month", 30)
+    Month("Month", 30);
+
+    fun getLabel(offset: Int): String = when {
+        offset == 0 -> label
+        this == Today -> "$offset days ago"
+        this == Week -> if (offset == 1) "Last week" else "$offset weeks ago"
+        this == Month -> if (offset == 1) "Last month" else "$offset months ago"
+        else -> label
+    }
 }
 
 data class TimelogEntry(
@@ -97,10 +108,31 @@ fun TimeHistoryScreen(
     val spacing = LocalSpacing.current
     val insets = WindowInsets.systemBarsForVisualComponents.asPaddingValues()
 
-    // Group timelogs by day
-    val groupedByDay = remember(timelogs) {
+    // Period offset (0 = current, 1 = previous, 2 = 2 periods ago, etc.)
+    var periodOffset by remember { mutableStateOf(0) }
+
+    // Reset offset when range changes
+    remember(selectedRange) { periodOffset = 0 }
+
+    // Filter timelogs based on selected range and offset
+    val filteredTimelogs = remember(timelogs, selectedRange, periodOffset) {
         val now = Clock.System.now()
-        timelogs
+        val periodDays = selectedRange.daysBack
+        val startOffset = periodOffset * periodDays
+        val endOffset = (periodOffset + 1) * periodDays
+
+        val periodStart = now - endOffset.days
+        val periodEnd = now - startOffset.days
+
+        timelogs.filter { entry ->
+            entry.spentAt >= periodStart && entry.spentAt < periodEnd
+        }
+    }
+
+    // Group timelogs by day
+    val groupedByDay = remember(filteredTimelogs) {
+        val now = Clock.System.now()
+        filteredTimelogs
             .groupBy { entry ->
                 val age = now - entry.spentAt
                 when {
@@ -124,7 +156,7 @@ fun TimeHistoryScreen(
     }
 
     // Calculate totals
-    val totalTime = timelogs.sumOf { it.timeSpent }
+    val totalTime = filteredTimelogs.sumOf { it.timeSpent }
 
     Scaffold(
         topBar = {
@@ -134,7 +166,9 @@ fun TimeHistoryScreen(
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
-                }
+                },
+                modifier = Modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents),
+                windowInsets = WindowInsets(0)
             )
         },
         modifier = modifier
@@ -149,7 +183,7 @@ fun TimeHistoryScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = spacing.screenPadding)
-                    .padding(bottom = spacing.md),
+                    .padding(bottom = spacing.sm),
                 horizontalArrangement = Arrangement.Center
             ) {
                 SingleChoiceSegmentedButtonRow {
@@ -165,6 +199,31 @@ fun TimeHistoryScreen(
                             Text(range.label)
                         }
                     }
+                }
+            }
+
+            // Period navigation
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = spacing.screenPadding)
+                    .padding(bottom = spacing.md),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { periodOffset++ }) {
+                    Icon(Icons.Default.ChevronLeft, contentDescription = "Previous period")
+                }
+                Text(
+                    text = selectedRange.getLabel(periodOffset),
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier.padding(horizontal = spacing.md)
+                )
+                IconButton(
+                    onClick = { if (periodOffset > 0) periodOffset-- },
+                    enabled = periodOffset > 0
+                ) {
+                    Icon(Icons.Default.ChevronRight, contentDescription = "Next period")
                 }
             }
 
@@ -221,7 +280,7 @@ fun TimeHistoryScreen(
                 ) {
                     CircularProgressIndicator()
                 }
-            } else if (timelogs.isEmpty()) {
+            } else if (filteredTimelogs.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
