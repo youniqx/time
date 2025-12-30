@@ -1,75 +1,58 @@
 package com.youniqx.time
 
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 
 @Composable
 fun Label(label: BareWorkItemWidgets.Node, useColors: Boolean) {
-    val default = SuggestionChipDefaults.suggestionChipColors()
-        .copy(
-            disabledContainerColor = MaterialTheme.colorScheme.surface,
-            disabledLabelColor = LocalContentColor.current,
-        )
-    val colors = if (useColors) remember(label.color) {
-        val color = try {
-            Color(label.color.toColorInt()).copy(alpha = 0.75f)
-        } catch (_: Exception) {
-            default.disabledContainerColor
+    val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+    val defaultText = MaterialTheme.colorScheme.onSurfaceVariant
+
+    val (bgColor, textColor) = if (useColors) {
+        remember(label.color) {
+            val color = try {
+                Color(label.color.toColorInt()).copy(alpha = 0.85f)
+            } catch (_: Exception) {
+                defaultBg
+            }
+            color to color.contrastingTextColor()
         }
-        default.copy(
-            disabledContainerColor = color,
-            disabledLabelColor = color.contrastingTextColor()
-        )
     } else {
-        default
+        defaultBg to defaultText
     }
-    val titleParts = label.title.split("::")
-    SuggestionChip(
-        onClick = { },
-        enabled = false,
-        colors = colors,
-        label = {
-            Text(
-                text = buildAnnotatedString {
-                    titleParts.forEachIndexed { i, titlePart ->
-                        append(titlePart)
-                        if (i != titleParts.lastIndex) {
-                            append(" ")
-                            appendInlineContent("divider", "|")
-                            append(" ")
-                        }
-                    }
-                },
-                inlineContent = mapOf(
-                    "divider" to InlineTextContent(
-                        Placeholder(
-                            width = 1.sp,
-                            height = 18.sp,
-                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                        )
-                    ) {
-                        VerticalDivider(
-                            thickness = 1.dp,
-                            color = colors.disabledLabelColor.copy(alpha = 0.6f)
-                        )
-                    },
-                )
-            )
-        }
-    )
+
+    val displayText = label.title.replace("::", " | ")
+
+    Box(
+        modifier = Modifier
+            .height(20.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(bgColor)
+            .padding(horizontal = 6.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = displayText,
+            color = textColor,
+            fontSize = 11.sp,
+            lineHeight = 11.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
 }

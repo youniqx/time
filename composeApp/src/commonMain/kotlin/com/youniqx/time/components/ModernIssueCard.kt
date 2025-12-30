@@ -1,4 +1,4 @@
-@file:OptIn(kotlin.time.ExperimentalTime::class)
+@file:OptIn(kotlin.time.ExperimentalTime::class, androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 
 package com.youniqx.time.components
 
@@ -12,7 +12,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,7 +58,6 @@ import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ModernIssueCard(
     issueId: String,
@@ -82,9 +80,9 @@ fun ModernIssueCard(
 
     // Update elapsed time when tracking
     LaunchedEffect(openTracking?.timeOfOpen, isTracking) {
-        if (isTracking && openTracking != null) {
+        if (isTracking) {
             while (isActive) {
-                elapsedTime = Clock.System.now() - openTracking.timeOfOpen
+                elapsedTime = Clock.System.now() - openTracking!!.timeOfOpen
                 delay(1.seconds)
             }
         } else {
@@ -142,22 +140,16 @@ fun ModernIssueCard(
                 }
             }
 
-            // Labels (if present)
+            // Labels (if present) - flow layout with proper spacing
             if (!labels.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.height(spacing.sm))
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(spacing.xs),
-                    verticalArrangement = Arrangement.spacedBy(spacing.xs)
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    labels.take(3).forEach { label ->
+                    labels.forEach { label ->
                         Label(label = label, useColors = useLabelColors)
-                    }
-                    if (labels.size > 3) {
-                        Text(
-                            text = "+${labels.size - 3}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
                 }
             }

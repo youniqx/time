@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -53,6 +54,7 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
 import androidx.compose.material.icons.filled.Visibility
@@ -61,6 +63,9 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -142,6 +147,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -181,6 +187,7 @@ import com.youniqx.time.components.QuickFilter
 import com.youniqx.time.components.QuickFilters
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.components.SwipeableIssueCard
+import com.youniqx.time.components.TimeBadge
 import com.youniqx.time.history.TimeHistoryScreen
 import com.youniqx.time.history.TimeRange
 import com.youniqx.time.history.TimelogEntry
@@ -188,6 +195,7 @@ import com.youniqx.time.onboarding.OnboardingScreen
 import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
+import com.youniqx.time.settings.UiState
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.LocalSpacing
 import com.youniqx.time.theme.TimerActiveColor
@@ -232,12 +240,18 @@ fun App(
     focusRequester: FocusRequester = remember { FocusRequester() },
     alwaysShowSearch: Boolean = alwaysShowSearch(),
     setWindowBackground: ((Color) -> Unit)? = null,
+    onSettingsStateChange: ((UiState) -> Unit)? = null,
 ) {
     val systemInDarkTheme = isSystemInDarkTheme()
     val settingsViewModel = viewModel<SettingsViewModel>(
         factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } }
     )
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+
+    // Report state changes to parent (for menu bar timer)
+    LaunchedEffect(settingsUiState) {
+        onSettingsStateChange?.invoke(settingsUiState)
+    }
     AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {
         if (setWindowBackground != null) {
             MaterialTheme.colorScheme.surface.let { color ->
@@ -359,39 +373,6 @@ fun App(
         )
         val coroutineScope = rememberCoroutineScope()
         Scaffold(
-            floatingActionButton = {
-                if (navigator.scaffoldValue.secondary == PaneAdaptedValue.Hidden ||
-                    navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) CompositionLocalProvider(
-                    LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
-                ) {
-                    val interactionSource = remember { MutableInteractionSource() }
-                    val isHovered by interactionSource.collectIsHoveredAsState()
-                    FloatingActionButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                if (forceSinglePane) {
-                                    forceSinglePane = false
-                                    return@launch
-                                }
-                                if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
-                                    navigator.navigateTo(SupportingPaneScaffoldRole.Main)
-                                } else {
-                                    navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
-                                }
-                            }
-                        },
-                        interactionSource = interactionSource,
-                    ) {
-                        val icon =
-                            if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
-                                if (isHovered) Icons.Filled.Home else Icons.Outlined.Home
-                            } else {
-                                if (isHovered) Icons.Filled.Settings else Icons.Outlined.Settings
-                            }
-                        Icon(imageVector = icon, contentDescription = null)
-                    }
-                }
-            }
         ) {
             SupportingPaneScaffold(
                 directive = navigator.scaffoldDirective,
@@ -401,7 +382,18 @@ fun App(
                         Settings(
                             viewModel = settingsViewModel,
                             iterationCadences = iterationCadences,
-                            disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
+                            disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
+                            onBack = if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
+                                {
+                                    coroutineScope.launch {
+                                        if (forceSinglePane) {
+                                            forceSinglePane = false
+                                        } else {
+                                            navigator.navigateTo(SupportingPaneScaffoldRole.Main)
+                                        }
+                                    }
+                                }
+                            } else null
                         )
                     }
                 }, mainPane = {
@@ -447,9 +439,10 @@ fun App(
                             matchesSearch && matchesQuickFilters
                         }
                         // Aggregate timelogs from all issues for history view
-                        val allTimelogs = remember(issues, currentUserId, selectedTimeRange) {
+                        // Fetch all timelogs (up to 1 year) - filtering by period is done in TimeHistoryScreen
+                        val allTimelogs = remember(issues, currentUserId) {
                             val now = Clock.System.now()
-                            val cutoff = now - selectedTimeRange.daysBack.days
+                            val cutoff = now - 365.days // Fetch up to 1 year of history
                             issues.orEmpty()
                                 .flatMap { issue ->
                                     issue.timelogs
@@ -505,7 +498,8 @@ fun App(
                                     Row(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp),
+                                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                            .padding(horizontal = 12.dp),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
@@ -519,12 +513,49 @@ fun App(
                                                 .focusProperties { canFocus = !disableGlobalSearch },
                                             onPress = { disableGlobalSearch = false }
                                         )
-                                        SimpleTooltip("Time History") {
-                                            IconButton(onClick = { showHistory = true }) {
+                                        // Hamburger menu
+                                        var menuExpanded by remember { mutableStateOf(false) }
+                                        Box {
+                                            IconButton(onClick = { menuExpanded = true }) {
                                                 Icon(
-                                                    imageVector = Icons.Default.History,
-                                                    contentDescription = "View time history"
+                                                    imageVector = Icons.Default.Menu,
+                                                    contentDescription = "Menu"
                                                 )
+                                            }
+                                            DropdownMenu(
+                                                expanded = menuExpanded,
+                                                onDismissRequest = { menuExpanded = false }
+                                            ) {
+                                                DropdownMenuItem(
+                                                    text = { Text("Time History") },
+                                                    onClick = {
+                                                        menuExpanded = false
+                                                        showHistory = true
+                                                    },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            imageVector = Icons.Default.History,
+                                                            contentDescription = null
+                                                        )
+                                                    }
+                                                )
+                                                if (navigator.scaffoldValue.secondary == PaneAdaptedValue.Hidden) {
+                                                    DropdownMenuItem(
+                                                        text = { Text("Settings") },
+                                                        onClick = {
+                                                            menuExpanded = false
+                                                            coroutineScope.launch {
+                                                                navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
+                                                            }
+                                                        },
+                                                        leadingIcon = {
+                                                            Icon(
+                                                                imageVector = Icons.Outlined.Settings,
+                                                                contentDescription = null
+                                                            )
+                                                        }
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -537,7 +568,9 @@ fun App(
                                                 activeFilters + filter
                                             }
                                         },
-                                        modifier = Modifier.adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                        modifier = Modifier
+                                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                            .padding(horizontal = 12.dp)
                                     )
                                 }
                             }
@@ -551,6 +584,7 @@ fun App(
                                 fun startTracking() = settingsViewModel.setOpenTracking(
                                     OpenTracking(
                                         workItemId = id.toString(),
+                                        workItemTitle = title,
                                         timeOfOpen = Clock.System.now()
                                     )
                                 )
@@ -721,7 +755,10 @@ fun App(
                                                             onClick = {
                                                                 openTrackingWarningOn = null
                                                                 settingsViewModel.setOpenTracking(
-                                                                    openTracking = it.copy(workItemId = id.toString())
+                                                                    openTracking = it.copy(
+                                                                        workItemId = id.toString(),
+                                                                        workItemTitle = title
+                                                                    )
                                                                 )
                                                             },
                                                             contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
@@ -955,7 +992,10 @@ fun Issue(
     val allTimelogs = issue.timelogs
     val myTimelogs = allTimelogs.filter { it.user.id == currentUserId }
     val myTotalTime = myTimelogs.fold(0) { acc, timelog -> acc + timelog.timeSpent }
-    val myTotalTimeString = myTotalTime.seconds.inWholeMinutes.minutes.toString()
+    val totalMinutes = myTotalTime / 60
+    val hours = totalMinutes / 60
+    val minutes = totalMinutes % 60
+    val myTotalTimeString = "%d:%02d".format(hours, minutes)
     val spacing = LocalSpacing.current
 
     // Hover state for visual feedback
@@ -1003,27 +1043,8 @@ fun Issue(
                 text = buildAnnotatedString {
                     append(issue.title)
                     if (myTotalTime > 0) {
-                        append(" - ")
-                        val linkStyle = SpanStyle(
-                            color = MaterialTheme.colorScheme.primary,
-                        )
-                        withLink(
-                            LinkAnnotation.Clickable(
-                                tag = "Tracking",
-                                styles = TextLinkStyles(
-                                    style = SpanStyle(color = LocalContentColor.current),
-                                    focusedStyle = linkStyle,
-                                    hoveredStyle = linkStyle,
-                                    pressedStyle = linkStyle,
-                        ),
-                                linkInteractionListener = {
-                                    showTimelogs = !showTimelogs
-                                },
-
-                            )
-                        ) {
-                            append(myTotalTimeString.replace(' ', nbsp))
-                        }
+                        append(" ")
+                        appendInlineContent("time", myTotalTimeString)
                     }
                     if (issue.promotedToEpicUrl != null) {
                         append(" ")
@@ -1034,6 +1055,18 @@ fun Issue(
                     }
                 },
                 inlineContent = mapOf(
+                    "time" to InlineTextContent(
+                        Placeholder(
+                            width = (myTotalTimeString.length * 8 + 14).sp,
+                            height = 20.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                        )
+                    ) {
+                        TimeBadge(
+                            time = myTotalTimeString,
+                            onClick = { showTimelogs = !showTimelogs }
+                        )
+                    },
                     "closed" to InlineTextContent(
                         Placeholder(
                             width = 16.sp,
@@ -1073,32 +1106,54 @@ fun Issue(
         labels?.let {
             AnimatedVisibility(visible = labels.isNotEmpty()) {
                 FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalArrangement = Arrangement.spacedBy((-4).dp, Alignment.CenterVertically)
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    it.filterNotNull().onEach { label -> Label(label = label, useColors = useLabelColors) }
+                    it.filterNotNull().forEach { label -> Label(label = label, useColors = useLabelColors) }
                 }
             }
         }
         AnimatedVisibility(visible = showTimelogs) {
-            Column {
-                myTimelogs.forEach {
-                    SimpleTooltip(it.spentAt?.let { Instant.parseOrNull(it.toString()) }?.let {
+            Column(modifier = Modifier.padding(top = 8.dp)) {
+                HorizontalDivider(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    thickness = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                myTimelogs.forEachIndexed { index, timelog ->
+                    val isEven = index % 2 == 0
+                    val rowBg = if (isEven) {
+                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    } else {
+                        Color.Transparent
+                    }
+                    SimpleTooltip(timelog.spentAt?.let { Instant.parseOrNull(it.toString()) }?.let {
                         "${formatDuration(Clock.System.now() - it, RelativeTime.Past)} ago"
                     }.orEmpty()) {
-                        Row(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(rowBg)
+                                .padding(horizontal = 8.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val timeMinutes = timelog.timeSpent / 60
+                            val h = timeMinutes / 60
+                            val m = timeMinutes % 60
+                            Text(
+                                text = "%d:%02d".format(h, m),
+                                fontFamily = FontFamily.Monospace,
+                                style = MaterialTheme.typography.bodySmall,
+                                modifier = Modifier.width(48.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 modifier = Modifier.weight(1f),
-                                text = it.timeSpent.seconds.inWholeMinutes.minutes.toString().replace(' ', nbsp)
-                            )
-                            Spacer(modifier = Modifier.size(8.dp))
-                            VerticalDivider(thickness = 0.5.dp, modifier = Modifier.size(width = 0.5.dp, height = 20.dp))
-                            Spacer(modifier = Modifier.size(8.dp))
-                            Text(
-                                modifier = Modifier.weight(4f),
-                                text = it.summary.orEmpty(),
+                                text = timelog.summary.orEmpty(),
+                                style = MaterialTheme.typography.bodySmall,
                                 maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
