@@ -591,7 +591,14 @@ fun App(
                                 SwipeableIssueCard(
                                     isPinned = pinned,
                                     isTracking = isTracking,
-                                    onStartTracking = { startTracking() },
+                                    onStartTracking = {
+                                        if (settingsUiState.openTracking?.workItemId == null) {
+                                            startTracking()
+                                        } else {
+                                            openTrackingWarningOn =
+                                                if (showOpenTrackingWarning) null else id.toString()
+                                        }
+                                    },
                                     onTogglePin = togglePinned
                                 ) {
                                 Column {
