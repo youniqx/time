@@ -157,12 +157,15 @@ fun ApplicationScope.Tray(
         // (see MultiResolutionImage.getResolutionVariant). Resources like svg/xml should look okay
         // because they don't use absolute '.dp' values to draw, they use values which are
         // relative to their viewport.
-        icon.toAwtImage(GlobalDensity, GlobalLayoutDirection, iconSize)
+        when (icon) {
+            is MenuBarTimerIcon -> icon.createAwtImage()
+            else -> icon.toAwtImage(GlobalDensity, GlobalLayoutDirection, iconSize)
+        }
     }
 
     val tray = remember {
         TrayIcon(awtIcon).apply {
-            isImageAutoSize = true
+            isImageAutoSize = false
             addMouseListener(object : MouseListener {
                 override fun mouseClicked(p0: MouseEvent?) {
                 }

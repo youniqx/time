@@ -25,6 +25,7 @@ data class UiState(
     val groupSprintInEpics: Boolean,
     val showLabelsByDefault: Boolean,
     val useLabelColors: Boolean,
+    val showMenuBarTimer: Boolean,
     val pinnedIssues: List<String>,
     val openTracking: OpenTracking?,
     val onboardingCompleted: Boolean,
@@ -34,6 +35,7 @@ data class UiState(
 @Serializable
 data class OpenTracking(
     val workItemId: String,
+    val workItemTitle: String? = null,
     val summary: String? = null,
     val timeOfOpen: Instant,
     val customTimeSpent: String? = null,
@@ -48,6 +50,7 @@ private enum class SettingKey {
     GroupSprintInEpics,
     ShowLabelsByDefault,
     UseLabelColors,
+    ShowMenuBarTimer,
     PinnedIssues,
     OpenTracking,
     OnboardingCompleted,
@@ -66,6 +69,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
                 groupSprintInEpics = false,
                 showLabelsByDefault = false,
                 useLabelColors = false,
+                showMenuBarTimer = true,
                 pinnedIssues = emptyList(),
                 openTracking = null,
                 onboardingCompleted = false,
@@ -84,6 +88,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         settings.getBooleanFlow(SettingKey.GroupSprintInEpics.name, false).loadInto { copy(groupSprintInEpics = it) }
         settings.getBooleanFlow(SettingKey.ShowLabelsByDefault.name, false).loadInto { copy(showLabelsByDefault = it) }
         settings.getBooleanFlow(SettingKey.UseLabelColors.name, false).loadInto { copy(useLabelColors = it) }
+        settings.getBooleanFlow(SettingKey.ShowMenuBarTimer.name, true).loadInto { copy(showMenuBarTimer = it) }
         settings.getStringFlow(
             SettingKey.PinnedIssues.name,
             json.encodeToString(emptyList<String>())
@@ -121,6 +126,12 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
     fun toggleUseLabelColors() {
         viewModelScope.launch {
             settings.putBoolean(SettingKey.UseLabelColors.name, !uiState.value.useLabelColors)
+        }
+    }
+
+    fun toggleShowMenuBarTimer() {
+        viewModelScope.launch {
+            settings.putBoolean(SettingKey.ShowMenuBarTimer.name, !uiState.value.showMenuBarTimer)
         }
     }
 
