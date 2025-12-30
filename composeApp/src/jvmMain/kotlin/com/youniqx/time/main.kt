@@ -75,7 +75,7 @@ fun main() {
             rememberWindowState(
                 placement = WindowPlacement.Floating,
                 position = WindowPosition(0.dp, 0.dp),
-                size = DpSize(380.dp, 500.dp),
+                size = DpSize(400.dp, 800.dp),
             )
         val density = LocalDensity.current
 
@@ -156,11 +156,6 @@ fun main() {
                 alwaysOnTop = true,
                 icon = TrayIcon, // Todo
             ) {
-                // Set min/max window size to prevent resize crashes
-                LaunchedEffect(true) {
-                    window.minimumSize = java.awt.Dimension(420, 800)
-                    window.maximumSize = java.awt.Dimension(420, 800)
-                }
                 if (isMacOs) {
                     LaunchedEffect(true) {
                         window.rootPane.putClientProperty("apple.awt.fullWindowContent", true)

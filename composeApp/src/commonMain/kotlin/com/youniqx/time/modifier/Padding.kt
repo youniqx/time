@@ -14,7 +14,7 @@ fun Modifier.adaptivePadding(
     val paddingPx = horizontalPadding.roundToPx()
     if (constraints.maxWidth >= minWidth.roundToPx()) {
         val contentWidth = constraints.maxWidth - (paddingPx * 2)
-        val newConstraints = constraints.copy(maxWidth = contentWidth)
+        val newConstraints = constraints.copy(maxWidth = contentWidth.coerceAtLeast(constraints.minWidth))
         val placeable = measurable.measure(newConstraints)
         layout(constraints.maxWidth, placeable.height) {
             placeable.placeRelative(x = paddingPx, y = 0)
