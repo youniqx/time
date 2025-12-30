@@ -1,11 +1,17 @@
 package com.youniqx.time.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -17,7 +23,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +60,10 @@ fun SwipeableIssueCard(
     var offsetX by remember { mutableFloatStateOf(0f) }
     val swipeThreshold = 150f
 
+    // Hover state for desktop action buttons
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
     val draggableState = rememberDraggableState { delta ->
         // Limit swipe distance and add resistance
         val newOffset = offsetX + delta * 0.5f
@@ -69,9 +82,11 @@ fun SwipeableIssueCard(
     )
 
     Box(
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
+            .hoverable(interactionSource)
     ) {
-        // Background with action indicators
+        // Background with action indicators (for swipe)
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -147,6 +162,62 @@ fun SwipeableIssueCard(
                 )
         ) {
             content()
+        }
+
+        // Hover action buttons for desktop
+        AnimatedVisibility(
+            visible = isHovered && offsetX == 0f,
+            enter = fadeIn(tween(150)),
+            exit = fadeOut(tween(150)),
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Start tracking button
+                if (!isTracking) {
+                    SimpleTooltip("Start tracking") {
+                        IconButton(
+                            onClick = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onStartTracking()
+                            },
+                            colors = IconButtonDefaults.iconButtonColors(
+                                containerColor = TimerActiveColor.copy(alpha = 0.15f),
+                                contentColor = TimerActiveColor
+                            ),
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.PlayArrow,
+                                contentDescription = "Start tracking",
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    }
+                }
+                // Pin/Unpin button
+                SimpleTooltip(if (isPinned) "Unpin" else "Pin") {
+                    IconButton(
+                        onClick = {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onTogglePin()
+                        },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                            contentColor = MaterialTheme.colorScheme.primary
+                        ),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
+                            contentDescription = if (isPinned) "Unpin" else "Pin",
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
         }
     }
 }
