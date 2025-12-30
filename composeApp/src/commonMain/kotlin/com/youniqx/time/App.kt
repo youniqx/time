@@ -61,6 +61,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -68,12 +69,14 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -187,6 +190,7 @@ import com.youniqx.time.components.QuickFilter
 import com.youniqx.time.components.QuickFilters
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.components.SwipeableIssueCard
+import com.youniqx.time.components.SwitchTrackingDialog
 import com.youniqx.time.components.TimeBadge
 import com.youniqx.time.history.TimeHistoryScreen
 import com.youniqx.time.history.TimeRange
@@ -475,7 +479,49 @@ fun App(
                             )
                         } else {
                         val lazyListState = rememberLazyListState()
-                        var openTrackingWarningOn by remember { mutableStateOf<String?>(null) }
+                        // State for tracking switch confirmation dialog
+                        var switchTrackingTarget by remember { mutableStateOf<Pair<String, String>?>(null) } // (id, title)
+
+                        // Confirmation dialog for switching tracking
+                        switchTrackingTarget?.let { (targetId, targetTitle) ->
+                            SwitchTrackingDialog(
+                                targetTitle = targetTitle,
+                                currentTracking = settingsUiState.openTracking,
+                                onKeepTimeAndSwitch = {
+                                    settingsUiState.openTracking?.let { currentTracking ->
+                                        settingsViewModel.setOpenTracking(
+                                            currentTracking.copy(
+                                                workItemId = targetId,
+                                                workItemTitle = targetTitle
+                                            )
+                                        )
+                                    }
+                                    switchTrackingTarget = null
+                                },
+                                onDiscardAndSwitch = {
+                                    settingsViewModel.setOpenTracking(
+                                        OpenTracking(
+                                            workItemId = targetId,
+                                            workItemTitle = targetTitle,
+                                            timeOfOpen = Clock.System.now()
+                                        )
+                                    )
+                                    switchTrackingTarget = null
+                                },
+                                onShowCurrent = {
+                                    val currentId = settingsUiState.openTracking?.workItemId
+                                    val index = filteredIssues.indexOfFirst { issue -> issue.id == currentId }
+                                    if (index >= 0) {
+                                        coroutineScope.launch {
+                                            lazyListState.animateScrollToItem(index + 1, -100)
+                                        }
+                                    }
+                                    switchTrackingTarget = null
+                                },
+                                onDismiss = { switchTrackingTarget = null }
+                            )
+                        }
+
                         val openSections = remember { mutableStateListOf(Section.Pinned, Section.Open) }
                         PullToRefreshBox(
                             isRefreshing = isRefreshing,
@@ -577,7 +623,6 @@ fun App(
 
                             @Composable
                             operator fun BareWorkItem.invoke() {
-                                val showOpenTrackingWarning = openTrackingWarningOn == id
                                 val isTracking = id == settingsUiState.openTracking?.workItemId
                                 val pinned = id in settingsUiState.pinnedIssues
                                 val togglePinned = { settingsViewModel.togglePinIssue(id.toString()) }
@@ -595,8 +640,7 @@ fun App(
                                         if (settingsUiState.openTracking?.workItemId == null) {
                                             startTracking()
                                         } else {
-                                            openTrackingWarningOn =
-                                                if (showOpenTrackingWarning) null else id.toString()
+                                            switchTrackingTarget = id.toString() to title
                                         }
                                     },
                                     onTogglePin = togglePinned
@@ -700,95 +744,10 @@ fun App(
                                             if (settingsUiState.openTracking?.workItemId == null) {
                                                 startTracking()
                                             } else {
-                                                openTrackingWarningOn =
-                                                    if (showOpenTrackingWarning) null else id.toString()
+                                                switchTrackingTarget = id.toString() to title
                                             }
                                         }
-                                    ) {
-                                        AnimatedVisibility(visible = showOpenTrackingWarning) {
-                                            settingsUiState.openTracking?.let {
-                                                Column {
-                                                    Spacer(Modifier.size(ButtonDefaults.IconSpacing * 1.5f))
-                                                    Row(
-                                                        verticalAlignment = Alignment.CenterVertically
-                                                    ) {
-                                                        Icon(
-                                                            imageVector = Icons.Outlined.Warning,
-                                                            modifier = Modifier.size(ButtonDefaults.IconSize),
-                                                            contentDescription = null
-                                                        )
-                                                        Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                                                        Text(text = "You are currently tracking another issue")
-                                                    }
-                                                    Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                                                    FlowRow(
-                                                        horizontalArrangement = Arrangement.spacedBy(space = 4.dp)
-                                                    ) {
-                                                        TextButton(
-                                                            onClick = {
-                                                                val index = filteredIssues.indexOfFirst {
-                                                                        issue -> issue.id == it.workItemId
-                                                                }
-                                                                coroutineScope.launch {
-                                                                    lazyListState.animateScrollToItem(index + 1, -100)
-                                                                }
-                                                            },
-                                                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                                                        ) {
-                                                            Icon(
-                                                                Icons.Filled.Visibility,
-                                                                contentDescription = "Show",
-                                                                modifier = Modifier.size(ButtonDefaults.IconSize),
-                                                            )
-                                                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                                                            Text("Show")
-                                                        }
-                                                        TextButton(
-                                                            onClick = {
-                                                                openTrackingWarningOn = null
-                                                                startTracking()
-                                                            },
-                                                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                                                        ) {
-                                                            Icon(
-                                                                Icons.Filled.DeleteForever,
-                                                                contentDescription = "Discard",
-                                                                modifier = Modifier.size(ButtonDefaults.IconSize),
-                                                            )
-                                                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                                                            Text("Discard")
-                                                        }
-                                                        TextButton(
-                                                            onClick = {
-                                                                openTrackingWarningOn = null
-                                                                settingsViewModel.setOpenTracking(
-                                                                    openTracking = it.copy(
-                                                                        workItemId = id.toString(),
-                                                                        workItemTitle = title
-                                                                    )
-                                                                )
-                                                            },
-                                                            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-                                                        ) {
-                                                            Icon(
-                                                                Icons.Filled.ContentCopy,
-                                                                contentDescription = "Copy over",
-                                                                modifier = Modifier.size(ButtonDefaults.IconSize),
-                                                            )
-                                                            Spacer(Modifier.size(ButtonDefaults.IconSpacing))
-                                                            Text("Copy over")
-                                                        }
-                                                    }
-                                                    FlowRow(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        horizontalArrangement = Arrangement.End
-                                                    ) {
-                                                        AdditionalActions(this@invoke, pinned, togglePinned)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                                    )
                                     AnimatedVisibility(visible = !commitTimeTrackingErrors.isNullOrEmpty()) {
                                         Column(
                                             modifier = Modifier
