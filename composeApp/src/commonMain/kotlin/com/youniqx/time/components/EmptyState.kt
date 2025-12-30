@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Assignment
+import androidx.compose.material.icons.automirrored.outlined.Assignment
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
@@ -75,7 +75,7 @@ fun EmptyState(
 @Composable
 fun NoIssuesEmptyState(modifier: Modifier = Modifier) {
     EmptyState(
-        icon = Icons.Outlined.Assignment,
+        icon = Icons.AutoMirrored.Outlined.Assignment,
         title = "No issues found",
         description = "Try adjusting your search or selecting a different iteration cadence",
         modifier = modifier

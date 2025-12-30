@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
@@ -26,6 +27,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -61,10 +63,12 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun Settings(
     viewModel: SettingsViewModel,
     iterationCadences: List<IterationCadencesQuery.Node>?,
-    disableGlobalSearchIfFocused: Modifier.() -> Modifier
+    disableGlobalSearchIfFocused: Modifier.() -> Modifier,
+    onBack: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
+        onBack = onBack,
         darkTheme = uiState.darkTheme,
         toggleDarkTheme = viewModel::toggleDarkTheme,
         highContrastColors = uiState.highContrastColors,
@@ -75,6 +79,8 @@ fun Settings(
         toggleShowLabelsByDefault = viewModel::toggleShowLabelsByDefault,
         useLabelColors = uiState.useLabelColors,
         toggleUseLabelColors = viewModel::toggleUseLabelColors,
+        showMenuBarTimer = uiState.showMenuBarTimer,
+        toggleShowMenuBarTimer = viewModel::toggleShowMenuBarTimer,
         instanceUrl = uiState.instanceUrl,
         onInstanceUrlChange = viewModel::setInstanceUrl,
         token = uiState.token,
@@ -88,6 +94,7 @@ fun Settings(
 
 @Composable
 fun SettingsScreen(
+    onBack: (() -> Unit)? = null,
     darkTheme: Boolean,
     toggleDarkTheme: () -> Unit,
     highContrastColors: Boolean,
@@ -98,6 +105,8 @@ fun SettingsScreen(
     toggleShowLabelsByDefault: () -> Unit,
     useLabelColors: Boolean,
     toggleUseLabelColors: () -> Unit,
+    showMenuBarTimer: Boolean,
+    toggleShowMenuBarTimer: () -> Unit,
     instanceUrl: String?,
     onInstanceUrlChange: (String) -> Unit,
     token: String?,
@@ -112,6 +121,26 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
     ) {
+        // Header with back button
+        if (onBack != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+                Text(
+                    text = "Settings",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+        }
         val lightInteractionSource = remember { MutableInteractionSource() }
         val lightIsHovered by lightInteractionSource.collectIsHoveredAsState()
         val darkInteractionSource = remember { MutableInteractionSource() }
@@ -209,6 +238,18 @@ fun SettingsScreen(
         ) {
             Text("Use label colors")
             Switch(checked = useLabelColors, onCheckedChange = { toggleUseLabelColors() })
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable(
+                onClickLabel = if (showMenuBarTimer) "Hide timer in menu bar" else "Show timer in menu bar",
+                role = Role.Switch,
+                onClick = toggleShowMenuBarTimer
+            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Show timer in menu bar")
+            Switch(checked = showMenuBarTimer, onCheckedChange = { toggleShowMenuBarTimer() })
         }
         val parsedInstanceUrl = instanceUrl?.let { Url(instanceUrl) }
         OutlinedTextField(
@@ -335,6 +376,8 @@ fun SettingsPreview() {
             toggleShowLabelsByDefault = {},
             useLabelColors = true,
             toggleUseLabelColors = {},
+            showMenuBarTimer = true,
+            toggleShowMenuBarTimer = {},
             instanceUrl = null,
             onInstanceUrlChange = {},
             token = "𐂂",

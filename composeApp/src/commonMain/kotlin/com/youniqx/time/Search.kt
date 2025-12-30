@@ -59,6 +59,8 @@ fun Search(
     OutlinedTextField(
         value = search,
         onValueChange = onSearchChange,
+
+        singleLine = true,
         modifier = modifier
             .onPreviewKeyEvent {
                 if (
