@@ -606,6 +606,7 @@ fun App(
                                     )
                                 )
                                 SwipeableIssueCard(
+                                    modifier = Modifier.padding(vertical = 4.dp),
                                     isPinned = pinned,
                                     isTracking = isTracking,
                                     onStartTracking = {
@@ -617,128 +618,130 @@ fun App(
                                     },
                                     onTogglePin = togglePinned
                                 ) {
-                                Column {
-                                    var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
-                                    var commitTimeTrackingErrors by remember {
-                                        mutableStateOf<List<String>?>(null)
-                                    }
-                                    Issue(
-                                        this@invoke,
-                                        currentUserId = currentUserId,
-                                        settingsUiState.showLabelsByDefault,
-                                        settingsUiState.useLabelColors,
-                                        openTracking = settingsUiState.openTracking,
-                                        onOpenTrackingChange = { openTracking ->
-                                            settingsViewModel.setOpenTracking(openTracking)
-                                        },
-                                        pinned = pinned,
-                                        togglePinned = togglePinned,
-                                        commitTimeTrackingEnabled = commitTimeTrackingEnabled,
-                                        commitTimeTracking = commitTimeTracking@ {
-                                            if (!commitTimeTrackingEnabled) return@commitTimeTracking
-                                            if (apolloClient == null) {
-                                                commitTimeTrackingErrors = listOf("Please check your settings.")
-                                                return@commitTimeTracking
-                                            }
-                                            commitTimeTrackingEnabled = false
-                                            commitTimeTrackingErrors = null
-                                            coroutineScope.launch {
-                                                settingsUiState.openTracking?.let {
-                                                    suspend fun manualRefresh() {
-                                                        // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
-                                                        val success = "Saved successfully!"
-                                                        val ignoredWarning = "Only refreshing failed (will be ignored)!"
-                                                        val manualRefreshResult =
-                                                            apolloClient.query(
-                                                                RefreshIssuesQuery.Builder()
-                                                                    .ids(listOf(id)).build()
-                                                            ).execute()
-                                                        if (manualRefreshResult.exception != null) {
-                                                            commitTimeTrackingErrors =
-                                                                listOf(
-                                                                    success,
-                                                                    ignoredWarning,
-                                                                    manualRefreshResult.exception?.message.orEmpty()
-                                                                )
-                                                            delay(4.seconds)
-                                                            commitTimeTrackingErrors = null
-                                                        } else if (manualRefreshResult.hasErrors()) {
-                                                            commitTimeTrackingErrors =
-                                                                listOf(success, ignoredWarning) +
-                                                                        manualRefreshResult.errors
-                                                                            ?.map { it.message }.orEmpty()
-                                                            delay(4.seconds)
-                                                            commitTimeTrackingErrors = null
-                                                        }
-                                                        settingsViewModel.setOpenTracking(null)
-                                                    }
-
-                                                    val timeSpent = it.customTimeSpent
-                                                        ?: (Clock.System.now() - it.timeOfOpen)
-                                                            .inWholeMinutes.minutes.toString()
-                                                    val result = apolloClient.mutation(
-                                                        TimelogCreateMutation(
-                                                            workItemId = listOf(id),
-                                                            input =
-                                                                TimelogCreateInput.Builder()
-                                                                    .issuableId(id)
-                                                                    .summary(it.summary.orEmpty())
-                                                                    .timeSpent(timeSpent)
-                                                                    .build()
-                                                        )
-                                                    ).execute()
-                                                    fun failedBecauseOfEpic() =
-                                                        result.errors?.let { errors ->
-                                                            errors.isNotEmpty() && errors.all {
-                                                                it.message == "Cannot return null for non-nullable field Timelog.project"
-                                                            }
-                                                        } == true
-                                                    if (result.exception != null) {
-                                                        commitTimeTrackingErrors =
-                                                            listOf(result.exception?.message.orEmpty())
-                                                    } else if (failedBecauseOfEpic()) {
-                                                        manualRefresh()
-                                                    } else if (result.hasErrors()) {
-                                                        commitTimeTrackingErrors = result.errors?.map { it.message }
-                                                    } else {
-                                                        settingsViewModel.setOpenTracking(null)
-                                                    }
+                                    Column {
+                                        var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
+                                        var commitTimeTrackingErrors by remember {
+                                            mutableStateOf<List<String>?>(null)
+                                        }
+                                        Issue(
+                                            this@invoke,
+                                            currentUserId = currentUserId,
+                                            settingsUiState.showLabelsByDefault,
+                                            settingsUiState.useLabelColors,
+                                            openTracking = settingsUiState.openTracking,
+                                            onOpenTrackingChange = { openTracking ->
+                                                settingsViewModel.setOpenTracking(openTracking)
+                                            },
+                                            pinned = pinned,
+                                            togglePinned = togglePinned,
+                                            commitTimeTrackingEnabled = commitTimeTrackingEnabled,
+                                            commitTimeTracking = commitTimeTracking@{
+                                                if (!commitTimeTrackingEnabled) return@commitTimeTracking
+                                                if (apolloClient == null) {
+                                                    commitTimeTrackingErrors = listOf("Please check your settings.")
+                                                    return@commitTimeTracking
                                                 }
-                                                commitTimeTrackingEnabled = true
+                                                commitTimeTrackingEnabled = false
+                                                commitTimeTrackingErrors = null
+                                                coroutineScope.launch {
+                                                    settingsUiState.openTracking?.let {
+                                                        suspend fun manualRefresh() {
+                                                            // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
+                                                            val success = "Saved successfully!"
+                                                            val ignoredWarning =
+                                                                "Only refreshing failed (will be ignored)!"
+                                                            val manualRefreshResult =
+                                                                apolloClient.query(
+                                                                    RefreshIssuesQuery.Builder()
+                                                                        .ids(listOf(id)).build()
+                                                                ).execute()
+                                                            if (manualRefreshResult.exception != null) {
+                                                                commitTimeTrackingErrors =
+                                                                    listOf(
+                                                                        success,
+                                                                        ignoredWarning,
+                                                                        manualRefreshResult.exception?.message.orEmpty()
+                                                                    )
+                                                                delay(4.seconds)
+                                                                commitTimeTrackingErrors = null
+                                                            } else if (manualRefreshResult.hasErrors()) {
+                                                                commitTimeTrackingErrors =
+                                                                    listOf(success, ignoredWarning) +
+                                                                            manualRefreshResult.errors
+                                                                                ?.map { it.message }.orEmpty()
+                                                                delay(4.seconds)
+                                                                commitTimeTrackingErrors = null
+                                                            }
+                                                            settingsViewModel.setOpenTracking(null)
+                                                        }
+
+                                                        val timeSpent = it.customTimeSpent
+                                                            ?: (Clock.System.now() - it.timeOfOpen)
+                                                                .inWholeMinutes.minutes.toString()
+                                                        val result = apolloClient.mutation(
+                                                            TimelogCreateMutation(
+                                                                workItemId = listOf(id),
+                                                                input =
+                                                                    TimelogCreateInput.Builder()
+                                                                        .issuableId(id)
+                                                                        .summary(it.summary.orEmpty())
+                                                                        .timeSpent(timeSpent)
+                                                                        .build()
+                                                            )
+                                                        ).execute()
+
+                                                        fun failedBecauseOfEpic() =
+                                                            result.errors?.let { errors ->
+                                                                errors.isNotEmpty() && errors.all {
+                                                                    it.message == "Cannot return null for non-nullable field Timelog.project"
+                                                                }
+                                                            } == true
+                                                        if (result.exception != null) {
+                                                            commitTimeTrackingErrors =
+                                                                listOf(result.exception?.message.orEmpty())
+                                                        } else if (failedBecauseOfEpic()) {
+                                                            manualRefresh()
+                                                        } else if (result.hasErrors()) {
+                                                            commitTimeTrackingErrors = result.errors?.map { it.message }
+                                                        } else {
+                                                            settingsViewModel.setOpenTracking(null)
+                                                        }
+                                                    }
+                                                    commitTimeTrackingEnabled = true
+                                                }
+                                            },
+                                            disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
+                                            modifier = Modifier.clickable(
+                                                enabled = !isTracking,
+                                                onClickLabel = "Work on issue",
+                                                role = Role.Switch
+                                            ) {
+                                                if (settingsUiState.openTracking?.workItemId == null) {
+                                                    startTracking()
+                                                } else {
+                                                    switchTrackingTarget = id.toString() to title
+                                                }
                                             }
-                                        },
-                                        disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
-                                        modifier = Modifier.clickable(
-                                            enabled = !isTracking,
-                                            onClickLabel = "Work on issue",
-                                            role = Role.Switch
-                                        ) {
-                                            if (settingsUiState.openTracking?.workItemId == null) {
-                                                startTracking()
-                                            } else {
-                                                switchTrackingTarget = id.toString() to title
-                                            }
-                                        }
-                                    )
-                                    AnimatedVisibility(visible = !commitTimeTrackingErrors.isNullOrEmpty()) {
-                                        Column(
-                                            modifier = Modifier
-                                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                                                .fillMaxWidth()
-                                                .padding(horizontal = 12.dp)
-                                                .padding(vertical = 8.dp)
-                                                .background(
-                                                    color = MaterialTheme.colorScheme.errorContainer,
-                                                    shape = MaterialTheme.shapes.medium
-                                                )
-                                                .padding(8.dp)
-                                        ) {
-                                            commitTimeTrackingErrors?.forEach {
-                                                Text(text = it, color = MaterialTheme.colorScheme.error)
+                                        )
+                                        AnimatedVisibility(visible = !commitTimeTrackingErrors.isNullOrEmpty()) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                                    .fillMaxWidth()
+                                                    .padding(horizontal = 12.dp)
+                                                    .padding(vertical = 8.dp)
+                                                    .background(
+                                                        color = MaterialTheme.colorScheme.errorContainer,
+                                                        shape = MaterialTheme.shapes.medium
+                                                    )
+                                                    .padding(8.dp)
+                                            ) {
+                                                commitTimeTrackingErrors?.forEach {
+                                                    Text(text = it, color = MaterialTheme.colorScheme.error)
+                                                }
                                             }
                                         }
                                     }
-                                }
                                 }
                             }
 
@@ -776,9 +779,7 @@ fun App(
 
                                     if (open) items(sectionIssues, key = { issue -> issue.id }) { sectionIssue ->
                                         FadeInItem {
-                                            Box(modifier = Modifier.padding(vertical = 4.dp)) {
-                                                sectionIssue()
-                                            }
+                                            sectionIssue()
                                         }
                                     }
                                 }
