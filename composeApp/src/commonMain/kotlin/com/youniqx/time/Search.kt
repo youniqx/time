@@ -160,7 +160,7 @@ fun SearchPlaceholder() {
             },
             "labels" to InlineTextContent(
                 Placeholder(
-                    width = 40.sp,
+                    width = 20.sp,
                     height = 20.sp,
                     placeholderVerticalAlign = PlaceholderVerticalAlign.Center
                 )
