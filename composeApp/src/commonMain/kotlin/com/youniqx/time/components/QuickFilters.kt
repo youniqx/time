@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import com.youniqx.time.modifier.adaptivePadding
 import com.youniqx.time.theme.LocalSpacing
 
 enum class QuickFilter {
@@ -42,6 +43,7 @@ fun QuickFilters(
 
     Row(
         modifier = modifier
+            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
             .horizontalScroll(rememberScrollState())
             .padding(horizontal = 12.dp, vertical = spacing.xs),
         horizontalArrangement = Arrangement.spacedBy(spacing.sm)

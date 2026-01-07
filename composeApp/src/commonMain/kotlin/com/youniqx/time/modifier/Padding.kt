@@ -2,6 +2,7 @@ package com.youniqx.time.modifier
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints.Companion.Infinity
 import androidx.compose.ui.unit.Dp
 
 /**
@@ -14,9 +15,10 @@ fun Modifier.adaptivePadding(
     val paddingPx = horizontalPadding.roundToPx()
     if (constraints.maxWidth >= minWidth.roundToPx()) {
         val contentWidth = constraints.maxWidth - (paddingPx * 2)
-        val newConstraints = constraints.copy(maxWidth = contentWidth.coerceAtLeast(constraints.minWidth))
+        val newConstraints = constraints.takeIf { !it.hasBoundedWidth } ?:
+            constraints.copy(maxWidth = contentWidth.coerceAtLeast(constraints.minWidth))
         val placeable = measurable.measure(newConstraints)
-        layout(constraints.maxWidth, placeable.height) {
+        layout(placeable.width + 2 * paddingPx, placeable.height) {
             placeable.placeRelative(x = paddingPx, y = 0)
         }
     } else {

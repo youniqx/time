@@ -614,9 +614,6 @@ fun App(
                                                 activeFilters + filter
                                             }
                                         },
-                                        modifier = Modifier
-                                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                                            .padding(horizontal = 12.dp)
                                     )
                                 }
                             }
