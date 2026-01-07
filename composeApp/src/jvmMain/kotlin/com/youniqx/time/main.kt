@@ -1,7 +1,9 @@
 package com.youniqx.time
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,7 +28,12 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import com.youniqx.time.settings.UiState
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.youniqx.time.settings.SettingsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.awt.Desktop
@@ -79,13 +86,23 @@ fun main() {
             )
         val density = LocalDensity.current
 
+        val systemInDarkTheme = isSystemInDarkTheme()
+        val appViewModelStoreOwner = remember {
+            object : ViewModelStoreOwner {
+                override val viewModelStore = ViewModelStore()
+            }
+        }
+        val settingsViewModel: SettingsViewModel = viewModel(
+            factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } },
+            viewModelStoreOwner = appViewModelStoreOwner
+        )
+        val settingsUiState by settingsViewModel.uiState.collectAsState()
         // State for menu bar timer
-        var settingsState by remember { mutableStateOf<UiState?>(null) }
         var elapsedTime by remember { mutableStateOf(Duration.ZERO) }
 
         // Update elapsed time every second when tracking
-        LaunchedEffect(settingsState?.openTracking) {
-            val openTracking = settingsState?.openTracking
+        LaunchedEffect(settingsUiState.openTracking) {
+            val openTracking = settingsUiState.openTracking
             if (openTracking != null) {
                 while (isActive) {
                     elapsedTime = Clock.System.now() - openTracking.timeOfOpen
@@ -98,12 +115,12 @@ fun main() {
 
         // Create dynamic tray icon
         val trayIcon = remember(
-            settingsState?.showMenuBarTimer,
-            settingsState?.openTracking,
+            settingsUiState.showMenuBarTimer,
+            settingsUiState.openTracking,
             elapsedTime
         ) {
-            val showTimer = settingsState?.showMenuBarTimer == true
-            val openTracking = settingsState?.openTracking
+            val showTimer = settingsUiState.showMenuBarTimer
+            val openTracking = settingsUiState.openTracking
 
             if (showTimer && openTracking != null) {
                 MenuBarTimerIcon(
@@ -197,9 +214,7 @@ fun main() {
                     setWindowBackground = {
                         window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
                     },
-                    onSettingsStateChange = { newState ->
-                        settingsState = newState
-                    }
+                    settingsViewModel = settingsViewModel
                 )
             }
         }

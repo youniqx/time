@@ -219,18 +219,12 @@ fun App(
     focusRequester: FocusRequester = remember { FocusRequester() },
     alwaysShowSearch: Boolean = alwaysShowSearch(),
     setWindowBackground: ((Color) -> Unit)? = null,
-    onSettingsStateChange: ((UiState) -> Unit)? = null,
-) {
-    val systemInDarkTheme = isSystemInDarkTheme()
-    val settingsViewModel = viewModel<SettingsViewModel>(
+    systemInDarkTheme: Boolean = isSystemInDarkTheme(),
+    settingsViewModel: SettingsViewModel = viewModel(
         factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } }
     )
+) {
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-
-    // Report state changes to parent (for menu bar timer)
-    LaunchedEffect(settingsUiState) {
-        onSettingsStateChange?.invoke(settingsUiState)
-    }
     AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {
         if (setWindowBackground != null) {
             MaterialTheme.colorScheme.surface.let { color ->
