@@ -934,7 +934,7 @@ fun Issue(
     val totalMinutes = myTotalTime / 60
     val hours = totalMinutes / 60
     val minutes = totalMinutes % 60
-    val myTotalTimeString = "%d:%02d".format(hours, minutes)
+    val myTotalTimeString = "$hours:${minutes.toString().padStart(length = 2, padChar = '0')}"
     val spacing = LocalSpacing.current
 
     // Hover state for visual feedback
@@ -1080,7 +1080,7 @@ fun Issue(
                             val h = timeMinutes / 60
                             val m = timeMinutes % 60
                             Text(
-                                text = "%d:%02d".format(h, m),
+                                text = "$h:${m.toString().padStart(length = 2, padChar = '0')}",
                                 fontFamily = FontFamily.Monospace,
                                 style = MaterialTheme.typography.bodySmall,
                                 modifier = Modifier.width(48.dp)
