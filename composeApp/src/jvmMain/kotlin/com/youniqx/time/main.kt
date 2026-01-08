@@ -34,6 +34,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.youniqx.time.settings.SettingsViewModel
+import com.youniqx.time.settings.UiState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.awt.Desktop
@@ -76,7 +77,6 @@ fun main() {
         LaunchedEffect(true) {
             println("--------- WE ARE RUNNING ------------")
         }
-        var isOpen by remember { mutableStateOf(true) }
         var isVisible by remember { mutableStateOf(!SystemTray.isSupported()) }
         val windowState =
             rememberWindowState(
@@ -132,91 +132,87 @@ fun main() {
             }
         }
 
-        if (isOpen) {
+        if (SystemTray.isSupported()) {
+            Tray(
+                icon = trayIcon,
+                onClick = { x, y ->
+                    with(density) {
+                        // Todo: check if we need the * 2 only on macOS
+                        windowState.position = WindowPosition(x.toDp() * 2 - windowState.size.width / 2, 45.dp)
+                    }
+                    // Restore from minimized state if needed
+                    if (windowState.isMinimized) {
+                        windowState.isMinimized = false
+                    }
+                    windowState.placement = WindowPlacement.Floating
+                    isVisible = !isVisible
+                },
+            )
+        }
+        val focusRequester = remember { FocusRequester() }
+        Window(
+            onCloseRequest = ::exitApplication,
+            onPreviewKeyEvent = {
+                if (
+                    !it.isMetaPressed &&
+                    !it.isAltPressed &&
+                    !it.isCtrlPressed &&
+                    !it.isShiftPressed &&
+                    it.type == KeyEventType.KeyDown &&
+                    !it.utf16CodePoint.toChar().isISOControl()
+                ) {
+                    focusRequester.requestFocus()
+                }
+                false
+            },
+            state = windowState,
+            visible = isVisible,
+            alwaysOnTop = true,
+            icon = TrayIcon, // Todo
+        ) {
+            if (isMacOs) {
+                LaunchedEffect(true) {
+                    window.rootPane.putClientProperty("apple.awt.fullWindowContent", true)
+                    window.rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
+                    window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
+                }
+            }
             if (SystemTray.isSupported()) {
-                Tray(
-                    icon = trayIcon,
-                    onClick = { x, y ->
-                        with(density) {
-                            // Todo: check if we need the * 2 only on macOS
-                            windowState.position = WindowPosition(x.toDp() * 2 - windowState.size.width / 2, 45.dp)
-                        }
-                        // Restore from minimized state if needed
-                        if (windowState.isMinimized) {
-                            windowState.isMinimized = false
-                        }
-                        windowState.placement = WindowPlacement.Floating
-                        isVisible = !isVisible
-                    },
-                )
-            }
-            val focusRequester = remember { FocusRequester() }
-            Window(
-                onCloseRequest = {
-                    isOpen = false
-                },
-                onPreviewKeyEvent = {
-                    if (
-                        !it.isMetaPressed &&
-                        !it.isAltPressed &&
-                        !it.isCtrlPressed &&
-                        !it.isShiftPressed &&
-                        it.type == KeyEventType.KeyDown &&
-                        !it.utf16CodePoint.toChar().isISOControl()
-                    ) {
-                        focusRequester.requestFocus()
-                    }
-                    false
-                },
-                state = windowState,
-                visible = isVisible,
-                alwaysOnTop = true,
-                icon = TrayIcon, // Todo
-            ) {
-                if (isMacOs) {
-                    LaunchedEffect(true) {
-                        window.rootPane.putClientProperty("apple.awt.fullWindowContent", true)
-                        window.rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
-                        window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
+                // Hide window instead of minimizing (tray app behavior)
+                LaunchedEffect(windowState.isMinimized) {
+                    if (windowState.isMinimized) {
+                        windowState.isMinimized = false
+                        isVisible = false
                     }
                 }
-                if (SystemTray.isSupported()) {
-                    // Hide window instead of minimizing (tray app behavior)
-                    LaunchedEffect(windowState.isMinimized) {
-                        if (windowState.isMinimized) {
-                            windowState.isMinimized = false
-                            isVisible = false
-                        }
-                    }
-                    LaunchedEffect(isVisible) {
-                        if (isVisible) try {
-                            Desktop.getDesktop().requestForeground(true)
-                        } catch (_: Exception) {}
-                    }
-                    DisposableEffect(window) {
-                        val listener =
-                            object : WindowFocusListener {
-                                override fun windowGainedFocus(p0: WindowEvent?) {
-                                }
-
-                                override fun windowLostFocus(p0: WindowEvent?) {
-                                    isVisible = false
-                                }
+                LaunchedEffect(isVisible) {
+                    if (isVisible) try {
+                        Desktop.getDesktop().requestForeground(true)
+                    } catch (_: Exception) {}
+                }
+                DisposableEffect(window) {
+                    val listener =
+                        object : WindowFocusListener {
+                            override fun windowGainedFocus(p0: WindowEvent?) {
                             }
-                        window.addWindowFocusListener(listener)
-                        onDispose {
-                            window.removeWindowFocusListener(listener)
+
+                            override fun windowLostFocus(p0: WindowEvent?) {
+                                isVisible = false
+                            }
                         }
+                    window.addWindowFocusListener(listener)
+                    onDispose {
+                        window.removeWindowFocusListener(listener)
                     }
                 }
-                App(
-                    focusRequester = focusRequester,
-                    setWindowBackground = {
-                        window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
-                    },
-                    settingsViewModel = settingsViewModel
-                )
             }
+            App(
+                focusRequester = focusRequester,
+                setWindowBackground = {
+                    window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
+                },
+                settingsViewModel = settingsViewModel
+            )
         }
     }
 }
