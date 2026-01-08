@@ -168,6 +168,7 @@ import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import com.youniqx.time.gitlab.models.type.WorkItemState
+import com.youniqx.time.history.HistorySummaryCard
 import com.youniqx.time.history.TimeHistoryScreen
 import com.youniqx.time.history.TimeRange
 import com.youniqx.time.history.TimelogEntry
@@ -207,9 +208,10 @@ operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingVa
 )
 
 @Composable
-fun alwaysShowSearch() = !hasPhysicalOrShowingKeyboard() || currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
-    WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
-)
+fun alwaysShowSearch() = true // for the time being always show the search
+//    !hasPhysicalOrShowingKeyboard() || currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
+//    WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
+//)
 
 enum class Section {
     Pinned, Open, Closed
@@ -257,7 +259,7 @@ fun App(
         var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
         var loading: Boolean by remember { mutableStateOf(false) }
         var showHistory by remember { mutableStateOf(false) }
-        var selectedTimeRange by remember { mutableStateOf(TimeRange.Week) }
+        var selectedTimeRange by remember { mutableStateOf(TimeRange.Today) }
         var isRefreshing by remember { mutableStateOf(false) }
         var refreshTrigger by remember { mutableStateOf(0) }
         var disableGlobalSearch by remember { mutableStateOf(false) }
@@ -558,58 +560,13 @@ fun App(
                                         Search(
                                             search = search,
                                             onSearchChange = { search = it },
-                                            show = alwaysShowSearch || search.isNotEmpty() || !lazyListState.canScrollBackward,
+                                            show = (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .focusRequester(focusRequester)
                                                 .focusProperties { canFocus = !disableGlobalSearch },
                                             onPress = { disableGlobalSearch = false }
                                         )
-                                        // Hamburger menu
-                                        var menuExpanded by remember { mutableStateOf(false) }
-                                        Box {
-                                            IconButton(onClick = { menuExpanded = true }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Menu,
-                                                    contentDescription = "Menu"
-                                                )
-                                            }
-                                            DropdownMenu(
-                                                expanded = menuExpanded,
-                                                onDismissRequest = { menuExpanded = false }
-                                            ) {
-                                                DropdownMenuItem(
-                                                    text = { Text("Time History") },
-                                                    onClick = {
-                                                        menuExpanded = false
-                                                        showHistory = true
-                                                    },
-                                                    leadingIcon = {
-                                                        Icon(
-                                                            imageVector = Icons.Default.History,
-                                                            contentDescription = null
-                                                        )
-                                                    }
-                                                )
-                                                if (navigator.scaffoldValue.secondary == PaneAdaptedValue.Hidden) {
-                                                    DropdownMenuItem(
-                                                        text = { Text("Settings") },
-                                                        onClick = {
-                                                            menuExpanded = false
-                                                            coroutineScope.launch {
-                                                                navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
-                                                            }
-                                                        },
-                                                        leadingIcon = {
-                                                            Icon(
-                                                                imageVector = Icons.Outlined.Settings,
-                                                                contentDescription = null
-                                                            )
-                                                        }
-                                                    )
-                                                }
-                                            }
-                                        }
                                     }
                                     QuickFilters(
                                         activeFilters = activeFilters,
@@ -795,6 +752,23 @@ fun App(
                                         }
                                     }
                                 }
+                            }
+
+                            if (!loading) item(key = "DaySummaryCard")  {
+                                HistorySummaryCard(
+                                    modifier = Modifier
+                                        .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                        .padding(horizontal = 12.dp)
+                                        .clickable(
+                                            onClickLabel = "Show history",
+                                            onClick = {
+                                                selectedTimeRange = TimeRange.Today
+                                                showHistory = true
+                                            }),
+                                    heading = { Text(text = "Total Time Today") },
+                                    totalTime = 0,
+                                    timelogs = emptyList()
+                                )
                             }
 
                             section(Section.Pinned)

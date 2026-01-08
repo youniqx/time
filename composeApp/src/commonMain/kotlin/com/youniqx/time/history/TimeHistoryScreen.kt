@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -34,6 +35,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -43,6 +46,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,6 +62,7 @@ import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.LocalSpacing
+import com.youniqx.time.theme.Spacing
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
@@ -122,7 +127,7 @@ fun TimeHistoryScreen(
         val periodEnd = now - startOffset.days
 
         timelogs.filter { entry ->
-            entry.spentAt >= periodStart && entry.spentAt < periodEnd
+            entry.spentAt in periodStart..<periodEnd
         }
     }
 
@@ -225,49 +230,14 @@ fun TimeHistoryScreen(
             }
 
             // Summary card
-            Card(
+            HistorySummaryCard(
                 modifier = Modifier
-                    .fillMaxWidth()
                     .padding(horizontal = spacing.screenPadding)
                     .padding(bottom = spacing.lg),
-                colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                )
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(spacing.cardPadding),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Total Time",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = formatTimeSpent(totalTime),
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(
-                            text = "${groupedByDay.size} days",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                        )
-                        Text(
-                            text = "${timelogs.size} entries",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
-            }
+                totalTime = totalTime,
+                groupedByDay = groupedByDay,
+                timelogs = timelogs
+            )
 
             // Content
             if (isLoading) {
@@ -493,7 +463,7 @@ private fun TimelogCard(
     }
 }
 
-private fun formatTimeSpent(seconds: Int): String {
+fun formatTimeSpent(seconds: Int): String {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     return when {
