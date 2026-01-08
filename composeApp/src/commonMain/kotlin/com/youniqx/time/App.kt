@@ -1036,6 +1036,7 @@ fun Issue(
                 labels?.let {
                     AnimatedVisibility(visible = labels.isNotEmpty()) {
                         FlowRow(
+                            modifier = Modifier.padding(vertical = 4.dp),
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
