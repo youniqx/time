@@ -15,6 +15,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,8 +51,11 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -66,6 +70,7 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDragHandle
@@ -84,6 +89,7 @@ import androidx.compose.material3.adaptive.layout.rememberPaneExpansionState
 import androidx.compose.material3.adaptive.navigation.rememberSupportingPaneScaffoldNavigator
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -344,6 +350,39 @@ fun App(
         )
         val coroutineScope = rememberCoroutineScope()
         Scaffold(
+            floatingActionButton = {
+                if (navigator.scaffoldValue.secondary == PaneAdaptedValue.Hidden ||
+                    navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) CompositionLocalProvider(
+                    LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+                ) {
+                    val interactionSource = remember { MutableInteractionSource() }
+                    val isHovered by interactionSource.collectIsHoveredAsState()
+                    SmallFloatingActionButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                if (forceSinglePane) {
+                                    forceSinglePane = false
+                                    return@launch
+                                }
+                                if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
+                                    navigator.navigateTo(SupportingPaneScaffoldRole.Main)
+                                } else {
+                                    navigator.navigateTo(SupportingPaneScaffoldRole.Supporting)
+                                }
+                            }
+                        },
+                        interactionSource = interactionSource,
+                    ) {
+                        val icon =
+                            if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
+                                if (isHovered) Icons.Filled.Home else Icons.Outlined.Home
+                            } else {
+                                if (isHovered) Icons.Filled.Settings else Icons.Outlined.Settings
+                            }
+                        Icon(imageVector = icon, contentDescription = null)
+                    }
+                }
+            }
         ) {
             SupportingPaneScaffold(
                 directive = navigator.scaffoldDirective,
