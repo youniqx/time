@@ -545,29 +545,24 @@ fun App(
                             state = lazyListState,
                             contentPadding = insets + extraPadding,
                         ) {
-                            stickyHeader {
+                            stickyHeader(listState = lazyListState) { _, isSticky ->
                                 Column(
-                                    modifier = Modifier.background(MaterialTheme.colorScheme.background)
+                                    modifier = Modifier
+                                        .background(MaterialTheme.colorScheme.background)
+
                                 ) {
-                                    Row(
+                                    Search(
+                                        search = search,
+                                        onSearchChange = { search = it },
+                                        show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                                            .padding(horizontal = 12.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        Search(
-                                            search = search,
-                                            onSearchChange = { search = it },
-                                            show = (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
-                                            modifier = Modifier
-                                                .weight(1f)
-                                                .focusRequester(focusRequester)
-                                                .focusProperties { canFocus = !disableGlobalSearch },
-                                            onPress = { disableGlobalSearch = false }
-                                        )
-                                    }
+                                            .padding(horizontal = 12.dp)
+                                            .focusRequester(focusRequester)
+                                            .focusProperties { canFocus = !disableGlobalSearch },
+                                        onPress = { disableGlobalSearch = false }
+                                    )
                                     QuickFilters(
                                         activeFilters = activeFilters,
                                         onFilterToggle = { filter ->
@@ -579,6 +574,23 @@ fun App(
                                         },
                                     )
                                 }
+                            }
+
+                            if (!loading) item(key = "daySummary") {
+                                HistorySummaryCard(
+                                    modifier = Modifier
+                                        .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                        .padding(horizontal = 12.dp)
+                                        .clickable(
+                                            onClickLabel = "Show history",
+                                            onClick = {
+                                                selectedTimeRange = TimeRange.Today
+                                                showHistory = true
+                                            }),
+                                    heading = { Text(text = "Total Time Today") },
+                                    totalTime = 0,
+                                    timelogs = emptyList()
+                                )
                             }
 
                             @Composable
@@ -752,23 +764,6 @@ fun App(
                                         }
                                     }
                                 }
-                            }
-
-                            if (!loading) item(key = "DaySummaryCard")  {
-                                HistorySummaryCard(
-                                    modifier = Modifier
-                                        .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                                        .padding(horizontal = 12.dp)
-                                        .clickable(
-                                            onClickLabel = "Show history",
-                                            onClick = {
-                                                selectedTimeRange = TimeRange.Today
-                                                showHistory = true
-                                            }),
-                                    heading = { Text(text = "Total Time Today") },
-                                    totalTime = 0,
-                                    timelogs = emptyList()
-                                )
                             }
 
                             section(Section.Pinned)
