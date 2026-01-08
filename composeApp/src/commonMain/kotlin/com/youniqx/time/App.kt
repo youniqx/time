@@ -175,7 +175,6 @@ import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
-import com.youniqx.time.settings.UiState
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.LocalSpacing
 import com.youniqx.time.theme.TimerActiveColor
@@ -589,7 +588,6 @@ fun App(
 
                             @Composable
                             operator fun BareWorkItem.invoke() {
-                                val isTracking = id == settingsUiState.openTracking?.workItemId
                                 val pinned = id in settingsUiState.pinnedIssues
                                 val togglePinned = { settingsViewModel.togglePinIssue(id.toString()) }
                                 fun startTracking() = settingsViewModel.setOpenTracking(
@@ -599,140 +597,122 @@ fun App(
                                         timeOfOpen = Clock.System.now()
                                     )
                                 )
-                                SwipeableIssueCard(
-                                    modifier = Modifier.padding(vertical = 4.dp),
-                                    isPinned = pinned,
-                                    isTracking = isTracking,
-                                    onStartTracking = {
-                                        if (settingsUiState.openTracking?.workItemId == null) {
-                                            startTracking()
-                                        } else {
-                                            switchTrackingTarget = id.toString() to title
-                                        }
-                                    },
-                                    onTogglePin = togglePinned
-                                ) {
-                                    Column {
-                                        var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
-                                        var commitTimeTrackingErrors by remember {
-                                            mutableStateOf<List<String>?>(null)
-                                        }
-                                        Issue(
-                                            this@invoke,
-                                            currentUserId = currentUserId,
-                                            settingsUiState.showLabelsByDefault,
-                                            settingsUiState.useLabelColors,
-                                            openTracking = settingsUiState.openTracking,
-                                            onOpenTrackingChange = { openTracking ->
-                                                settingsViewModel.setOpenTracking(openTracking)
-                                            },
-                                            pinned = pinned,
-                                            togglePinned = togglePinned,
-                                            commitTimeTrackingEnabled = commitTimeTrackingEnabled,
-                                            commitTimeTracking = commitTimeTracking@{
-                                                if (!commitTimeTrackingEnabled) return@commitTimeTracking
-                                                if (apolloClient == null) {
-                                                    commitTimeTrackingErrors = listOf("Please check your settings.")
-                                                    return@commitTimeTracking
-                                                }
-                                                commitTimeTrackingEnabled = false
-                                                commitTimeTrackingErrors = null
-                                                coroutineScope.launch {
-                                                    settingsUiState.openTracking?.let {
-                                                        suspend fun manualRefresh() {
-                                                            // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
-                                                            val success = "Saved successfully!"
-                                                            val ignoredWarning =
-                                                                "Only refreshing failed (will be ignored)!"
-                                                            val manualRefreshResult =
-                                                                apolloClient.query(
-                                                                    RefreshIssuesQuery.Builder()
-                                                                        .ids(listOf(id)).build()
-                                                                ).execute()
-                                                            if (manualRefreshResult.exception != null) {
-                                                                commitTimeTrackingErrors =
-                                                                    listOf(
-                                                                        success,
-                                                                        ignoredWarning,
-                                                                        manualRefreshResult.exception?.message.orEmpty()
-                                                                    )
-                                                                delay(4.seconds)
-                                                                commitTimeTrackingErrors = null
-                                                            } else if (manualRefreshResult.hasErrors()) {
-                                                                commitTimeTrackingErrors =
-                                                                    listOf(success, ignoredWarning) +
-                                                                            manualRefreshResult.errors
-                                                                                ?.map { it.message }.orEmpty()
-                                                                delay(4.seconds)
-                                                                commitTimeTrackingErrors = null
-                                                            }
-                                                            settingsViewModel.setOpenTracking(null)
-                                                        }
-
-                                                        val timeSpent = it.customTimeSpent
-                                                            ?: (Clock.System.now() - it.timeOfOpen)
-                                                                .inWholeMinutes.minutes.toString()
-                                                        val result = apolloClient.mutation(
-                                                            TimelogCreateMutation(
-                                                                workItemId = listOf(id),
-                                                                input =
-                                                                    TimelogCreateInput.Builder()
-                                                                        .issuableId(id)
-                                                                        .summary(it.summary.orEmpty())
-                                                                        .timeSpent(timeSpent)
-                                                                        .build()
-                                                            )
-                                                        ).execute()
-
-                                                        fun failedBecauseOfEpic() =
-                                                            result.errors?.let { errors ->
-                                                                errors.isNotEmpty() && errors.all {
-                                                                    it.message == "Cannot return null for non-nullable field Timelog.project"
-                                                                }
-                                                            } == true
-                                                        if (result.exception != null) {
-                                                            commitTimeTrackingErrors =
-                                                                listOf(result.exception?.message.orEmpty())
-                                                        } else if (failedBecauseOfEpic()) {
-                                                            manualRefresh()
-                                                        } else if (result.hasErrors()) {
-                                                            commitTimeTrackingErrors = result.errors?.map { it.message }
-                                                        } else {
-                                                            settingsViewModel.setOpenTracking(null)
-                                                        }
-                                                    }
-                                                    commitTimeTrackingEnabled = true
-                                                }
-                                            },
-                                            disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
-                                            modifier = Modifier.clickable(
-                                                enabled = !isTracking,
-                                                onClickLabel = "Work on issue",
-                                                role = Role.Switch
-                                            ) {
-                                                if (settingsUiState.openTracking?.workItemId == null) {
-                                                    startTracking()
-                                                } else {
-                                                    switchTrackingTarget = id.toString() to title
-                                                }
+                                Column {
+                                    var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
+                                    var commitTimeTrackingErrors by remember {
+                                        mutableStateOf<List<String>?>(null)
+                                    }
+                                    Issue(
+                                        this@invoke,
+                                        startTracking = {
+                                            if (settingsUiState.openTracking?.workItemId == null) {
+                                                startTracking()
+                                            } else {
+                                                switchTrackingTarget = id.toString() to title
                                             }
-                                        )
-                                        AnimatedVisibility(visible = !commitTimeTrackingErrors.isNullOrEmpty()) {
-                                            Column(
-                                                modifier = Modifier
-                                                    .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                                                    .fillMaxWidth()
-                                                    .padding(horizontal = 12.dp)
-                                                    .padding(vertical = 8.dp)
-                                                    .background(
-                                                        color = MaterialTheme.colorScheme.errorContainer,
-                                                        shape = MaterialTheme.shapes.medium
-                                                    )
-                                                    .padding(8.dp)
-                                            ) {
-                                                commitTimeTrackingErrors?.forEach {
-                                                    Text(text = it, color = MaterialTheme.colorScheme.error)
+                                        },
+                                        currentUserId = currentUserId,
+                                        settingsUiState.showLabelsByDefault,
+                                        settingsUiState.useLabelColors,
+                                        openTracking = settingsUiState.openTracking,
+                                        onOpenTrackingChange = { openTracking ->
+                                            settingsViewModel.setOpenTracking(openTracking)
+                                        },
+                                        pinned = pinned,
+                                        togglePinned = togglePinned,
+                                        commitTimeTrackingEnabled = commitTimeTrackingEnabled,
+                                        commitTimeTracking = commitTimeTracking@{
+                                            if (!commitTimeTrackingEnabled) return@commitTimeTracking
+                                            if (apolloClient == null) {
+                                                commitTimeTrackingErrors = listOf("Please check your settings.")
+                                                return@commitTimeTracking
+                                            }
+                                            commitTimeTrackingEnabled = false
+                                            commitTimeTrackingErrors = null
+                                            coroutineScope.launch {
+                                                settingsUiState.openTracking?.let {
+                                                    suspend fun manualRefresh() {
+                                                        // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
+                                                        val success = "Saved successfully!"
+                                                        val ignoredWarning =
+                                                            "Only refreshing failed (will be ignored)!"
+                                                        val manualRefreshResult =
+                                                            apolloClient.query(
+                                                                RefreshIssuesQuery.Builder()
+                                                                    .ids(listOf(id)).build()
+                                                            ).execute()
+                                                        if (manualRefreshResult.exception != null) {
+                                                            commitTimeTrackingErrors =
+                                                                listOf(
+                                                                    success,
+                                                                    ignoredWarning,
+                                                                    manualRefreshResult.exception?.message.orEmpty()
+                                                                )
+                                                            delay(4.seconds)
+                                                            commitTimeTrackingErrors = null
+                                                        } else if (manualRefreshResult.hasErrors()) {
+                                                            commitTimeTrackingErrors =
+                                                                listOf(success, ignoredWarning) +
+                                                                        manualRefreshResult.errors
+                                                                            ?.map { it.message }.orEmpty()
+                                                            delay(4.seconds)
+                                                            commitTimeTrackingErrors = null
+                                                        }
+                                                        settingsViewModel.setOpenTracking(null)
+                                                    }
+
+                                                    val timeSpent = it.customTimeSpent
+                                                        ?: (Clock.System.now() - it.timeOfOpen)
+                                                            .inWholeMinutes.minutes.toString()
+                                                    val result = apolloClient.mutation(
+                                                        TimelogCreateMutation(
+                                                            workItemId = listOf(id),
+                                                            input =
+                                                                TimelogCreateInput.Builder()
+                                                                    .issuableId(id)
+                                                                    .summary(it.summary.orEmpty())
+                                                                    .timeSpent(timeSpent)
+                                                                    .build()
+                                                        )
+                                                    ).execute()
+
+                                                    fun failedBecauseOfEpic() =
+                                                        result.errors?.let { errors ->
+                                                            errors.isNotEmpty() && errors.all {
+                                                                it.message == "Cannot return null for non-nullable field Timelog.project"
+                                                            }
+                                                        } == true
+                                                    if (result.exception != null) {
+                                                        commitTimeTrackingErrors =
+                                                            listOf(result.exception?.message.orEmpty())
+                                                    } else if (failedBecauseOfEpic()) {
+                                                        manualRefresh()
+                                                    } else if (result.hasErrors()) {
+                                                        commitTimeTrackingErrors = result.errors?.map { it.message }
+                                                    } else {
+                                                        settingsViewModel.setOpenTracking(null)
+                                                    }
                                                 }
+                                                commitTimeTrackingEnabled = true
+                                            }
+                                        },
+                                        disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
+                                    )
+                                    AnimatedVisibility(visible = !commitTimeTrackingErrors.isNullOrEmpty()) {
+                                        Column(
+                                            modifier = Modifier
+                                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                                .fillMaxWidth()
+                                                .padding(horizontal = 12.dp)
+                                                .padding(vertical = 8.dp)
+                                                .background(
+                                                    color = MaterialTheme.colorScheme.errorContainer,
+                                                    shape = MaterialTheme.shapes.medium
+                                                )
+                                                .padding(8.dp)
+                                        ) {
+                                            commitTimeTrackingErrors?.forEach {
+                                                Text(text = it, color = MaterialTheme.colorScheme.error)
                                             }
                                         }
                                     }
@@ -906,6 +886,7 @@ private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
 @Composable
 fun Issue(
     issue: BareWorkItem,
+    startTracking: () -> Unit,
     currentUserId: String?,
     showLabelsByDefault: Boolean,
     useLabelColors: Boolean,
@@ -917,7 +898,7 @@ fun Issue(
     commitTimeTrackingEnabled: Boolean,
     commitTimeTracking: () -> Unit,
     modifier: Modifier = Modifier,
-    additionalContent: (@Composable () -> Unit)? = null
+    additionalContent: (@Composable () -> Unit)? = null,
 ) {
     val uriHandler = LocalUriHandler.current
     val open = openTracking?.workItemId == issue.id
@@ -946,287 +927,310 @@ fun Issue(
         label = "issueSurfaceColor"
     )
 
-    Surface(
+    SwipeableIssueCard(
         modifier = modifier
+            .padding(vertical = 4.dp)
             .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-            .padding(horizontal = 12.dp)
-            .then(
-                if (open) Modifier.border(
-                    width = 2.dp,
-                    color = TimerActiveColor,
-                    shape = RoundedCornerShape(spacing.cardRadius)
-                ) else Modifier
-            ),
-        color = surfaceColor,
-        shape = RoundedCornerShape(spacing.cardRadius),
-        shadowElevation = if (open) 4.dp else 0.dp
+            .padding(horizontal = 12.dp),
+        isPinned = pinned,
+        isTracking = open,
+        onStartTracking = startTracking,
+        onTogglePin = togglePinned
     ) {
-        Column(
+        Surface(
             modifier = Modifier
-                .heightIn(min = 48.dp)
-                .padding(spacing.cardPadding)
-        ) {
-        val labels = if (showLabelsByDefault) issue.labels?.nodes else null
-        Row(
-            modifier = Modifier.fillMaxWidth().heightIn(min = if (labels.isNullOrEmpty()) 48.dp else 0.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            issue.workItemType.name.let { WorkItemTypeIcon(it) }
-            Text(
-                text = buildAnnotatedString {
-                    append(issue.title)
-                    if (myTotalTime > 0) {
-                        append(" ")
-                        appendInlineContent("time", myTotalTimeString)
-                    }
-                    if (issue.promotedToEpicUrl != null) {
-                        append(" ")
-                        appendInlineContent("promoted", "(promoted)")
-                    } else if (issue.state == WorkItemState.CLOSED) {
-                        append(" ")
-                        appendInlineContent("closed", "(closed)")
-                    }
-                },
-                inlineContent = mapOf(
-                    "time" to InlineTextContent(
-                        Placeholder(
-                            width = (myTotalTimeString.length * 8 + 14).sp,
-                            height = 20.sp,
-                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                        )
-                    ) {
-                        TimeBadge(
-                            time = myTotalTimeString,
-                            onClick = { showTimelogs = !showTimelogs }
-                        )
-                    },
-                    "closed" to InlineTextContent(
-                        Placeholder(
-                            width = 16.sp,
-                            height = 16.sp,
-                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                        )
-                    ) {
-                        SimpleTooltip("closed") {
-                            Icon(
-                                imageVector = Icons.Default.Done,
-                                contentDescription = "closed",
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    },
-                    "promoted" to InlineTextContent(
-                        Placeholder(
-                            width = 16.sp,
-                            height = 16.sp,
-                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                        )
-                    ) {
-                        SimpleTooltip("promoted") {
-                            Icon(
-                                imageVector = Icons.Default.ArrowCircleUp,
-                                contentDescription = "promoted",
-                                modifier = Modifier.size(16.dp).clickable {
-                                    issue.promotedToEpicUrl?.let { uri -> uriHandler.openUri(uri) }
-                                }
-                            )
-                        }
-                    },
-                ),
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-        labels?.let {
-            AnimatedVisibility(visible = labels.isNotEmpty()) {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                .then(
+                    if (open) Modifier.border(
+                        width = 2.dp,
+                        color = TimerActiveColor,
+                        shape = RoundedCornerShape(spacing.cardRadius)
+                    ) else Modifier
+                )
+                .clip(RoundedCornerShape(spacing.cardRadius))
+                .clickable(
+                    enabled = !open,
+                    onClickLabel = "Work on issue",
+                    role = Role.Switch
                 ) {
-                    it.filterNotNull().forEach { label -> Label(label = label, useColors = useLabelColors) }
+                    startTracking()
+                },
+            color = surfaceColor,
+            shape = RoundedCornerShape(spacing.cardRadius),
+            shadowElevation = if (open) 4.dp else 0.dp
+        ) {
+            Column(
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .padding(spacing.cardPadding)
+            ) {
+                val labels = if (showLabelsByDefault) issue.labels?.nodes else null
+                Row(
+                    modifier = Modifier.fillMaxWidth().heightIn(min = if (labels.isNullOrEmpty()) 48.dp else 0.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    issue.workItemType.name.let { WorkItemTypeIcon(it) }
+                    Text(
+                        text = buildAnnotatedString {
+                            append(issue.title)
+                            if (myTotalTime > 0) {
+                                append(" ")
+                                appendInlineContent("time", myTotalTimeString)
+                            }
+                            if (issue.promotedToEpicUrl != null) {
+                                append(" ")
+                                appendInlineContent("promoted", "(promoted)")
+                            } else if (issue.state == WorkItemState.CLOSED) {
+                                append(" ")
+                                appendInlineContent("closed", "(closed)")
+                            }
+                        },
+                        inlineContent = mapOf(
+                            "time" to InlineTextContent(
+                                Placeholder(
+                                    width = (myTotalTimeString.length * 8 + 14).sp,
+                                    height = 20.sp,
+                                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                                )
+                            ) {
+                                TimeBadge(
+                                    time = myTotalTimeString,
+                                    onClick = { showTimelogs = !showTimelogs }
+                                )
+                            },
+                            "closed" to InlineTextContent(
+                                Placeholder(
+                                    width = 16.sp,
+                                    height = 16.sp,
+                                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                                )
+                            ) {
+                                SimpleTooltip("closed") {
+                                    Icon(
+                                        imageVector = Icons.Default.Done,
+                                        contentDescription = "closed",
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+                            },
+                            "promoted" to InlineTextContent(
+                                Placeholder(
+                                    width = 16.sp,
+                                    height = 16.sp,
+                                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+                                )
+                            ) {
+                                SimpleTooltip("promoted") {
+                                    Icon(
+                                        imageVector = Icons.Default.ArrowCircleUp,
+                                        contentDescription = "promoted",
+                                        modifier = Modifier.size(16.dp).clickable {
+                                            issue.promotedToEpicUrl?.let { uri -> uriHandler.openUri(uri) }
+                                        }
+                                    )
+                                }
+                            },
+                        ),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
                 }
-            }
-        }
-        AnimatedVisibility(visible = showTimelogs) {
-            Column(modifier = Modifier.padding(top = 8.dp)) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant
-                )
-                myTimelogs.forEachIndexed { index, timelog ->
-                    val isEven = index % 2 == 0
-                    val rowBg = if (isEven) {
-                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                    } else {
-                        Color.Transparent
-                    }
-                    SimpleTooltip(timelog.spentAt?.let { Instant.parseOrNull(it.toString()) }?.let {
-                        "${formatDuration(Clock.System.now() - it, RelativeTime.Past)} ago"
-                    }.orEmpty()) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(rowBg)
-                                .padding(horizontal = 8.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                labels?.let {
+                    AnimatedVisibility(visible = labels.isNotEmpty()) {
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            val timeMinutes = timelog.timeSpent / 60
-                            val h = timeMinutes / 60
-                            val m = timeMinutes % 60
-                            Text(
-                                text = "$h:${m.toString().padStart(length = 2, padChar = '0')}",
-                                fontFamily = FontFamily.Monospace,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.width(48.dp)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = timelog.summary.orEmpty(),
-                                style = MaterialTheme.typography.bodySmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                            it.filterNotNull().forEach { label -> Label(label = label, useColors = useLabelColors) }
                         }
                     }
                 }
-            }
-        }
-        AnimatedVisibility(visible = open) {
-            if (!open) return@AnimatedVisibility
-            var timeSinceOpen by remember { mutableStateOf(Duration.ZERO) }
-            val timeSinceOpenInWholeMinutes = timeSinceOpen.inWholeMinutes.minutes
-            val customTimeSpent = openTracking.customTimeSpent
-            val focusRequester = remember { FocusRequester() }
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth()
-                        .disableGlobalSearchIfFocused()
-                        .focusRequester(focusRequester)
-                        .changeFocusOnTab()
-                        .onCtrlOrMetaEnter(commitTimeTracking)
-                        .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612,
-                    value = openTracking.summary.orEmpty(),
-                    label = { Text("What have I achieved? (optional)") },
-                    onValueChange = { text -> onOpenTrackingChange(openTracking.copy(summary = text)) },
-                )
-                val timeSinceOpenString = timeSinceOpenInWholeMinutes.toComponents { hours, minutes, _, _ ->
-                    "${hours}h ${minutes}m"
-                }
-                OutlinedTextField(
-                    modifier = Modifier.fillMaxWidth()
-                        .disableGlobalSearchIfFocused()
-                        .changeFocusOnTab()
-                        .onCtrlOrMetaEnter(commitTimeTracking)
-                        .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612
-                    value = customTimeSpent ?: timeSinceOpenString,
-                    onValueChange = { text -> onOpenTrackingChange(openTracking.copy(customTimeSpent = text)) },
-                    label = { Text("Time spent")},
-                    placeholder = { Text("Example: 1h 30m") },
-                    visualTransformation = customTimeSpent?.let { VisualTransformation.None }
-                        ?: AddedTextVisualTransformation(
-                            addedText = buildAnnotatedString {
-                                withStyle(SpanStyle(color = LocalContentColor.current.copy(alpha = 0.5f))) {
-                                    append(" ${(timeSinceOpen - timeSinceOpenInWholeMinutes).inWholeSeconds}s")
+                AnimatedVisibility(visible = showTimelogs) {
+                    Column(modifier = Modifier.padding(top = 8.dp)) {
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 8.dp),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                        myTimelogs.forEachIndexed { index, timelog ->
+                            val isEven = index % 2 == 0
+                            val rowBg = if (isEven) {
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                            } else {
+                                Color.Transparent
+                            }
+                            SimpleTooltip(timelog.spentAt?.let { Instant.parseOrNull(it.toString()) }?.let {
+                                "${formatDuration(Clock.System.now() - it, RelativeTime.Past)} ago"
+                            }.orEmpty()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(rowBg)
+                                        .padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    val timeMinutes = timelog.timeSpent / 60
+                                    val h = timeMinutes / 60
+                                    val m = timeMinutes % 60
+                                    Text(
+                                        text = "$h:${m.toString().padStart(length = 2, padChar = '0')}",
+                                        fontFamily = FontFamily.Monospace,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.width(48.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        modifier = Modifier.weight(1f),
+                                        text = timelog.summary.orEmpty(),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
                                 }
                             }
-                        ),
-                    trailingIcon = {
-                        when {
-                            customTimeSpent != null -> Row {
-                                val customTimeSpentDuration = Duration.parseOrNull(customTimeSpent.trim())
-                                customTimeSpentDuration?.let {
-                                    SimpleTooltip("Continue timer\n(overwrites $timeSinceOpenString)") {
+                        }
+                    }
+                }
+                AnimatedVisibility(visible = open) {
+                    if (!open) return@AnimatedVisibility
+                    var timeSinceOpen by remember { mutableStateOf(Duration.ZERO) }
+                    val timeSinceOpenInWholeMinutes = timeSinceOpen.inWholeMinutes.minutes
+                    val customTimeSpent = openTracking.customTimeSpent
+                    val focusRequester = remember { FocusRequester() }
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth()
+                                .disableGlobalSearchIfFocused()
+                                .focusRequester(focusRequester)
+                                .changeFocusOnTab()
+                                .onCtrlOrMetaEnter(commitTimeTracking)
+                                .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612,
+                            value = openTracking.summary.orEmpty(),
+                            label = { Text("What have I achieved? (optional)") },
+                            onValueChange = { text -> onOpenTrackingChange(openTracking.copy(summary = text)) },
+                        )
+                        val timeSinceOpenString = timeSinceOpenInWholeMinutes.toComponents { hours, minutes, _, _ ->
+                            "${hours}h ${minutes}m"
+                        }
+                        OutlinedTextField(
+                            modifier = Modifier.fillMaxWidth()
+                                .disableGlobalSearchIfFocused()
+                                .changeFocusOnTab()
+                                .onCtrlOrMetaEnter(commitTimeTracking)
+                                .onKeyEvent { true }, // https://github.com/JetBrains/compose-multiplatform/issues/4612
+                            value = customTimeSpent ?: timeSinceOpenString,
+                            onValueChange = { text -> onOpenTrackingChange(openTracking.copy(customTimeSpent = text)) },
+                            label = { Text("Time spent") },
+                            placeholder = { Text("Example: 1h 30m") },
+                            visualTransformation = customTimeSpent?.let { VisualTransformation.None }
+                                ?: AddedTextVisualTransformation(
+                                    addedText = buildAnnotatedString {
+                                        withStyle(SpanStyle(color = LocalContentColor.current.copy(alpha = 0.5f))) {
+                                            append(" ${(timeSinceOpen - timeSinceOpenInWholeMinutes).inWholeSeconds}s")
+                                        }
+                                    }
+                                ),
+                            trailingIcon = {
+                                when {
+                                    customTimeSpent != null -> Row {
+                                        val customTimeSpentDuration = Duration.parseOrNull(customTimeSpent.trim())
+                                        customTimeSpentDuration?.let {
+                                            SimpleTooltip("Continue timer\n(overwrites $timeSinceOpenString)") {
+                                                IconButton(
+                                                    modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                                                    onClick = {
+                                                        timeSinceOpen = customTimeSpentDuration
+                                                        onOpenTrackingChange(
+                                                            openTracking.copy(
+                                                                timeOfOpen = Clock.System.now() - customTimeSpentDuration,
+                                                                customTimeSpent = null,
+                                                            )
+                                                        )
+                                                    }
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Start,
+                                                        contentDescription = "Continue timer from entered time"
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        SimpleTooltip("Reset to running timer\n($timeSinceOpenString)") {
+                                            IconButton(
+                                                modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                                                onClick = { onOpenTrackingChange(openTracking.copy(customTimeSpent = null)) }
+                                            ) {
+                                                Icon(
+                                                    Icons.Default.History,
+                                                    contentDescription = "Reset to running timer"
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    else -> SimpleTooltip("Restart time spent timer") {
                                         IconButton(
                                             modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
-                                            onClick = {
-                                                timeSinceOpen = customTimeSpentDuration
-                                                onOpenTrackingChange(openTracking.copy(
-                                                    timeOfOpen = Clock.System.now() - customTimeSpentDuration,
-                                                    customTimeSpent = null,
-                                                ))
-                                            }
+                                            onClick = { onOpenTrackingChange(openTracking.copy(timeOfOpen = Clock.System.now())) }
                                         ) {
                                             Icon(
-                                                Icons.Default.Start,
-                                                contentDescription = "Continue timer from entered time"
+                                                Icons.Default.Clear,
+                                                contentDescription = "Restart time spent timer"
                                             )
                                         }
                                     }
                                 }
-                                SimpleTooltip("Reset to running timer\n($timeSinceOpenString)") {
-                                    IconButton(
-                                        modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
-                                        onClick = { onOpenTrackingChange(openTracking.copy(customTimeSpent = null)) }
-                                    ) {
-                                        Icon(
-                                            Icons.Default.History,
-                                            contentDescription = "Reset to running timer"
-                                        )
-                                    }
-                                }
-                            }
-                            else -> SimpleTooltip("Restart time spent timer") {
-                                IconButton(
-                                    modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
-                                    onClick = { onOpenTrackingChange(openTracking.copy(timeOfOpen = Clock.System.now())) }
-                                ) {
+                            },
+                            isError = customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
+                        )
+                        FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                            AdditionalActions(issue, pinned, togglePinned)
+                            SimpleTooltip("Discard time tracking") {
+                                IconButton(onClick = { onOpenTrackingChange(null) }) {
                                     Icon(
-                                        Icons.Default.Clear,
-                                        contentDescription = "Restart time spent timer"
+                                        imageVector = Icons.Default.DeleteForever,
+                                        contentDescription = "Discard time tracking"
+                                    )
+                                }
+                            }
+                            SimpleTooltip("Commit time tracking") {
+                                FilledTonalIconButton(
+                                    modifier = Modifier.padding(start = 4.dp),
+                                    onClick = commitTimeTracking
+                                ) {
+                                    val x by rememberInfiniteTransition().animateValue(
+                                        initialValue = if (commitTimeTrackingEnabled) 0.dp else (-35).dp,
+                                        targetValue = if (commitTimeTrackingEnabled) 0.dp else 35.dp,
+                                        typeConverter = Dp.VectorConverter,
+                                        animationSpec = infiniteRepeatable(
+                                            animation = tween(1500),
+                                            repeatMode = RepeatMode.Restart,
+                                            initialStartOffset = StartOffset(
+                                                offsetMillis = 750,
+                                                offsetType = StartOffsetType.FastForward
+                                            )
+                                        ),
+                                    )
+                                    Icon(
+                                        modifier = Modifier.offset(x = x, y = -x / 10).rotate(-x.value / 8),
+                                        imageVector = Icons.AutoMirrored.Filled.Send,
+                                        contentDescription = "Commit time tracking"
                                     )
                                 }
                             }
                         }
-                    },
-                    isError = customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
-                )
-                FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    AdditionalActions(issue, pinned, togglePinned)
-                    SimpleTooltip("Discard time tracking") {
-                        IconButton(onClick = { onOpenTrackingChange(null) }) {
-                            Icon(imageVector = Icons.Default.DeleteForever, contentDescription = "Discard time tracking")
-                        }
                     }
-                    SimpleTooltip("Commit time tracking") {
-                        FilledTonalIconButton(
-                            modifier = Modifier.padding(start = 4.dp),
-                            onClick = commitTimeTracking
-                        ) {
-                            val x by rememberInfiniteTransition().animateValue(
-                                initialValue = if (commitTimeTrackingEnabled) 0.dp else (-35).dp,
-                                targetValue = if (commitTimeTrackingEnabled) 0.dp  else 35.dp,
-                                typeConverter =  Dp.VectorConverter,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(1500),
-                                    repeatMode = RepeatMode.Restart,
-                                    initialStartOffset = StartOffset(
-                                        offsetMillis = 750,
-                                        offsetType = StartOffsetType.FastForward
-                                    )
-                                ),
-                            )
-                            Icon(
-                                modifier = Modifier.offset(x = x, y = -x / 10).rotate(-x.value / 8),
-                                imageVector = Icons.AutoMirrored.Filled.Send,
-                                contentDescription = "Commit time tracking"
-                            )
+                    LaunchedEffect(open, openTracking.timeOfOpen) {
+                        if (!open) return@LaunchedEffect
+                        focusRequester.requestFocus()
+                        while (true) {
+                            if (!isActive) return@LaunchedEffect
+                            timeSinceOpen = (Clock.System.now() - openTracking.timeOfOpen)
+                            delay(1.seconds)
                         }
                     }
                 }
+                additionalContent?.invoke()
             }
-            LaunchedEffect(open, openTracking.timeOfOpen) {
-                if (!open) return@LaunchedEffect
-                focusRequester.requestFocus()
-                while (true) {
-                    if (!isActive) return@LaunchedEffect
-                    timeSinceOpen = (Clock.System.now() - openTracking.timeOfOpen)
-                    delay(1.seconds)
-                }
-            }
-        }
-        additionalContent?.invoke()
         }
     }
 }
