@@ -22,8 +22,6 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.theme.custom.TimerActiveColor
-import com.youniqx.time.theme.custom.TimerIdleColor
 import com.youniqx.time.theme.TimerTextStyle
 import kotlin.time.Duration
 
@@ -50,7 +48,7 @@ fun ProgressRing(
     )
 
     val ringColor by animateColorAsState(
-        targetValue = if (isRunning) TimerActiveColor else TimerIdleColor,
+        targetValue = if (isRunning) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.secondary,
         animationSpec = tween(300),
         label = "ringColor"
     )
@@ -95,7 +93,7 @@ fun ProgressRing(
                 Text(
                     text = "Tracking",
                     style = MaterialTheme.typography.labelMedium,
-                    color = TimerActiveColor
+                    color = MaterialTheme.colorScheme.tertiary
                 )
             }
         }

@@ -2,11 +2,6 @@ package com.youniqx.time.theme.custom
 
 import androidx.compose.ui.graphics.Color
 
-// Timer-specific colors (used across themes)
-val TimerActiveColor = Color(0xFF38B2AC)      // Teal when running
-val TimerPausedColor = Color(0xFFF6AD55)      // Amber when paused
-val TimerIdleColor = Color(0xFFA0AEC0)        // Gray when idle
-
 // Modern Minimal Light Theme - Slate/Teal palette
 val primaryLight = Color(0xFF2D3748)          // Slate gray - professional
 val onPrimaryLight = Color(0xFFFFFFFF)

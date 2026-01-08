@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.theme.LocalSpacing
-import com.youniqx.time.theme.custom.TimerActiveColor
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlin.time.Clock
@@ -120,8 +119,8 @@ fun VisualTimer(
                         onClick = onCommit,
                         modifier = Modifier.size(56.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(
-                            containerColor = TimerActiveColor,
-                            contentColor = MaterialTheme.colorScheme.onPrimary
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            contentColor = MaterialTheme.colorScheme.tertiary
                         )
                     ) {
                         Icon(

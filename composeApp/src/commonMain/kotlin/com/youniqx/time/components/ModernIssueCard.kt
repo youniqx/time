@@ -50,7 +50,6 @@ import com.youniqx.time.WorkItemTypeIcon
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.theme.LocalSpacing
-import com.youniqx.time.theme.custom.TimerActiveColor
 import com.youniqx.time.timer.formatCompact
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -207,19 +206,19 @@ private fun ActiveTimerBadge(elapsedTime: Duration) {
     val spacing = LocalSpacing.current
 
     Surface(
-        color = TimerActiveColor.copy(alpha = 0.15f),
+        color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.15f),
         shape = RoundedCornerShape(8.dp)
     ) {
         Row(
             modifier = Modifier.padding(horizontal = spacing.sm, vertical = spacing.xs),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            PulsingDot(color = TimerActiveColor)
+            PulsingDot(color = MaterialTheme.colorScheme.tertiary)
             Spacer(Modifier.width(6.dp))
             Text(
                 text = elapsedTime.formatCompact(),
                 style = MaterialTheme.typography.labelMedium,
-                color = TimerActiveColor,
+                color = MaterialTheme.colorScheme.tertiary,
                 fontFamily = FontFamily.Monospace
             )
         }

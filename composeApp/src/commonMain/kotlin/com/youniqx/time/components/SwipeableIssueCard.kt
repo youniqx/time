@@ -43,7 +43,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.theme.LocalSpacing
-import com.youniqx.time.theme.custom.TimerActiveColor
 import kotlin.math.roundToInt
 
 @Composable
@@ -73,7 +72,7 @@ fun SwipeableIssueCard(
     // Background color based on swipe direction
     val backgroundColor by animateColorAsState(
         targetValue = when {
-            offsetX > 50f -> TimerActiveColor.copy(alpha = 0.2f)
+            offsetX > 50f -> MaterialTheme.colorScheme.tertiaryContainer
             offsetX < -50f -> MaterialTheme.colorScheme.primaryContainer
             else -> Color.Transparent
         },
@@ -109,12 +108,12 @@ fun SwipeableIssueCard(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = "Start tracking",
                             modifier = Modifier.size(24.dp),
-                            tint = TimerActiveColor
+                            tint = MaterialTheme.colorScheme.tertiary
                         )
                         Text(
                             text = "Start",
                             style = MaterialTheme.typography.labelLarge,
-                            color = TimerActiveColor
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                     }
                 }
@@ -184,8 +183,8 @@ fun SwipeableIssueCard(
                                 onStartTracking()
                             },
                             colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = TimerActiveColor.copy(alpha = 0.15f),
-                                contentColor = TimerActiveColor
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                                contentColor = MaterialTheme.colorScheme.tertiary
                             ),
                             modifier = Modifier.size(32.dp)
                         ) {
