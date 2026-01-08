@@ -556,8 +556,8 @@ fun App(
                                         onSearchChange = { search = it },
                                         show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                                         modifier = Modifier
-                                            .fillMaxWidth()
                                             .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                            .fillMaxWidth()
                                             .padding(horizontal = 12.dp)
                                             .focusRequester(focusRequester)
                                             .focusProperties { canFocus = !disableGlobalSearch },
