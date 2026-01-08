@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.settings.UiState
+import com.youniqx.time.theme.themes
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import java.awt.Desktop
@@ -150,7 +151,7 @@ fun main() {
             )
         }
         val focusRequester = remember { FocusRequester() }
-        Window(
+        for ((i, theme) in themes.withIndex()) Window(
             onCloseRequest = ::exitApplication,
             onPreviewKeyEvent = {
                 if (
@@ -165,8 +166,12 @@ fun main() {
                 }
                 false
             },
-            state = windowState,
-            visible = isVisible,
+            state = rememberWindowState(
+                placement = WindowPlacement.Floating,
+                position = WindowPosition((15 + i * 430).dp, 50.dp),
+                size = DpSize(400.dp, 800.dp),
+            ),
+            visible = true,
             alwaysOnTop = true,
             icon = TrayIcon, // Todo
         ) {
@@ -211,7 +216,8 @@ fun main() {
                 setWindowBackground = {
                     window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
                 },
-                settingsViewModel = settingsViewModel
+                settingsViewModel = settingsViewModel,
+                theme = theme
             )
         }
     }

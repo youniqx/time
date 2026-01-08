@@ -3,7 +3,6 @@
 package com.youniqx.time
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset
 import androidx.compose.animation.core.StartOffsetType
@@ -16,7 +15,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -177,7 +175,7 @@ import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.LocalSpacing
-import com.youniqx.time.theme.TimerActiveColor
+import com.youniqx.time.theme.Theme
 import io.ktor.http.appendPathSegments
 import io.ktor.http.buildUrl
 import io.ktor.http.takeFrom
@@ -221,10 +219,11 @@ fun App(
     systemInDarkTheme: Boolean = isSystemInDarkTheme(),
     settingsViewModel: SettingsViewModel = viewModel(
         factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } }
-    )
+    ),
+    theme: Theme = com.youniqx.time.theme.custom.theme,
 ) {
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-    AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors) {
+    AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors, theme = theme) {
         if (setWindowBackground != null) {
             MaterialTheme.colorScheme.surface.let { color ->
                 LaunchedEffect(setWindowBackground, color) {
@@ -912,21 +911,6 @@ fun Issue(
     val myTotalTimeString = "$hours:${minutes.toString().padStart(length = 2, padChar = '0')}"
     val spacing = LocalSpacing.current
 
-    // Hover state for visual feedback
-    val interactionSource = remember { MutableInteractionSource() }
-    val isHovered by interactionSource.collectIsHoveredAsState()
-
-    // Animated surface color based on state
-    val surfaceColor by animateColorAsState(
-        targetValue = when {
-            open -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
-            isHovered -> MaterialTheme.colorScheme.surfaceContainerHigh
-            else -> MaterialTheme.colorScheme.surface
-        },
-        animationSpec = tween(150),
-        label = "issueSurfaceColor"
-    )
-
     SwipeableIssueCard(
         modifier = modifier
             .padding(vertical = 4.dp)
@@ -942,7 +926,7 @@ fun Issue(
                 .then(
                     if (open) Modifier.border(
                         width = 2.dp,
-                        color = TimerActiveColor,
+                        color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(spacing.cardRadius)
                     ) else Modifier
                 )
@@ -954,7 +938,7 @@ fun Issue(
                 ) {
                     startTracking()
                 },
-            color = surfaceColor,
+            color = MaterialTheme.colorScheme.surfaceContainer,
             shape = RoundedCornerShape(spacing.cardRadius),
             shadowElevation = if (open) 4.dp else 0.dp
         ) {

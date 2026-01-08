@@ -22,8 +22,8 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.theme.TimerActiveColor
-import com.youniqx.time.theme.TimerIdleColor
+import com.youniqx.time.theme.custom.TimerActiveColor
+import com.youniqx.time.theme.custom.TimerIdleColor
 import com.youniqx.time.theme.TimerTextStyle
 import kotlin.time.Duration
 

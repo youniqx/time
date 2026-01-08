@@ -26,7 +26,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun Section(title: @Composable () -> Unit, open: Boolean, count: Int, modifier: Modifier = Modifier) {
     val mergedStyle = LocalTextStyle.current.merge(MaterialTheme.typography.titleSmall)
     CompositionLocalProvider(
-        LocalContentColor provides MaterialTheme.colorScheme.primary,
         LocalTextStyle provides mergedStyle,
     ) {
         Row(

@@ -1,4 +1,4 @@
-package com.youniqx.time.theme
+package com.youniqx.time.theme.custom
 
 import androidx.compose.ui.graphics.Color
 

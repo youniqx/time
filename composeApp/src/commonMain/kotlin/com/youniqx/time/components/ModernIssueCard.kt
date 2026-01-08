@@ -50,7 +50,7 @@ import com.youniqx.time.WorkItemTypeIcon
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.theme.LocalSpacing
-import com.youniqx.time.theme.TimerActiveColor
+import com.youniqx.time.theme.custom.TimerActiveColor
 import com.youniqx.time.timer.formatCompact
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive

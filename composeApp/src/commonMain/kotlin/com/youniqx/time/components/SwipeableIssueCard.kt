@@ -43,7 +43,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.theme.LocalSpacing
-import com.youniqx.time.theme.TimerActiveColor
+import com.youniqx.time.theme.custom.TimerActiveColor
 import kotlin.math.roundToInt
 
 @Composable

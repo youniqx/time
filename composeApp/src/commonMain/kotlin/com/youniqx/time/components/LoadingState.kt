@@ -59,7 +59,7 @@ fun ShimmerIssueCard(modifier: Modifier = Modifier) {
     Card(
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = CardDefaults.cardColors().containerColor.copy(alpha = 0.7f)
         ),
         shape = RoundedCornerShape(spacing.cardRadius)
     ) {
