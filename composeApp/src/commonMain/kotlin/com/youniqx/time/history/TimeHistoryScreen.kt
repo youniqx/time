@@ -109,10 +109,7 @@ fun TimeHistoryScreen(
     val insets = WindowInsets.systemBarsForVisualComponents.asPaddingValues()
 
     // Period offset (0 = current, 1 = previous, 2 = 2 periods ago, etc.)
-    var periodOffset by remember { mutableStateOf(0) }
-
-    // Reset offset when range changes
-    remember(selectedRange) { periodOffset = 0 }
+    var periodOffset by remember(selectedRange) { mutableStateOf(0) }
 
     // Filter timelogs based on selected range and offset
     val filteredTimelogs = remember(timelogs, selectedRange, periodOffset) {
