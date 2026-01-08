@@ -32,9 +32,8 @@ fun TimeBadge(
         Text(
             text = time,
             color = MaterialTheme.colorScheme.onSecondaryContainer,
-            fontSize = 11.sp,
+            style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
-            lineHeight = 11.sp
         )
     }
 }

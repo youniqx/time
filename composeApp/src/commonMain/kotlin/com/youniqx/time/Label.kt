@@ -49,8 +49,7 @@ fun Label(label: BareWorkItemWidgets.Node, useColors: Boolean) {
         Text(
             text = displayText,
             color = textColor,
-            fontSize = 11.sp,
-            lineHeight = 11.sp,
+            style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
