@@ -219,33 +219,3 @@ val surfaceContainerLowDarkHighContrast = Color(0xFF1D2024)
 val surfaceContainerDarkHighContrast = Color(0xFF2E3035)
 val surfaceContainerHighDarkHighContrast = Color(0xFF393B40)
 val surfaceContainerHighestDarkHighContrast = Color(0xFF44474C)
-
-val tealLight = Color(0xFF006A66)
-val onTealLight = Color(0xFFFFFFFF)
-val tealContainerLight = Color(0xFF9CF1EB)
-val onTealContainerLight = Color(0xFF00504D)
-
-val tealLightMediumContrast = Color(0xFF003D3B)
-val onTealLightMediumContrast = Color(0xFFFFFFFF)
-val tealContainerLightMediumContrast = Color(0xFF187975)
-val onTealContainerLightMediumContrast = Color(0xFFFFFFFF)
-
-val tealLightHighContrast = Color(0xFF003230)
-val onTealLightHighContrast = Color(0xFFFFFFFF)
-val tealContainerLightHighContrast = Color(0xFF00524F)
-val onTealContainerLightHighContrast = Color(0xFFFFFFFF)
-
-val tealDark = Color(0xFF80D5CF)
-val onTealDark = Color(0xFF003735)
-val tealContainerDark = Color(0xFF00504D)
-val onTealContainerDark = Color(0xFF9CF1EB)
-
-val tealDarkMediumContrast = Color(0xFF96EBE5)
-val onTealDarkMediumContrast = Color(0xFF002B29)
-val tealContainerDarkMediumContrast = Color(0xFF489E99)
-val onTealContainerDarkMediumContrast = Color(0xFF000000)
-
-val tealDarkHighContrast = Color(0xFFABFFF9)
-val onTealDarkHighContrast = Color(0xFF000000)
-val tealContainerDarkHighContrast = Color(0xFF7CD1CB)
-val onTealContainerDarkHighContrast = Color(0xFF000E0D)

@@ -220,7 +220,7 @@ fun App(
     settingsViewModel: SettingsViewModel = viewModel(
         factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } }
     ),
-    theme: Theme = com.youniqx.time.theme.custom.theme,
+    theme: Theme = com.youniqx.time.theme.teal.theme,
 ) {
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors, theme = theme) {

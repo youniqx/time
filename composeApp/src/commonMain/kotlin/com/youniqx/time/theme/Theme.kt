@@ -20,17 +20,15 @@ data class Theme(
 )
 
 val themes = listOf(
-    com.youniqx.time.theme.custom.theme,
     com.youniqx.time.theme.rosybrown.theme,
     com.youniqx.time.theme.teal.theme,
-    com.youniqx.time.theme.teal2.theme,
 )
 
 @Composable
 fun AppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     useHighContrastColors: Boolean = false,
-    theme: Theme = com.youniqx.time.theme.custom.theme,
+    theme: Theme = com.youniqx.time.theme.teal.theme,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) {

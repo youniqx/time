@@ -151,7 +151,7 @@ fun main() {
             )
         }
         val focusRequester = remember { FocusRequester() }
-        for ((i, theme) in themes.withIndex()) Window(
+        Window(
             onCloseRequest = ::exitApplication,
             onPreviewKeyEvent = {
                 if (
@@ -166,12 +166,8 @@ fun main() {
                 }
                 false
             },
-            state = rememberWindowState(
-                placement = WindowPlacement.Floating,
-                position = WindowPosition((15 + i * 430).dp, 50.dp),
-                size = DpSize(400.dp, 800.dp),
-            ),
-            visible = true,
+            state = windowState,
+            visible = isVisible,
             alwaysOnTop = true,
             icon = TrayIcon, // Todo
         ) {
@@ -217,7 +213,6 @@ fun main() {
                     window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
                 },
                 settingsViewModel = settingsViewModel,
-                theme = theme
             )
         }
     }
