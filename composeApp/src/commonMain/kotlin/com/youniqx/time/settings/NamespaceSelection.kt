@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.NamespaceQuery
+import com.youniqx.time.modifier.changeFocusOnTab
 import kotlinx.coroutines.flow.drop
 
 class NamespaceSelectionState(val textFieldState: TextFieldState) {
@@ -89,6 +90,7 @@ fun NamespaceSelection(
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
             modifier = Modifier.fillMaxWidth()
+                .changeFocusOnTab { state.expanded = false }
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
             state = if (showSelectedNamespace) emptyTextFieldState else state.textFieldState,
             readOnly = showSelectedNamespace,

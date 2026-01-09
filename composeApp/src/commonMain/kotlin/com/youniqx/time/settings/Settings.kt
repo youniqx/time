@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.NamespaceQuery
+import com.youniqx.time.modifier.changeFocusOnTab
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.LocalSpacing
@@ -256,6 +257,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .disableGlobalSearchIfFocused()
+                .changeFocusOnTab()
                 .padding(vertical = 8.dp)
                 .padding(horizontal = 12.dp),
             isError = !instanceUrl.isNullOrEmpty() && parsedInstanceUrl == null,
@@ -270,6 +272,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .disableGlobalSearchIfFocused()
+                .changeFocusOnTab()
                 .padding(vertical = 8.dp)
                 .padding(horizontal = 12.dp),
             visualTransformation = PasswordVisualTransformation(),

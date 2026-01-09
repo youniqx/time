@@ -14,12 +14,13 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 
 @Composable
-fun Modifier.changeFocusOnTab(): Modifier {
+fun Modifier.changeFocusOnTab(afterTab: (() -> Unit)? = null): Modifier {
     val focusManager = LocalFocusManager.current
     return onPreviewKeyEvent {
         if (it.key == Key.Tab && it.type == KeyEventType.KeyDown) {
             val direction = if (it.isShiftPressed) FocusDirection.Previous else FocusDirection.Next
             focusManager.moveFocus(direction)
+            afterTab?.invoke()
             true
         } else {
             false
