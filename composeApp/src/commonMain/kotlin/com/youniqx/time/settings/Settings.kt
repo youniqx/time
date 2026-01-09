@@ -259,7 +259,6 @@ fun SettingsScreen(
             instanceUrl = instanceUrl,
             onInstanceUrlChange = onInstanceUrlChange
         )
-        val parsedInstanceUrl = instanceUrl?.let { Url(instanceUrl) }
         val uriHandler = LocalUriHandler.current
         TokenInput(
             modifier = Modifier
@@ -274,17 +273,8 @@ fun SettingsScreen(
                         modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
                         enabled = !instanceUrl.isNullOrEmpty(),
                         onClick = {
-                            parsedInstanceUrl?.let {
-                                val tokenUrl = buildUrl {
-                                    takeFrom(parsedInstanceUrl)
-                                    appendPathSegments("-", "user_settings", "personal_access_tokens")
-                                    parameters.append("name", "Time")
-                                    parameters.append("scopes", "api")
-                                    parameters.append(
-                                        "description",
-                                        "Token used by the Time app to help you track time on GitLab."
-                                    )
-                                }
+                            instanceUrl?.let {
+                                val tokenUrl = createTokenUrl(fromInstanceUrl = instanceUrl)
                                 uriHandler.openUri(tokenUrl.toString())
                             }
                         }) {

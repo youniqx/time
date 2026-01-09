@@ -25,9 +25,9 @@ enum class OnboardingStep {
 @Composable
 fun OnboardingScreen(
     loading: Boolean,
-    instanceUrl: String,
+    instanceUrl: String?,
     onInstanceUrlChange: (String) -> Unit,
-    token: String,
+    token: String?,
     onTokenChange: (String) -> Unit,
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,

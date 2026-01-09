@@ -239,9 +239,9 @@ fun App(
         if (showOnboarding) {
             OnboardingScreen(
                 loading = !settingsUiState.settingsLoaded,
-                instanceUrl = settingsUiState.instanceUrl.orEmpty(),
+                instanceUrl = settingsUiState.instanceUrl,
                 onInstanceUrlChange = settingsViewModel::setInstanceUrl,
-                token = settingsUiState.token.orEmpty(),
+                token = settingsUiState.token,
                 onTokenChange = settingsViewModel::setToken,
                 onComplete = { showOnboarding = false }
             )

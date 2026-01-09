@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -28,18 +29,22 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.settings.InstanceUrlInput
 import com.youniqx.time.settings.TokenInput
+import com.youniqx.time.settings.createTokenUrl
 import com.youniqx.time.theme.LocalSpacing
 
 @Composable
 fun GitLabSetupStep(
-    instanceUrl: String,
+    instanceUrl: String?,
     onInstanceUrlChange: (String) -> Unit,
-    token: String,
+    token: String?,
     onTokenChange: (String) -> Unit,
     onComplete: () -> Unit,
     onSkip: () -> Unit,
@@ -97,23 +102,23 @@ fun GitLabSetupStep(
 
         Spacer(modifier = Modifier.height(spacing.sm))
 
-        // Token creation helper
-        TextButton(
-            onClick = {
-                val url = if (instanceUrl.isNotBlank()) {
-                    "${instanceUrl.trimEnd('/')}/-/user_settings/personal_access_tokens"
-                } else {
-                    "https://gitlab.com/-/user_settings/personal_access_tokens"
+        SimpleTooltip("Open browser" + if (instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "") {
+            TextButton(
+                enabled = !instanceUrl.isNullOrEmpty(),
+                onClick = {
+                    instanceUrl?.let {
+                        val tokenUrl = createTokenUrl(fromInstanceUrl = instanceUrl)
+                        uriHandler.openUri(tokenUrl.toString())
+                    }
                 }
-                uriHandler.openUri(url)
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = spacing.sm)
+                )
+                Text("Create a new access token")
             }
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.OpenInNew,
-                contentDescription = null,
-                modifier = Modifier.padding(end = spacing.sm)
-            )
-            Text("Create a new access token")
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -130,7 +135,7 @@ fun GitLabSetupStep(
 
             Button(
                 onClick = onComplete,
-                enabled = instanceUrl.isNotBlank() && token.isNotBlank()
+                enabled = !instanceUrl.isNullOrBlank() && !token.isNullOrBlank()
             ) {
                 Text("Continue")
             }
