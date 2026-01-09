@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.settings.InstanceUrlInput
+import com.youniqx.time.settings.TokenInput
 import com.youniqx.time.theme.LocalSpacing
 
 @Composable
@@ -89,16 +90,9 @@ fun GitLabSetupStep(
         Spacer(modifier = Modifier.height(spacing.lg))
 
         // Token input
-        OutlinedTextField(
-            value = token,
-            onValueChange = onTokenChange,
-            label = { Text("Personal Access Token") },
-            modifier = Modifier.fillMaxWidth(),
-            visualTransformation = PasswordVisualTransformation(),
-            singleLine = true,
-            leadingIcon = {
-                Icon(Icons.Default.Key, contentDescription = null)
-            }
+        TokenInput(
+            token = token,
+            onTokenChange = onTokenChange,
         )
 
         Spacer(modifier = Modifier.height(spacing.sm))

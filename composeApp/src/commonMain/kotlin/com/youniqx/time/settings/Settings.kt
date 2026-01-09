@@ -251,7 +251,6 @@ fun SettingsScreen(
             Text("Show timer in menu bar")
             Switch(checked = showMenuBarTimer, onCheckedChange = { toggleShowMenuBarTimer() })
         }
-        val parsedInstanceUrl = instanceUrl?.let { Url(instanceUrl) }
         InstanceUrlInput(
             modifier = Modifier
                 .disableGlobalSearchIfFocused()
@@ -260,19 +259,15 @@ fun SettingsScreen(
             instanceUrl = instanceUrl,
             onInstanceUrlChange = onInstanceUrlChange
         )
+        val parsedInstanceUrl = instanceUrl?.let { Url(instanceUrl) }
         val uriHandler = LocalUriHandler.current
-        OutlinedTextField(
-            value = token.orEmpty(),
-            onValueChange = onTokenChange,
+        TokenInput(
             modifier = Modifier
-                .fillMaxWidth()
                 .disableGlobalSearchIfFocused()
-                .changeFocusOnTab()
                 .padding(vertical = 8.dp)
                 .padding(horizontal = 12.dp),
-            visualTransformation = PasswordVisualTransformation(),
-            label = { Text("GitLab Token") },
-            supportingText = { Text("Needs API read & write access.") },
+            token = token,
+            onTokenChange = onTokenChange,
             trailingIcon = {
                 SimpleTooltip("Create new GitLab token" + if (instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "") {
                     IconButton(
