@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.youniqx.time.settings.InstanceUrlInput
 import com.youniqx.time.theme.LocalSpacing
 
 @Composable
@@ -80,16 +81,9 @@ fun GitLabSetupStep(
         Spacer(modifier = Modifier.height(spacing.xl))
 
         // GitLab URL input
-        OutlinedTextField(
-            value = instanceUrl,
-            onValueChange = onInstanceUrlChange,
-            label = { Text("GitLab Instance URL") },
-            placeholder = { Text("https://gitlab.com") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            leadingIcon = {
-                Icon(Icons.Default.Language, contentDescription = null)
-            }
+        InstanceUrlInput(
+            instanceUrl = instanceUrl,
+            onInstanceUrlChange = onInstanceUrlChange
         )
 
         Spacer(modifier = Modifier.height(spacing.lg))

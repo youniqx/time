@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
@@ -251,19 +252,13 @@ fun SettingsScreen(
             Switch(checked = showMenuBarTimer, onCheckedChange = { toggleShowMenuBarTimer() })
         }
         val parsedInstanceUrl = instanceUrl?.let { Url(instanceUrl) }
-        OutlinedTextField(
-            value = instanceUrl.orEmpty(),
-            onValueChange = onInstanceUrlChange,
+        InstanceUrlInput(
             modifier = Modifier
-                .fillMaxWidth()
                 .disableGlobalSearchIfFocused()
-                .changeFocusOnTab()
                 .padding(vertical = 8.dp)
                 .padding(horizontal = 12.dp),
-            isError = !instanceUrl.isNullOrEmpty() && parsedInstanceUrl == null,
-            label = { Text("GitLab Instance Url") },
-            placeholder = { Text("https://gitlab.com") },
-            supportingText = { Text("Requires GitLab version 18.6 or higher.") },
+            instanceUrl = instanceUrl,
+            onInstanceUrlChange = onInstanceUrlChange
         )
         val uriHandler = LocalUriHandler.current
         OutlinedTextField(
