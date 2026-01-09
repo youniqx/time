@@ -62,6 +62,7 @@ kotlin {
             implementation(libs.settings.coroutines)
             implementation(libs.settings.makeObservable)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
             implementation(libs.compose.material3.adaptive)
             implementation(libs.compose.material3.adaptive.layout)
             implementation(libs.compose.material3.adaptive.navigation)

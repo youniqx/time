@@ -189,6 +189,9 @@ import io.ktor.http.takeFrom
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -587,9 +590,13 @@ fun App(
                                                 selectedTimeRange = TimeRange.Today
                                                 showHistory = true
                                             }),
-                                    heading = { Text(text = "Total Time Today") },
-                                    totalTime = 0,
-                                    timelogs = emptyList()
+                                    heading = { Text(text = "Today") },
+                                    timelogs = remember(allTimelogs) { allTimelogs.filter {
+                                        val now = Clock.System.now()
+                                        val timeZone = TimeZone.currentSystemDefault()
+                                        val startOfDay = now.toLocalDateTime(timeZone).date.atStartOfDayIn(timeZone)
+                                        it.spentAt in startOfDay..now
+                                    } }
                                 )
                             }
 

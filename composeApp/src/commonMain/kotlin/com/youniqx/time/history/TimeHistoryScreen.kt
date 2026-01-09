@@ -157,9 +157,6 @@ fun TimeHistoryScreen(
             }
     }
 
-    // Calculate totals
-    val totalTime = filteredTimelogs.sumOf { it.timeSpent }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -234,9 +231,8 @@ fun TimeHistoryScreen(
                 modifier = Modifier
                     .padding(horizontal = spacing.screenPadding)
                     .padding(bottom = spacing.lg),
-                totalTime = totalTime,
                 groupedByDay = groupedByDay,
-                timelogs = timelogs
+                timelogs = filteredTimelogs
             )
 
             // Content

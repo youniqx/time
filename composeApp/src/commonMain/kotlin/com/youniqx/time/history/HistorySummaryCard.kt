@@ -21,13 +21,14 @@ import com.youniqx.time.theme.LocalSpacing
 
 @Composable
 fun HistorySummaryCard(
-    totalTime: Int,
     timelogs: List<TimelogEntry>,
     modifier: Modifier = Modifier,
     heading: @Composable () -> Unit = { Text(text = "Total Time") },
     groupedByDay: List<DayGroup>? = null,
 ) {
     val spacing = LocalSpacing.current
+    // Calculate totals
+    val totalTime = timelogs.sumOf { it.timeSpent }
     Card(
         modifier = modifier.clip(CardDefaults.shape),
         colors = CardDefaults.cardColors(
