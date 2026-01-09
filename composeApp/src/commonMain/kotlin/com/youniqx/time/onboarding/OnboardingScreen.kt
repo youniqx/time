@@ -8,7 +8,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -25,12 +24,13 @@ enum class OnboardingStep {
 
 @Composable
 fun OnboardingScreen(
+    loading: Boolean,
     instanceUrl: String,
     onInstanceUrlChange: (String) -> Unit,
     token: String,
     onTokenChange: (String) -> Unit,
     onComplete: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     var currentStep by remember { mutableStateOf(OnboardingStep.Welcome) }
 
@@ -56,6 +56,7 @@ fun OnboardingScreen(
         when (step) {
             OnboardingStep.Welcome -> {
                 WelcomeStep(
+                    loading = loading,
                     onNext = { currentStep = OnboardingStep.GitLabSetup }
                 )
             }

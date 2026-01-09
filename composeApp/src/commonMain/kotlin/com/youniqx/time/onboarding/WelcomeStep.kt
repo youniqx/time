@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,8 +24,9 @@ import com.youniqx.time.theme.LocalSpacing
 
 @Composable
 fun WelcomeStep(
+    loading: Boolean,
     onNext: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
 
@@ -66,12 +68,16 @@ fun WelcomeStep(
 
         Spacer(modifier = Modifier.height(spacing.xxxl))
 
-        // Get Started button
-        Button(
-            onClick = onNext,
-            modifier = Modifier.fillMaxWidth(0.6f)
-        ) {
-            Text("Get Started")
+        if (loading) {
+            CircularProgressIndicator()
+        } else {
+            // Get Started button
+            Button(
+                onClick = onNext,
+                modifier = Modifier.fillMaxWidth(0.6f)
+            ) {
+                Text("Get Started")
+            }
         }
     }
 }

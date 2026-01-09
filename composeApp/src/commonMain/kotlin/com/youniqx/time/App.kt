@@ -52,14 +52,11 @@ import androidx.compose.material.icons.filled.DeleteForever
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
@@ -243,14 +240,18 @@ fun App(
             }
         }
 
+        var showOnboarding by remember(settingsUiState.settingsLoaded) {
+            mutableStateOf(settingsUiState.instanceUrl.isNullOrEmpty() || settingsUiState.token.isNullOrEmpty())
+        }
         // Show onboarding for new users
-        if (!settingsUiState.onboardingCompleted) {
+        if (showOnboarding) {
             OnboardingScreen(
+                loading = !settingsUiState.settingsLoaded,
                 instanceUrl = settingsUiState.instanceUrl.orEmpty(),
                 onInstanceUrlChange = settingsViewModel::setInstanceUrl,
                 token = settingsUiState.token.orEmpty(),
                 onTokenChange = settingsViewModel::setToken,
-                onComplete = settingsViewModel::completeOnboarding
+                onComplete = { showOnboarding = false }
             )
             return@AppTheme
         }

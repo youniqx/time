@@ -17,6 +17,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 data class UiState(
+    val settingsLoaded: Boolean,
     val instanceUrl: String?,
     val token: String?,
     val iterationCadenceId: String?,
@@ -28,7 +29,6 @@ data class UiState(
     val showMenuBarTimer: Boolean,
     val pinnedIssues: List<String>,
     val openTracking: OpenTracking?,
-    val onboardingCompleted: Boolean,
 )
 
 @OptIn(ExperimentalTime::class)
@@ -61,6 +61,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
     private val _uiState =
         MutableStateFlow(
             UiState(
+                settingsLoaded = false,
                 instanceUrl = null,
                 token = null,
                 iterationCadenceId = null,
@@ -72,7 +73,6 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
                 showMenuBarTimer = true,
                 pinnedIssues = emptyList(),
                 openTracking = null,
-                onboardingCompleted = false,
             )
         )
     val uiState = _uiState.asStateFlow()
@@ -80,7 +80,7 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
     private val json = Json { ignoreUnknownKeys = true }
 
     init {
-        settings.getStringOrNullFlow(SettingKey.InstanceUrl.name).loadInto { copy(instanceUrl = it) }
+        settings.getStringOrNullFlow(SettingKey.InstanceUrl.name).loadInto { copy(settingsLoaded = true, instanceUrl = it) }
         settings.getStringOrNullFlow(SettingKey.Token.name).loadInto { copy(token = it) }
         settings.getStringOrNullFlow(SettingKey.IterationCadenceId.name).loadInto { copy(iterationCadenceId = it) }
         settings.getBooleanFlow(SettingKey.DarkTheme.name, systemInDarkTheme).loadInto { copy(darkTheme = it) }
@@ -95,8 +95,6 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
         ).loadInto { copy(pinnedIssues = json.decodeFromString<List<String>>(it).filter(isGlobalId)) }
         settings.getStringOrNullFlow(SettingKey.OpenTracking.name)
             .loadInto { copy(openTracking = it?.let { json.decodeFromString(it) }) }
-        settings.getBooleanFlow(SettingKey.OnboardingCompleted.name, false)
-            .loadInto { copy(onboardingCompleted = it) }
     }
 
     fun toggleDarkTheme() {
@@ -175,12 +173,6 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
             } else {
                 settings.putString(SettingKey.OpenTracking.name, json.encodeToString(openTracking))
             }
-        }
-    }
-
-    fun completeOnboarding() {
-        viewModelScope.launch {
-            settings.putBoolean(SettingKey.OnboardingCompleted.name, true)
         }
     }
 
