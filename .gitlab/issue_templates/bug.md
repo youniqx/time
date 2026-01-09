@@ -9,4 +9,4 @@
  - Time version:
  - Platform:
 
-~Bug
+/label ~Bug
