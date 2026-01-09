@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.modifier.changeFocusOnTab
@@ -239,7 +240,7 @@ fun SettingsScreen(
             Text("Use label colors")
             Switch(checked = useLabelColors, onCheckedChange = { toggleUseLabelColors() })
         }
-        Row(
+        if (additionalTimerSupport.isSupported) Row(
             modifier = Modifier.fillMaxWidth().clickable(
                 onClickLabel = if (showMenuBarTimer) "Hide timer in menu bar" else "Show timer in menu bar",
                 role = Role.Switch,
@@ -248,7 +249,7 @@ fun SettingsScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Show timer in menu bar")
+            Text(additionalTimerSupport.settingsText.orEmpty())
             Switch(checked = showMenuBarTimer, onCheckedChange = { toggleShowMenuBarTimer() })
         }
         InstanceUrlInput(
