@@ -20,7 +20,7 @@ import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 
 @Composable
 fun Label(label: BareWorkItemWidgets.Node, useColors: Boolean) {
-    val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+    val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
     val defaultText = MaterialTheme.colorScheme.onSurfaceVariant
 
     val (bgColor, textColor) = if (useColors) {

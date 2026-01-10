@@ -5,6 +5,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.LightMode
@@ -24,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
@@ -39,20 +38,15 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youniqx.time.Label
 import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.NamespaceQuery
-import com.youniqx.time.modifier.changeFocusOnTab
+import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
-import com.youniqx.time.theme.LocalSpacing
-import io.ktor.http.Url
-import io.ktor.http.appendPathSegments
-import io.ktor.http.buildUrl
-import io.ktor.http.takeFrom
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -216,29 +210,48 @@ fun SettingsScreen(
             Text("Group sprint in epics")
             Switch(checked = groupSprintInEpics, onCheckedChange = { toggleGroupSprintInEpics() })
         }
-        Row(
+        FlowRow (
             modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (showLabelsByDefault) "Hide labels by default" else "Show labels by default",
+                onClickLabel = if (showLabelsByDefault) "Hide labels" else "Show labels",
                 role = Role.Switch,
                 onClick = toggleShowLabelsByDefault
             ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            itemVerticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Show labels by default")
-            Switch(checked = showLabelsByDefault, onCheckedChange = { toggleShowLabelsByDefault() })
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (useLabelColors) "Don't color labels" else "Use label colors",
-                role = Role.Switch,
-                onClick = toggleUseLabelColors
-            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text("Use label colors")
-            Switch(checked = useLabelColors, onCheckedChange = { toggleUseLabelColors() })
+            Text("Labels")
+            SingleChoiceSegmentedButtonRow {
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = 0, count = 3
+                    ),
+                    onClick = { if(showLabelsByDefault) toggleShowLabelsByDefault() },
+                    selected = !showLabelsByDefault,
+                    label = { Text("None", style = MaterialTheme.typography.labelSmall) }
+                )
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = 1, count = 3
+                    ),
+                    onClick = {
+                        if (!showLabelsByDefault) toggleShowLabelsByDefault()
+                        if (useLabelColors) toggleUseLabelColors()
+                    },
+                    selected = showLabelsByDefault && !useLabelColors,
+                    label = { Label(BareWorkItemWidgets.Node(__typename = "", id = "", color = "#a4c639", title = "Simple"), useColors = false) }
+                )
+                SegmentedButton(
+                    shape = SegmentedButtonDefaults.itemShape(
+                        index = 2, count = 3
+                    ),
+                    onClick = {
+                        if (!showLabelsByDefault) toggleShowLabelsByDefault()
+                        if (!useLabelColors) toggleUseLabelColors()
+                    },
+                    selected = showLabelsByDefault && useLabelColors,
+                    label = { Label(BareWorkItemWidgets.Node(__typename = "", id = "", color = "#a4c639", title = "Color"), useColors = true) }
+                )
+            }
         }
         if (additionalTimerSupport.isSupported) Row(
             modifier = Modifier.fillMaxWidth().clickable(

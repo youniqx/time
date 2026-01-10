@@ -61,7 +61,6 @@ private enum class SettingKey {
     ShowMenuBarTimer,
     PinnedIssues,
     OpenTracking,
-    OnboardingCompleted,
 }
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -109,32 +108,42 @@ class SettingsViewModel(systemInDarkTheme: Boolean) : ViewModel() {
     }
 
     fun toggleDarkTheme() {
+        val newValue = !uiState.value.darkTheme
+        _uiState.update { it.copy(darkTheme = newValue) } // optimistic ui
         viewModelScope.launch {
-            settings.putBoolean(SettingKey.DarkTheme.name, !uiState.value.darkTheme)
+            settings.putBoolean(SettingKey.DarkTheme.name, newValue)
         }
     }
 
     fun toggleHighContrastColors() {
+        val newValue = !uiState.value.highContrastColors
+        _uiState.update { it.copy(highContrastColors = newValue) } // optimistic ui
         viewModelScope.launch {
-            settings.putBoolean(SettingKey.HighContrastColors.name, !uiState.value.highContrastColors)
+            settings.putBoolean(SettingKey.HighContrastColors.name, newValue)
         }
     }
 
     fun toggleGroupSprintInEpics() {
+        val newValue = !uiState.value.groupSprintInEpics
+        _uiState.update { it.copy(groupSprintInEpics = newValue) } // optimistic ui
         viewModelScope.launch {
-            settings.putBoolean(SettingKey.GroupSprintInEpics.name, !uiState.value.groupSprintInEpics)
+            settings.putBoolean(SettingKey.GroupSprintInEpics.name, newValue)
         }
     }
 
     fun toggleShowLabelsByDefault() {
+        val newValue = !uiState.value.showLabelsByDefault
+        _uiState.update { it.copy(showLabelsByDefault = newValue) } // optimistic ui
         viewModelScope.launch {
-            settings.putBoolean(SettingKey.ShowLabelsByDefault.name, !uiState.value.showLabelsByDefault)
+            settings.putBoolean(SettingKey.ShowLabelsByDefault.name, newValue)
         }
     }
 
     fun toggleUseLabelColors() {
+        val newValue = !uiState.value.useLabelColors
+        _uiState.update { it.copy(useLabelColors = newValue) } // optimistic ui
         viewModelScope.launch {
-            settings.putBoolean(SettingKey.UseLabelColors.name, !uiState.value.useLabelColors)
+            settings.putBoolean(SettingKey.UseLabelColors.name, newValue)
         }
     }
 
