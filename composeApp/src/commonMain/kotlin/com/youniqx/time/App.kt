@@ -490,7 +490,8 @@ fun App(
                                 isLoading = loading,
                                 selectedRange = selectedTimeRange,
                                 onRangeChange = { selectedTimeRange = it },
-                                onBack = { showHistory = false }
+                                onBack = { showHistory = false },
+                                openTracking = settingsUiState.openTracking
                             )
                         } else {
                         val lazyListState = rememberLazyListState()
@@ -595,6 +596,7 @@ fun App(
                                                 showHistory = true
                                             }),
                                     heading = { Text(text = "Today") },
+                                    openTracking = settingsUiState.openTracking,
                                     timelogs = remember(allTimelogs) { allTimelogs.filter {
                                         val now = Clock.System.now()
                                         val timeZone = TimeZone.currentSystemDefault()

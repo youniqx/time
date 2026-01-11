@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.history.TimelogEntry
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -46,6 +47,9 @@ fun OpenTracking.toDurationOrNull(): Duration? = Duration.parseOrNull(currentTim
 private const val OPEN_TRACKING_TIMELOG_ID = "OPEN_TRACKING_TIMELOG_ID"
 
 val BareWorkItemWidgets.Node2.isOpenTracking: Boolean
+    get() = this.id == OPEN_TRACKING_TIMELOG_ID
+
+val TimelogEntry.isOpenTracking: Boolean
     get() = this.id == OPEN_TRACKING_TIMELOG_ID
 
 fun OpenTracking.toTimelog(currentUserId: String): BareWorkItemWidgets.Node2 {

@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.opentracking.OpenTracking
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.systemBarsForVisualComponents
@@ -117,6 +118,7 @@ fun TimeHistoryScreen(
     selectedRange: TimeRange,
     onRangeChange: (TimeRange) -> Unit,
     onBack: () -> Unit,
+    openTracking: OpenTracking?,
     modifier: Modifier = Modifier
 ) {
     val spacing = LocalSpacing.current
@@ -241,6 +243,7 @@ fun TimeHistoryScreen(
                     .padding(horizontal = spacing.screenPadding)
                     .padding(bottom = spacing.lg),
                 groupedByDay = groupedByDay,
+                openTracking = openTracking,
                 timelogs = filteredTimelogs
             )
 
