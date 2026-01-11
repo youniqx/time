@@ -143,6 +143,7 @@ fun SwipeableIssueCard(
             modifier = Modifier
                 .offset { IntOffset(offsetX.roundToInt(), 0) }
                 .draggable(
+                    enabled = !isTracking,
                     state = draggableState,
                     orientation = Orientation.Horizontal,
                     onDragStopped = {
@@ -165,35 +166,34 @@ fun SwipeableIssueCard(
 
         // Hover action buttons for desktop
         AnimatedVisibility(
-            visible = isHovered && offsetX == 0f,
+            visible = !isTracking && isHovered && offsetX == 0f,
             enter = fadeIn(tween(150)),
             exit = fadeOut(tween(150)),
             modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)
         ) {
+            if (isTracking) return@AnimatedVisibility
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Start tracking button
-                if (!isTracking) {
-                    SimpleTooltip("Start tracking") {
-                        IconButton(
-                            onClick = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onStartTracking()
-                            },
-                            colors = IconButtonDefaults.iconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
-                                contentColor = MaterialTheme.colorScheme.tertiary
-                            ),
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.PlayArrow,
-                                contentDescription = "Start tracking",
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
+                SimpleTooltip("Start tracking") {
+                    IconButton(
+                        onClick = {
+                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onStartTracking()
+                        },
+                        colors = IconButtonDefaults.iconButtonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                            contentColor = MaterialTheme.colorScheme.tertiary
+                        ),
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.PlayArrow,
+                            contentDescription = "Start tracking",
+                            modifier = Modifier.size(18.dp)
+                        )
                     }
                 }
                 // Pin/Unpin button
