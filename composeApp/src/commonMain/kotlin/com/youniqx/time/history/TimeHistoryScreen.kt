@@ -57,6 +57,9 @@ import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.opentracking.OpenTracking
+import com.youniqx.time.opentracking.RepresentingIndicator
+import com.youniqx.time.opentracking.isOpenTracking
+import com.youniqx.time.opentracking.representingColors
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.systemBarsForVisualComponents
@@ -296,13 +299,33 @@ fun TimeHistoryScreen(
                         item(key = "header-${dayGroup.dayLabel}") {
                             DayHeader(
                                 dayLabel = dayGroup.dayLabel,
-                                totalSeconds = dayGroup.totalSeconds
+                                totalSeconds = dayGroup.totalSeconds,
+                                openTrackingRepresentation = openTracking.takeIf {
+                                    dayGroup.entries.firstOrNull()?.isOpenTracking == true
+                                }?.run {
+                                    {
+                                        RepresentingIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            color = representingColors.color
+                                        )
+                                    }
+                                }
                             )
                         }
 
                         // Entries for this day
                         items(dayGroup.entries, key = { it.id }) { entry ->
-                            TimelogCard(entry = entry)
+                            TimelogCard(
+                                entry = entry,
+                                openTrackingRepresentation = openTracking.takeIf { entry.isOpenTracking }?.run {
+                                    {
+                                        RepresentingIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            color = representingColors.color
+                                        )
+                                    }
+                                }
+                            )
                         }
                     }
                 }
@@ -315,7 +338,8 @@ fun TimeHistoryScreen(
 private fun DayHeader(
     dayLabel: String,
     totalSeconds: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    openTrackingRepresentation: (@Composable () -> Unit)? = null,
 ) {
     val spacing = LocalSpacing.current
 
@@ -347,12 +371,18 @@ private fun DayHeader(
             shape = RoundedCornerShape(12.dp),
             color = MaterialTheme.colorScheme.secondaryContainer
         ) {
-            Text(
-                text = formatTimeSpent(totalSeconds),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                openTrackingRepresentation?.let {
+                    Spacer(Modifier.width(spacing.xs))
+                    openTrackingRepresentation()
+                }
+                Text(
+                    text = formatTimeSpent(totalSeconds),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
         }
     }
 }
@@ -360,7 +390,8 @@ private fun DayHeader(
 @Composable
 private fun TimelogCard(
     entry: TimelogEntry,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    openTrackingRepresentation: (@Composable () -> Unit)? = null,
 ) {
     val spacing = LocalSpacing.current
     val uriHandler = LocalUriHandler.current
@@ -414,13 +445,19 @@ private fun TimelogCard(
                     shape = RoundedCornerShape(8.dp),
                     color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
                 ) {
-                    Text(
-                        text = formatTimeSpent(entry.timeSpent),
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        openTrackingRepresentation?.let {
+                            Spacer(Modifier.width(spacing.xs))
+                            openTrackingRepresentation()
+                        }
+                        Text(
+                            text = formatTimeSpent(entry.timeSpent),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
 
