@@ -182,7 +182,6 @@ import io.ktor.http.appendPathSegments
 import io.ktor.http.buildUrl
 import io.ktor.http.takeFrom
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -1100,7 +1099,9 @@ fun Issue(
                 }
                 AnimatedVisibility(visible = open) {
                     if (!open) return@AnimatedVisibility
-                    var timeSinceOpen by remember { mutableStateOf(Duration.ZERO) }
+                    val timeSinceOpen = remember(openTracking, refresh(every = 1.seconds)) {
+                        Clock.System.now() - openTracking.timeOfOpen
+                    }
                     val timeSinceOpenInWholeMinutes = timeSinceOpen.inWholeMinutes.minutes
                     val customTimeSpent = openTracking.customTimeSpent
                     val focusRequester = remember { FocusRequester() }
@@ -1148,7 +1149,6 @@ fun Issue(
                                                 IconButton(
                                                     modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
                                                     onClick = {
-                                                        timeSinceOpen = customTimeSpentDuration
                                                         onOpenTrackingChange(
                                                             openTracking.copy(
                                                                 timeOfOpen = Clock.System.now() - customTimeSpentDuration,
@@ -1233,14 +1233,9 @@ fun Issue(
                             }
                         }
                     }
-                    LaunchedEffect(open, openTracking.timeOfOpen) {
+                    LaunchedEffect(open) {
                         if (!open) return@LaunchedEffect
                         focusRequester.requestFocus()
-                        while (true) {
-                            if (!isActive) return@LaunchedEffect
-                            timeSinceOpen = (Clock.System.now() - openTracking.timeOfOpen)
-                            delay(1.seconds)
-                        }
                     }
                 }
                 additionalContent?.invoke()
