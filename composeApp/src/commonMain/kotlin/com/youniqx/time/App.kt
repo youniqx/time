@@ -993,12 +993,36 @@ fun Issue(
                         },
                         inlineContent = mapOf(
                             "time" to InlineTextContent(
-                                placeholder = rememberTimeBadgePlaceholder(time = myTotalTimeString)
-                            ) {
-                                TimeBadge(
+                                placeholder = rememberTimeBadgePlaceholder(
                                     time = myTotalTimeString,
-                                    onClick = { showTimelogs = !showTimelogs }
+                                    trailingIconSize = if (open) 16.dp else null
                                 )
+                            ) {
+                                SimpleTooltip(
+                                    text = "Timelog Sum\nClick to ${if (showTimelogs) "hide" else "see"} details."
+                                ) {
+                                    openTracking.takeIf { open }?.run {
+                                        val representingColors = representingColors
+                                        TimeBadge(
+                                            time = myTotalTimeString,
+                                            backgroundColor = representingColors.container.copy(alpha = 0.7f),
+                                            color = representingColors.onContainer,
+                                            trailingIcon = {
+                                                RepresentingIndicator(
+                                                    modifier = Modifier.size(16.dp),
+                                                    color = representingColors.onContainer,
+                                                )
+                                            },
+                                            onClick = { showTimelogs = !showTimelogs }
+                                        )
+                                    } ?: TimeBadge(
+                                        time = myTotalTimeString,
+                                        backgroundColor =
+                                            MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        onClick = { showTimelogs = !showTimelogs }
+                                    )
+                                }
                             },
                             "closed" to InlineTextContent(
                                 Placeholder(
@@ -1082,7 +1106,7 @@ fun Issue(
                                     if (timelog.isOpenTracking && openTracking != null) {
                                         Spacer(modifier = Modifier.width(4.dp))
                                         openTracking.RepresentingIndicator(
-                                            modifier = modifier.size(16.dp),
+                                            modifier = Modifier.size(16.dp),
                                             color = openTracking.representingColors.color
                                         )
                                     }
