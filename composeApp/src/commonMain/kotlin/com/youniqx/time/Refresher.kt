@@ -18,8 +18,10 @@ import kotlin.time.Instant
 fun refresh(every: Duration): Instant {
     var output by remember { mutableStateOf(Clock.System.now()) }
     LaunchedEffect(every) {
+        // Sync refresh functions as much as possible
+        delay(timeMillis = output.toEpochMilliseconds() % every.inWholeMilliseconds)
         while (isActive) {
-            delay(every)
+            delay(duration = every)
             output = Clock.System.now()
         }
     }
