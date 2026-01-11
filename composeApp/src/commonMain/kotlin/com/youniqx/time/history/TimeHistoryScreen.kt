@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,8 +34,6 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SegmentedButton
@@ -46,7 +43,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -58,15 +54,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.gitlab.models.fragment.BareWorkItem
+import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.LocalSpacing
-import com.youniqx.time.theme.Spacing
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.hours
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -93,6 +88,20 @@ data class TimelogEntry(
     val issueUrl: String?,
     val issueIid: String?
 )
+
+fun BareWorkItemWidgets.Node2.toTimelogEntry(workItem: BareWorkItem?, cutoff: Instant): TimelogEntry? {
+    val spentAt = spentAt?.let { Instant.parseOrNull(it.toString()) }
+    if (spentAt == null || spentAt < cutoff) return null
+    return TimelogEntry(
+        id = id,
+        spentAt = spentAt,
+        summary = summary,
+        timeSpent = timeSpent,
+        issueTitle = workItem?.title,
+        issueUrl = workItem?.webUrl,
+        issueIid = workItem?.iid
+    )
+}
 
 data class DayGroup(
     val dayLabel: String,

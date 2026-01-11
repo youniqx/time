@@ -159,7 +159,7 @@ import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.history.HistorySummaryCard
 import com.youniqx.time.history.TimeHistoryScreen
 import com.youniqx.time.history.TimeRange
-import com.youniqx.time.history.TimelogEntry
+import com.youniqx.time.history.toTimelogEntry
 import com.youniqx.time.modifier.adaptivePadding
 import com.youniqx.time.modifier.changeFocusOnTab
 import com.youniqx.time.modifier.clip
@@ -458,28 +458,27 @@ fun App(
 
                             matchesSearch && matchesQuickFilters
                         }
+                        val openTrackingAsTimelog = remember(
+                            settingsUiState.openTracking, currentUserId, refresh(every = 1.seconds)
+                        ) { settingsUiState.openTracking?.toTimelog(currentUserId = currentUserId.orEmpty()) }
+                        val openTrackingIssue = remember(issues, settingsUiState.openTracking) {
+                            settingsUiState.openTracking?.let { openTracking ->
+                                issues?.firstOrNull { it.id == openTracking.workItemId }
+                            }
+                        }
                         // Aggregate timelogs from all issues for history view
                         // Fetch all timelogs (up to 1 year) - filtering by period is done in TimeHistoryScreen
-                        val allTimelogs = remember(issues, currentUserId) {
+                        val allTimelogs = remember(openTrackingAsTimelog, issues, currentUserId) {
                             val now = Clock.System.now()
                             val cutoff = now - 365.days // Fetch up to 1 year of history
-                            issues.orEmpty()
+                            val openTrackingAsEntry =
+                                openTrackingAsTimelog?.toTimelogEntry(workItem = openTrackingIssue, cutoff = cutoff)
+                            listOfNotNull(openTrackingAsEntry) + issues.orEmpty()
                                 .flatMap { issue ->
                                     issue.timelogs
                                         .filter { timelog -> timelog.user.id == currentUserId }
                                         .mapNotNull { timelog ->
-                                            val spentAt = timelog.spentAt?.let { Instant.parseOrNull(it.toString()) }
-                                            if (spentAt != null && spentAt >= cutoff) {
-                                                TimelogEntry(
-                                                    id = timelog.id,
-                                                    spentAt = spentAt,
-                                                    summary = timelog.summary,
-                                                    timeSpent = timelog.timeSpent,
-                                                    issueTitle = issue.title,
-                                                    issueUrl = issue.webUrl,
-                                                    issueIid = issue.iid
-                                                )
-                                            } else null
+                                            timelog.toTimelogEntry(workItem = issue, cutoff = cutoff)
                                         }
                                 }
                                 .sortedByDescending { it.spentAt }
