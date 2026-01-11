@@ -148,6 +148,7 @@ import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.components.SwipeableIssueCard
 import com.youniqx.time.components.SwitchTrackingDialog
 import com.youniqx.time.components.TimeBadge
+import com.youniqx.time.components.rememberTimeBadgePlaceholder
 import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.RefreshIssuesQuery
@@ -992,11 +993,7 @@ fun Issue(
                         },
                         inlineContent = mapOf(
                             "time" to InlineTextContent(
-                                Placeholder(
-                                    width = (myTotalTimeString.length * 8 + 14).sp,
-                                    height = 20.sp,
-                                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                                )
+                                placeholder = rememberTimeBadgePlaceholder(time = myTotalTimeString)
                             ) {
                                 TimeBadge(
                                     time = myTotalTimeString,
