@@ -170,6 +170,7 @@ import com.youniqx.time.opentracking.RepresentingIndicator
 import com.youniqx.time.opentracking.currentTimeSpentString
 import com.youniqx.time.opentracking.customTimeSpentHasErrorMessage
 import com.youniqx.time.opentracking.representingColors
+import com.youniqx.time.opentracking.toTimelogOrNull
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.settings.Settings
@@ -921,7 +922,10 @@ fun Issue(
     val uriHandler = LocalUriHandler.current
     val open = openTracking?.workItemId == issue.id
     var showTimelogs by remember { mutableStateOf(false) }
-    val allTimelogs = issue.timelogs
+    val openTrackingAsTimelog = remember(
+        openTracking, currentUserId, open, refresh(every = 1.seconds)
+    ) { openTracking.takeIf { open }?.toTimelogOrNull(currentUserId = currentUserId.orEmpty()) }
+    val allTimelogs = issue.timelogs + listOfNotNull(openTrackingAsTimelog)
     val myTimelogs = allTimelogs.filter { it.user.id == currentUserId }
     val myTotalTime = myTimelogs.fold(0) { acc, timelog -> acc + timelog.timeSpent }
     val totalMinutes = myTotalTime / 60

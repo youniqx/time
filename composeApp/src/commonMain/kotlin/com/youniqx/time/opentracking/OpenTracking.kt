@@ -1,3 +1,4 @@
+@file:OptIn(ExperimentalTime::class)
 package com.youniqx.time.opentracking
 
 import androidx.compose.material.icons.Icons
@@ -9,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration
@@ -36,9 +38,25 @@ data class OpenTracking(
     )
 }
 
-@OptIn(ExperimentalTime::class)
 val OpenTracking.currentTimeSpentString: String
     get() = customTimeSpent ?: (Clock.System.now() - timeOfOpen).inWholeMinutes.minutes.toString()
+
+fun OpenTracking.toDurationOrNull(): Duration? = Duration.parseOrNull(currentTimeSpentString)
+
+fun OpenTracking.toTimelogOrNull(currentUserId: String): BareWorkItemWidgets.Node2? {
+    val timeSpent = toDurationOrNull()?.inWholeSeconds?.toInt() ?: return null
+    return BareWorkItemWidgets.Node2(
+        __typename = "",
+        id = "",
+        spentAt = Clock.System.now().toString(),
+        summary = summary,
+        timeSpent = timeSpent,
+        user = BareWorkItemWidgets.User(
+            __typename = "",
+            id = currentUserId
+        )
+    )
+}
 
 const val customTimeSpentHasErrorMessage = "Manually entered time is not valid"
 private const val customTimeSpentInfoMessage = "Manually entered time.\nTimer not running."
