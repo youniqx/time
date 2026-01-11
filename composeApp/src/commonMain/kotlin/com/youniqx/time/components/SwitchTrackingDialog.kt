@@ -11,12 +11,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.settings.OpenTracking
-import kotlin.time.Clock
+import com.youniqx.time.opentracking.OpenTracking
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)

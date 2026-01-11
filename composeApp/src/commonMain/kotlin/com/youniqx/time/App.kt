@@ -164,9 +164,10 @@ import com.youniqx.time.modifier.changeFocusOnTab
 import com.youniqx.time.modifier.clip
 import com.youniqx.time.modifier.onCtrlOrMetaEnter
 import com.youniqx.time.onboarding.OnboardingScreen
+import com.youniqx.time.opentracking.OpenTracking
+import com.youniqx.time.opentracking.currentTimeSpentString
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
-import com.youniqx.time.settings.OpenTracking
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
@@ -645,7 +646,7 @@ fun App(
                                             commitTimeTrackingEnabled = false
                                             commitTimeTrackingErrors = null
                                             coroutineScope.launch {
-                                                settingsUiState.openTracking?.let {
+                                                settingsUiState.openTracking?.let { openTracking ->
                                                     suspend fun manualRefresh() {
                                                         // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
                                                         val success = "Saved successfully!"
@@ -677,17 +678,14 @@ fun App(
                                                         settingsViewModel.setOpenTracking(null)
                                                     }
 
-                                                    val timeSpent = it.customTimeSpent
-                                                        ?: (Clock.System.now() - it.timeOfOpen)
-                                                            .inWholeMinutes.minutes.toString()
                                                     val result = apolloClient.mutation(
                                                         TimelogCreateMutation(
                                                             workItemId = listOf(id),
                                                             input =
                                                                 TimelogCreateInput.Builder()
                                                                     .issuableId(id)
-                                                                    .summary(it.summary.orEmpty())
-                                                                    .timeSpent(timeSpent)
+                                                                    .summary(openTracking.summary.orEmpty())
+                                                                    .timeSpent(openTracking.currentTimeSpentString)
                                                                     .build()
                                                         )
                                                     ).execute()
@@ -943,7 +941,11 @@ fun Issue(
                 .then(
                     if (open) Modifier.border(
                         width = 2.dp,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = if (openTracking.customTimeSpentHasError) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.primary
+                        },
                         shape = RoundedCornerShape(spacing.cardRadius)
                     ) else Modifier
                 )
@@ -1182,7 +1184,10 @@ fun Issue(
                                     }
                                 }
                             },
-                            isError = customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
+                            isError = openTracking.customTimeSpentHasError,
+                            supportingText = if (openTracking.customTimeSpentHasError) {
+                                { Text("Manually entered time is not valid") }
+                            } else null
                         )
                         FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                             AdditionalActions(issue, pinned, togglePinned)
@@ -1197,7 +1202,8 @@ fun Issue(
                             SimpleTooltip("Commit time tracking") {
                                 FilledTonalIconButton(
                                     modifier = Modifier.padding(start = 4.dp),
-                                    onClick = commitTimeTracking
+                                    onClick = commitTimeTracking,
+                                    enabled = !openTracking.customTimeSpentHasError
                                 ) {
                                     val x by rememberInfiniteTransition().animateValue(
                                         initialValue = if (commitTimeTrackingEnabled) 0.dp else (-35).dp,

@@ -6,6 +6,7 @@ import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.coroutines.toFlowSettings
 import com.russhwolf.settings.observable.makeObservable
+import com.youniqx.time.opentracking.OpenTracking
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,16 +31,6 @@ data class UiState(
     val showMenuBarTimer: Boolean,
     val pinnedIssues: List<String>,
     val openTracking: OpenTracking?,
-)
-
-@OptIn(ExperimentalTime::class)
-@Serializable
-data class OpenTracking(
-    val workItemId: String,
-    val workItemTitle: String? = null,
-    val summary: String? = null,
-    val timeOfOpen: Instant,
-    val customTimeSpent: String? = null,
 )
 
 @Serializable
