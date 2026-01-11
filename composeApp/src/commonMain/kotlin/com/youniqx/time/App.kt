@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Start
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Summarize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
@@ -165,7 +166,10 @@ import com.youniqx.time.modifier.clip
 import com.youniqx.time.modifier.onCtrlOrMetaEnter
 import com.youniqx.time.onboarding.OnboardingScreen
 import com.youniqx.time.opentracking.OpenTracking
+import com.youniqx.time.opentracking.RepresentingIndicator
 import com.youniqx.time.opentracking.currentTimeSpentString
+import com.youniqx.time.opentracking.customTimeSpentHasErrorMessage
+import com.youniqx.time.opentracking.representingColors
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.settings.Settings
@@ -941,11 +945,7 @@ fun Issue(
                 .then(
                     if (open) Modifier.border(
                         width = 2.dp,
-                        color = if (openTracking.customTimeSpentHasError) {
-                            MaterialTheme.colorScheme.error
-                        } else {
-                            MaterialTheme.colorScheme.primary
-                        },
+                        color = openTracking.representingColors.color,
                         shape = RoundedCornerShape(spacing.cardRadius)
                     ) else Modifier
                 )
@@ -1111,6 +1111,7 @@ fun Issue(
                             value = openTracking.summary.orEmpty(),
                             label = { Text("What have I achieved? (optional)") },
                             onValueChange = { text -> onOpenTrackingChange(openTracking.copy(summary = text)) },
+                            leadingIcon = { Icon(Icons.Outlined.Summarize, contentDescription = null) },
                         )
                         val timeSinceOpenString = timeSinceOpenInWholeMinutes.toComponents { hours, minutes, _, _ ->
                             "${hours}h ${minutes}m"
@@ -1133,6 +1134,7 @@ fun Issue(
                                         }
                                     }
                                 ),
+                            leadingIcon = { openTracking.RepresentingIndicator(openTracking.representingColors.color) },
                             trailingIcon = {
                                 when {
                                     customTimeSpent != null -> Row {
@@ -1186,7 +1188,7 @@ fun Issue(
                             },
                             isError = openTracking.customTimeSpentHasError,
                             supportingText = if (openTracking.customTimeSpentHasError) {
-                                { Text("Manually entered time is not valid") }
+                                { Text(customTimeSpentHasErrorMessage) }
                             } else null
                         )
                         FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
