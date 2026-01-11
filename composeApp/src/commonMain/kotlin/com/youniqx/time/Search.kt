@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isAltPressed
@@ -46,6 +47,7 @@ fun Search(
     search: String,
     onSearchChange: (String) -> Unit,
     show: Boolean,
+    canFocus: Boolean,
     modifier: Modifier = Modifier,
     onPress: () -> Unit
 ) {
@@ -59,9 +61,9 @@ fun Search(
     OutlinedTextField(
         value = search,
         onValueChange = onSearchChange,
-
         singleLine = true,
         modifier = modifier
+            .focusProperties { this.canFocus = canFocus }
             .onPreviewKeyEvent {
                 if (
                     !it.isMetaPressed &&
@@ -90,7 +92,9 @@ fun Search(
             {
                 SimpleTooltip("Clear search") {
                     IconButton(
-                        modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
+                        modifier = Modifier
+                            .focusProperties { this.canFocus = canFocus }
+                            .pointerHoverIcon(PointerIcon.Default),
                         onClick = { onSearchChange("") }
                     ) {
                         Icon(

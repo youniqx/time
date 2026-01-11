@@ -557,12 +557,12 @@ fun App(
                                         search = search,
                                         onSearchChange = { search = it },
                                         show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
+                                        canFocus = !disableGlobalSearch,
                                         modifier = Modifier
                                             .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
                                             .fillMaxWidth()
                                             .padding(horizontal = 12.dp)
-                                            .focusRequester(focusRequester)
-                                            .focusProperties { canFocus = !disableGlobalSearch },
+                                            .focusRequester(focusRequester),
                                         onPress = { disableGlobalSearch = false }
                                     )
                                     QuickFilters(
