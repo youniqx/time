@@ -16,7 +16,9 @@ data class OpenTracking(
     val timeOfOpen: Instant,
     val customTimeSpent: String? = null,
 ) {
-    val customTimeSpentHasError = customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
+    val customTimeSpentHasError by lazy {
+        customTimeSpent?.let { Duration.parseOrNull(it.trim()) == null } ?: false
+    }
 }
 
 @OptIn(ExperimentalTime::class)
