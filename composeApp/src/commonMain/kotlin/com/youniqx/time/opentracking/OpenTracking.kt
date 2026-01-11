@@ -57,9 +57,9 @@ val OpenTracking.representingColors: OpenTracking.RepresentingColors
             onContainer = MaterialTheme.colorScheme.onErrorContainer,
         )
         else -> OpenTracking.RepresentingColors(
-            color = MaterialTheme.colorScheme.primary,
-            container = MaterialTheme.colorScheme.primaryContainer,
-            onContainer = MaterialTheme.colorScheme.onPrimaryContainer,
+            color = MaterialTheme.colorScheme.secondary,
+            container = MaterialTheme.colorScheme.secondaryContainer,
+            onContainer = MaterialTheme.colorScheme.onSecondaryContainer,
         )
     }
 
