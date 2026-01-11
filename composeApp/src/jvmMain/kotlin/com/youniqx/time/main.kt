@@ -33,6 +33,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.youniqx.time.opentracking.toDurationOrNull
 import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.settings.UiState
 import com.youniqx.time.theme.themes
@@ -98,27 +99,12 @@ fun main() {
             viewModelStoreOwner = appViewModelStoreOwner
         )
         val settingsUiState by settingsViewModel.uiState.collectAsState()
-        // State for menu bar timer
-        var elapsedTime by remember { mutableStateOf(Duration.ZERO) }
-
-        // Update elapsed time every second when tracking
-        LaunchedEffect(settingsUiState.openTracking) {
-            val openTracking = settingsUiState.openTracking
-            if (openTracking != null) {
-                while (isActive) {
-                    elapsedTime = Clock.System.now() - openTracking.timeOfOpen
-                    delay(1.seconds)
-                }
-            } else {
-                elapsedTime = Duration.ZERO
-            }
-        }
 
         // Create dynamic tray icon
         val trayIcon = remember(
             settingsUiState.showMenuBarTimer,
             settingsUiState.openTracking,
-            elapsedTime
+            refresh(every = 1.seconds)
         ) {
             val showTimer = settingsUiState.showMenuBarTimer
             val openTracking = settingsUiState.openTracking
@@ -126,7 +112,7 @@ fun main() {
             if (showTimer && openTracking != null) {
                 MenuBarTimerIcon(
                     title = openTracking.workItemTitle,
-                    elapsed = elapsedTime
+                    elapsed = openTracking.toDurationOrNull() ?: Duration.ZERO
                 )
             } else {
                 TrayIcon
