@@ -43,14 +43,19 @@ val OpenTracking.currentTimeSpentString: String
 
 fun OpenTracking.toDurationOrNull(): Duration? = Duration.parseOrNull(currentTimeSpentString)
 
-fun OpenTracking.toTimelogOrNull(currentUserId: String): BareWorkItemWidgets.Node2? {
-    val timeSpent = toDurationOrNull()?.inWholeSeconds?.toInt() ?: return null
+private const val OPEN_TRACKING_TIMELOG_ID = "OPEN_TRACKING_TIMELOG_ID"
+
+val BareWorkItemWidgets.Node2.isOpenTracking: Boolean
+    get() = this.id == OPEN_TRACKING_TIMELOG_ID
+
+fun OpenTracking.toTimelog(currentUserId: String): BareWorkItemWidgets.Node2 {
+    val timeSpent = toDurationOrNull() ?: Duration.ZERO
     return BareWorkItemWidgets.Node2(
         __typename = "",
-        id = "",
+        id = OPEN_TRACKING_TIMELOG_ID,
         spentAt = Clock.System.now().toString(),
         summary = summary,
-        timeSpent = timeSpent,
+        timeSpent = timeSpent.inWholeSeconds.toInt(),
         user = BareWorkItemWidgets.User(
             __typename = "",
             id = currentUserId

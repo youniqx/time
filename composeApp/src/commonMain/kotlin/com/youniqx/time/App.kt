@@ -60,7 +60,6 @@ import androidx.compose.material.icons.outlined.Summarize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -169,8 +168,9 @@ import com.youniqx.time.opentracking.OpenTracking
 import com.youniqx.time.opentracking.RepresentingIndicator
 import com.youniqx.time.opentracking.currentTimeSpentString
 import com.youniqx.time.opentracking.customTimeSpentHasErrorMessage
+import com.youniqx.time.opentracking.isOpenTracking
 import com.youniqx.time.opentracking.representingColors
-import com.youniqx.time.opentracking.toTimelogOrNull
+import com.youniqx.time.opentracking.toTimelog
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.settings.Settings
@@ -923,8 +923,8 @@ fun Issue(
     var showTimelogs by remember { mutableStateOf(false) }
     val openTrackingAsTimelog = remember(
         openTracking, currentUserId, open, refresh(every = 1.seconds)
-    ) { openTracking.takeIf { open }?.toTimelogOrNull(currentUserId = currentUserId.orEmpty()) }
-    val allTimelogs = issue.timelogs + listOfNotNull(openTrackingAsTimelog)
+    ) { openTracking.takeIf { open }?.toTimelog(currentUserId = currentUserId.orEmpty()) }
+    val allTimelogs = listOfNotNull(openTrackingAsTimelog) + issue.timelogs
     val myTimelogs = allTimelogs.filter { it.user.id == currentUserId }
     val myTotalTime = myTimelogs.fold(0) { acc, timelog -> acc + timelog.timeSpent }
     val totalMinutes = myTotalTime / 60
@@ -1052,20 +1052,19 @@ fun Issue(
                 }
                 AnimatedVisibility(visible = showTimelogs) {
                     Column(modifier = Modifier.padding(top = 8.dp)) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 8.dp),
-                            thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.outlineVariant
-                        )
                         myTimelogs.forEachIndexed { index, timelog ->
                             val isEven = index % 2 == 0
                             val rowBg = if (isEven) {
                                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                             } else {
-                                Color.Transparent
+                                Transparent
                             }
                             SimpleTooltip(timelog.spentAt?.let { Instant.parseOrNull(it.toString()) }?.let {
-                                "${formatDuration(Clock.System.now() - it, RelativeTime.Past)} ago"
+                                if (timelog.isOpenTracking) {
+                                    "Currently tracking"
+                                } else {
+                                    "${formatDuration(Clock.System.now() - it, RelativeTime.Past)} ago"
+                                }
                             }.orEmpty()) {
                                 Row(
                                     modifier = Modifier
@@ -1081,8 +1080,15 @@ fun Issue(
                                         text = "$h:${m.toString().padStart(length = 2, padChar = '0')}",
                                         fontFamily = FontFamily.Monospace,
                                         style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.width(48.dp)
+                                        modifier = Modifier.width(48.dp - if (timelog.isOpenTracking) 12.dp else 0.dp)
                                     )
+                                    if (timelog.isOpenTracking && openTracking != null) {
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        openTracking.RepresentingIndicator(
+                                            modifier = modifier.size(16.dp),
+                                            color = openTracking.representingColors.color
+                                        )
+                                    }
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         modifier = Modifier.weight(1f),
@@ -1139,7 +1145,12 @@ fun Issue(
                                         }
                                     }
                                 ),
-                            leadingIcon = { openTracking.RepresentingIndicator(openTracking.representingColors.color) },
+                            leadingIcon = {
+                                openTracking.RepresentingIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = openTracking.representingColors.color
+                                )
+                            },
                             trailingIcon = {
                                 when {
                                     customTimeSpent != null -> Row {

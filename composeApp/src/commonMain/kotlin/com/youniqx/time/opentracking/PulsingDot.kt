@@ -8,13 +8,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 
 @Composable
 fun PulsingDot(color: Color, modifier: Modifier = Modifier) {
@@ -29,9 +28,11 @@ fun PulsingDot(color: Color, modifier: Modifier = Modifier) {
         label = "pulseAlpha"
     )
 
-    Box(
-        modifier = modifier
-            .size(12.dp)
-            .background(color.copy(alpha = alpha), CircleShape)
-    )
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize(0.5f)
+                .background(color.copy(alpha = alpha), CircleShape)
+        )
+    }
 }
