@@ -38,6 +38,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youniqx.time.Label
@@ -47,7 +48,6 @@ import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun Settings(
