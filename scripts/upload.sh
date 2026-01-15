@@ -17,6 +17,15 @@ if [ "$CI" = "true" ]; then
     glab config set -g host "$CI_SERVER_HOST"
 fi
 
+glab release upload "${CI_COMMIT_TAG}" --assets-links='
+  [
+    {
+      "name": "Time Website",
+      "url": "'"$CI_PAGES_URL"'",
+      "link_type": "other"
+    }
+  ]'
+
 for f in time-*.*; do
   # path#name#type
   glab release upload "${CI_COMMIT_TAG}" "${f}#${f}#image"
