@@ -46,7 +46,7 @@ class RemoteNamespacesRepository(
         scope.launch {
             apolloClientFlow.filterNotNull().collect { apolloClient ->
                 val response = apolloClient.query(NamespaceQuery()).execute()
-                _namespaces.update { SourceAware(source = DataSource.Remote, data = response.data) }
+                _namespaces.update { SourceAware(source = DataSource.Remote, data = response.data, isSyncing = false) }
             }
         }
     }

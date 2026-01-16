@@ -108,7 +108,6 @@ import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.Placeholder
@@ -125,16 +124,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
-import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.api.ApolloResponse
-import com.apollographql.apollo.cache.normalized.FetchPolicy
-import com.apollographql.apollo.cache.normalized.api.CacheKey
-import com.apollographql.apollo.cache.normalized.api.CacheKeyGenerator
-import com.apollographql.apollo.cache.normalized.api.CacheKeyGeneratorContext
-import com.apollographql.apollo.cache.normalized.api.MemoryCacheFactory
-import com.apollographql.apollo.cache.normalized.fetchPolicy
-import com.apollographql.apollo.cache.normalized.normalizedCache
-import com.apollographql.apollo.cache.normalized.watch
 import com.youniqx.time.components.LoadingIssuesList
 import com.youniqx.time.components.NoIssuesEmptyState
 import com.youniqx.time.components.NoSearchResultsEmptyState
@@ -153,8 +142,6 @@ import com.youniqx.time.domain.models.currentTimeSpentString
 import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.domain.models.isOpenTracking
 import com.youniqx.time.domain.models.toTimelog
-import com.youniqx.time.gitlab.models.IssuesQuery
-import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.RefreshIssuesQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
@@ -172,15 +159,14 @@ import com.youniqx.time.onboarding.OnboardingScreen
 import com.youniqx.time.opentracking.RepresentingIndicator
 import com.youniqx.time.opentracking.customTimeSpentHasErrorMessage
 import com.youniqx.time.opentracking.representingColors
+import com.youniqx.time.presentation.workitems.WorkItemsViewModel
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.LocalSpacing
 import com.youniqx.time.theme.Theme
-import io.ktor.http.appendPathSegments
-import io.ktor.http.buildUrl
-import io.ktor.http.takeFrom
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -244,64 +230,23 @@ fun App(
             return@AppTheme
         }
 
-        var currentUserId: String? by remember { mutableStateOf(null) }
-        var issues: List<BareWorkItem>? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
-        var loading: Boolean by remember { mutableStateOf(false) }
         var showHistory by remember { mutableStateOf(false) }
         var selectedTimeRange by remember { mutableStateOf(TimeRange.Today) }
-        var isRefreshing by remember { mutableStateOf(false) }
-        var refreshTrigger by remember { mutableStateOf(0) }
         var disableGlobalSearch by remember { mutableStateOf(false) }
         val disableGlobalSearchIfFocused: Modifier.() -> Modifier = {
             onFocusChanged { disableGlobalSearch = it.hasFocus }
         }
-        val isPreview = LocalInspectionMode.current
 
         val apolloClient = remember(sourceAwareSettings) { sourceAwareSettings.toApolloClientOrNull() }
+        val viewModel: WorkItemsViewModel = metroViewModel()
+        val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+        var loading: Boolean = uiState?.isSyncing ?: true
+        var isRefreshing by remember(uiState) { mutableStateOf(false) }
+        val issues = uiState?.data?.workItems
+        val currentUserId = uiState?.data?.currentUserId
 
-        LaunchedEffect(
-            search,
-            settings.namespaceFullPath,
-            settings.iterationCadence,
-            settings.pinnedIssues,
-            settings.groupSprintInEpics,
-            apolloClient,
-            refreshTrigger
-        ) {
-            if (isPreview) {
-                currentUserId = previewUserId
-                issues = previewIssues
-                return@LaunchedEffect
-            }
-            if (apolloClient == null) return@LaunchedEffect
-            val namespaceFullPath = settings.namespaceFullPath ?: return@LaunchedEffect
-            val iterationCadenceNamespaceFullPath = settings.iterationCadence?.namespaceFullPath
-                ?: return@LaunchedEffect
-            if (!isRefreshing) loading = true
-            if (search.isNotEmpty()) delay(300)
-            val pinnedPlusOpen = settings.pinnedIssues +
-                    (settings.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
-            val query = IssuesQuery.Builder()
-                .namespaceFullPath(namespaceFullPath)
-                .iterationCadenceNamespaceFullPath(iterationCadenceNamespaceFullPath)
-                .iterationCadenceId(settings.iterationCadence.id?.let { listOf(it) } ?: emptyList())
-                .pinnedIds(pinnedPlusOpen)
-                // skip when searching to reduce query complexity
-                .doPinnedSearch(pinnedPlusOpen.isNotEmpty() && search.isBlank())
-                .search(search)
-                .doSearch(search.isNotBlank())
-                .build()
-            apolloClient.query(query).fetchPolicy(FetchPolicy.NetworkFirst).watch().collect {
-                currentUserId = it.data?.currentUser?.id.toString()
-                issues = it.extractIssues(
-                    groupSprintInEpics = settings.groupSprintInEpics,
-                )
-                loading = false
-                isRefreshing = false
-            }
-        }
         val singlePaneDirective = remember { PaneScaffoldDirective.Default }
         val defaultPaneDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo())
         var anchorRefresher by remember { mutableStateOf(false) }
@@ -500,7 +445,7 @@ fun App(
                             isRefreshing = isRefreshing,
                             onRefresh = {
                                 isRefreshing = true
-                                refreshTrigger++
+                                viewModel.search(search, setSyncing = false)
                             },
                             modifier = Modifier.onConsumedWindowInsetsChanged {
                                 consumedWindowInsets.insets = it
@@ -518,7 +463,11 @@ fun App(
                                 ) {
                                     Search(
                                         search = search,
-                                        onSearchChange = { search = it },
+                                        onSearchChange = {
+                                            search = it
+                                            loading = true
+                                            viewModel.search(it)
+                                        },
                                         show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                                         canFocus = !disableGlobalSearch,
                                         modifier = Modifier
@@ -834,29 +783,8 @@ val BareWorkItem.assignees get() = widgets?.firstOrNull { it.bareWorkItemWidgets
     ?.bareWorkItemWidgets?.onWorkItemWidgetAssignees?.assignees
 val BareWorkItem.labels get() = widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetLabels != null }
     ?.bareWorkItemWidgets?.onWorkItemWidgetLabels?.labels
-val IssuesQuery.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
-    ?.onWorkItemWidgetHierarchy?.parent?.bareWorkItem
 val BareWorkItem.timelogs get() = widgets?.firstOrNull { it.bareWorkItemWidgets.onWorkItemWidgetTimeTracking != null }
     ?.bareWorkItemWidgets?.onWorkItemWidgetTimeTracking?.timelogs?.nodes?.filterNotNull().orEmpty()
-
-@Suppress("DEPRECATION") // experimental api
-private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
-    groupSprintInEpics: Boolean,
-): List<BareWorkItem> {
-    val searchNamespace = data?.searchNamespace
-    return buildList {
-        addAll(data?.iterationCadenceNamespace?.workItems?.nodes?.map {
-            if (groupSprintInEpics) {
-                it?.parent ?: it?.bareWorkItem
-            } else {
-                it?.bareWorkItem
-            }
-        }.orEmpty())
-        addAll(searchNamespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(searchNamespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(searchNamespace?.searchIid?.nodes?.map { it?.bareWorkItem }.orEmpty())
-    }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
-}
 
 @OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable

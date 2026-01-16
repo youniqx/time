@@ -50,7 +50,8 @@ class LocalSettingsRepository(
         MutableStateFlow(
             SourceAware(
                 data = defaultSettings,
-                source = DataSource.Default
+                source = DataSource.Default,
+                isSyncing = true,
             )
         )
     override val settings = _settings.asStateFlow()
@@ -185,7 +186,13 @@ class LocalSettingsRepository(
     private inline fun <reified T> Flow<T>.loadInto(crossinline updateSettings: Settings.(T) -> Settings) {
         scope.launch {
             collect { setting ->
-                _settings.update { it.copy(data = it.data.updateSettings(setting), source = DataSource.Local) }
+                _settings.update {
+                    it.copy(
+                        data = it.data.updateSettings(setting),
+                        source = DataSource.Local,
+                        isSyncing = false
+                    )
+                }
             }
         }
     }
