@@ -9,20 +9,17 @@ import androidx.compose.animation.core.animateValue
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
@@ -56,7 +53,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
@@ -66,9 +62,7 @@ import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -81,7 +75,6 @@ import com.youniqx.time.components.SwipeableWorkItemCard
 import com.youniqx.time.components.TimeBadge
 import com.youniqx.time.components.rememberTimeBadgePlaceholder
 import com.youniqx.time.domain.models.OpenTracking
-import com.youniqx.time.domain.models.isOpenTracking
 import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
@@ -93,8 +86,6 @@ import com.youniqx.time.opentracking.RepresentingIndicator
 import com.youniqx.time.opentracking.customTimeSpentHasErrorMessage
 import com.youniqx.time.opentracking.representingColors
 import com.youniqx.time.refresh
-import com.youniqx.time.relativetime.RelativeTime
-import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.theme.LocalSpacing
 import com.youniqx.time.timelogs
 import kotlin.time.Clock
@@ -102,7 +93,6 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 @OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -263,58 +253,8 @@ operator fun BareWorkItem.invoke(
                     )
                 }
                 labels(useLabelColors)
-                AnimatedVisibility(visible = showTimelogs) {
-                    Column(modifier = Modifier.padding(top = 8.dp)) {
-                        myTimelogs.forEachIndexed { index, timelog ->
-                            val isEven = index % 2 == 0
-                            val rowBg = if (isEven) {
-                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                            } else {
-                                Transparent
-                            }
-                            SimpleTooltip(timelog.spentAt?.let { Instant.parseOrNull(it.toString()) }?.let {
-                                if (timelog.isOpenTracking) {
-                                    "Currently tracking"
-                                } else {
-                                    "${formatDuration(Clock.System.now() - it, RelativeTime.Past)} ago"
-                                }
-                            }.orEmpty()) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(rowBg)
-                                        .padding(horizontal = 8.dp, vertical = 6.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    val timeMinutes = timelog.timeSpent / 60
-                                    val h = timeMinutes / 60
-                                    val m = timeMinutes % 60
-                                    Text(
-                                        text = "$h:${m.toString().padStart(length = 2, padChar = '0')}",
-                                        fontFamily = FontFamily.Monospace,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        modifier = Modifier.width(48.dp - if (timelog.isOpenTracking) 12.dp else 0.dp)
-                                    )
-                                    if (timelog.isOpenTracking && openTracking != null) {
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        openTracking.RepresentingIndicator(
-                                            modifier = Modifier.size(16.dp),
-                                            color = openTracking.representingColors.color
-                                        )
-                                    }
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        modifier = Modifier.weight(1f),
-                                        text = timelog.summary.orEmpty(),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
-                    }
+                AnimatedVisibility(showTimelogs) {
+                    myTimelogs(openTracking)
                 }
                 AnimatedVisibility(visible = open) {
                     if (!open) return@AnimatedVisibility
