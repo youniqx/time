@@ -33,7 +33,7 @@ operator fun List<BareWorkItemWidgets.Node2>.invoke(
     openTracking: OpenTracking?
 ) {
     Column(modifier = Modifier.padding(top = 8.dp)) {
-        this@invoke.forEachIndexed { index, timelog ->
+        forEachIndexed { index, timelog ->
             val isEven = index % 2 == 0
             val rowBg = if (isEven) {
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
