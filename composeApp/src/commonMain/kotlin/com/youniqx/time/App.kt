@@ -583,11 +583,12 @@ fun App(
                                 }
                             }
 
-                            if (!loading) item(key = "daySummary") {
+                            item(key = "daySummary") {
                                 HistorySummaryCard(
                                     modifier = Modifier
                                         .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
                                         .padding(horizontal = 12.dp)
+                                        .padding(bottom = 4.dp)
                                         .clickable(
                                             onClickLabel = "Show history",
                                             onClick = {
