@@ -46,7 +46,7 @@ import com.youniqx.time.theme.LocalSpacing
 import kotlin.math.roundToInt
 
 @Composable
-fun SwipeableIssueCard(
+fun SwipeableWorkItemCard(
     isPinned: Boolean,
     isTracking: Boolean,
     onStartTracking: () -> Unit,

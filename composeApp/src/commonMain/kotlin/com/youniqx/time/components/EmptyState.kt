@@ -73,10 +73,10 @@ fun EmptyState(
 }
 
 @Composable
-fun NoIssuesEmptyState(modifier: Modifier = Modifier) {
+fun NoWorkItemsEmptyState(modifier: Modifier = Modifier) {
     EmptyState(
         icon = Icons.AutoMirrored.Outlined.Assignment,
-        title = "No issues found",
+        title = "No work items found",
         description = "Try adjusting your search or selecting a different iteration cadence",
         modifier = modifier
     )

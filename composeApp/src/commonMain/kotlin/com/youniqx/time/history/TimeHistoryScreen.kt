@@ -88,9 +88,9 @@ data class TimelogEntry(
     val spentAt: Instant,
     val summary: String?,
     val timeSpent: Int, // in seconds
-    val issueTitle: String?,
-    val issueUrl: String?,
-    val issueIid: String?
+    val workItemTitle: String?,
+    val workItemUrl: String?,
+    val workItemIid: String?
 )
 
 fun BareWorkItemWidgets.Node2.toTimelogEntry(workItem: BareWorkItem?, cutoff: Instant): TimelogEntry? {
@@ -101,9 +101,9 @@ fun BareWorkItemWidgets.Node2.toTimelogEntry(workItem: BareWorkItem?, cutoff: In
         spentAt = spentAt,
         summary = summary,
         timeSpent = timeSpent,
-        issueTitle = workItem?.title,
-        issueUrl = workItem?.webUrl,
-        issueIid = workItem?.iid
+        workItemTitle = workItem?.title,
+        workItemUrl = workItem?.webUrl,
+        workItemIid = workItem?.iid
     )
 }
 
@@ -279,7 +279,7 @@ fun TimeHistoryScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = "Track time on issues to see your history here",
+                            text = "Track time on work items to see your history here",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                         )
@@ -418,9 +418,9 @@ private fun TimelogCard(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     // Issue title
-                    if (!entry.issueTitle.isNullOrEmpty()) {
+                    if (!entry.workItemTitle.isNullOrEmpty()) {
                         Text(
-                            text = entry.issueTitle,
+                            text = entry.workItemTitle,
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             maxLines = if (expanded) Int.MAX_VALUE else 1,
@@ -429,9 +429,9 @@ private fun TimelogCard(
                     }
 
                     // Issue ID
-                    if (!entry.issueIid.isNullOrEmpty()) {
+                    if (!entry.workItemIid.isNullOrEmpty()) {
                         Text(
-                            text = "#${entry.issueIid}",
+                            text = "#${entry.workItemIid}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -488,10 +488,10 @@ private fun TimelogCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                     )
 
-                    if (!entry.issueUrl.isNullOrEmpty()) {
+                    if (!entry.workItemUrl.isNullOrEmpty()) {
                         SimpleTooltip("Open in GitLab") {
                             IconButton(
-                                onClick = { uriHandler.openUri(entry.issueUrl) },
+                                onClick = { uriHandler.openUri(entry.workItemUrl) },
                                 modifier = Modifier.size(32.dp)
                             ) {
                                 Icon(

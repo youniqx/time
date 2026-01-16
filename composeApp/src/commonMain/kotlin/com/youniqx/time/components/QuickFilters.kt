@@ -27,7 +27,7 @@ import com.youniqx.time.modifier.adaptivePadding
 import com.youniqx.time.theme.LocalSpacing
 
 enum class QuickFilter {
-    MyIssues,
+    Assigend,
     HasTimeLogged,
     Pinned,
     RecentlyTracked
@@ -49,10 +49,10 @@ fun QuickFilters(
         horizontalArrangement = Arrangement.spacedBy(spacing.sm)
     ) {
         QuickFilterChip(
-            label = "My Issues",
+            label = "Assigned",
             icon = Icons.Default.Person,
-            selected = QuickFilter.MyIssues in activeFilters,
-            onClick = { onFilterToggle(QuickFilter.MyIssues) }
+            selected = QuickFilter.Assigend in activeFilters,
+            onClick = { onFilterToggle(QuickFilter.Assigend) }
         )
 
         QuickFilterChip(

@@ -19,12 +19,12 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun AdditionalActions(
-    issue: BareWorkItem,
+    workItem: BareWorkItem,
     pinned: Boolean,
     togglePinned: () -> Unit,
 ) {
     val uriHandler = LocalUriHandler.current
-    val text = if (pinned) "Unpin issue" else "Pin issue"
+    val text = if (pinned) "Unpin" else "Pin"
     SimpleTooltip(text) {
         IconToggleButton(checked = pinned, onCheckedChange = { togglePinned() }) {
             Icon(
@@ -35,33 +35,33 @@ fun AdditionalActions(
     }
     val coroutineScope = rememberCoroutineScope()
     val clipboard = LocalClipboard.current
-    SimpleTooltip("Copy issue ID\n${issue.iid}") {
+    SimpleTooltip("Copy work item ID\n${workItem.iid}") {
         IconButton(onClick = {
             coroutineScope.launch {
-                clipboard.setClipEntry(clipEntryOf(issue.iid))
+                clipboard.setClipEntry(clipEntryOf(workItem.iid))
             }
         }) {
             Icon(
                 imageVector = Icons.Default.Numbers,
-                contentDescription = "Copy issue ID\n${issue.iid}"
+                contentDescription = "Copy work item ID\n${workItem.iid}"
             )
         }
     }
-    if (issue.webUrl != null) SimpleTooltip("Copy issue URL") {
+    if (workItem.webUrl != null) SimpleTooltip("Copy work item URL") {
         IconButton(onClick = {
             coroutineScope.launch {
-                clipboard.setClipEntry(clipEntryOf(issue.webUrl))
+                clipboard.setClipEntry(clipEntryOf(workItem.webUrl))
             }
         }) {
             Icon(
                 imageVector = Icons.Default.Link,
-                contentDescription = "Copy issue URL"
+                contentDescription = "Copy work item URL"
             )
         }
     }
-    if (issue.webUrl != null) SimpleTooltip("Open issue") {
-        IconButton(onClick = { uriHandler.openUri(issue.webUrl) }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open issue")
+    if (workItem.webUrl != null) SimpleTooltip("Open work item") {
+        IconButton(onClick = { uriHandler.openUri(workItem.webUrl) }) {
+            Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open work item")
         }
     }
 }

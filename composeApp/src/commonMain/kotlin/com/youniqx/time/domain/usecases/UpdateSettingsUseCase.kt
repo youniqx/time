@@ -14,6 +14,6 @@ interface UpdateSettingsUseCase {
     fun setToken(token: String)
     fun setNamespaceFullPath(fullPath: String)
     fun setIterationCadence(iterationCadence: IterationCadence?)
-    fun togglePinIssue(id: String)
+    fun togglePinWorkItem(id: String)
     fun setOpenTracking(openTracking: OpenTracking?)
 }

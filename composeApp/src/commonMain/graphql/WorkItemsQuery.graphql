@@ -1,4 +1,4 @@
-query IssuesQuery(
+query WorkItemsQuery(
   $namespaceFullPath: ID!,
   $iterationCadenceNamespaceFullPath: ID!,
   $iterationCadenceId: [IterationsCadenceID!],

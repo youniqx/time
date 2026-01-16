@@ -1,4 +1,4 @@
-query RefreshIssuesQuery(
+query RefreshWorkItemsQuery(
   $namespaceFullPath: ID!,
   $ids: [WorkItemID!] = [],
 ) {

@@ -11,6 +11,6 @@ data class Settings(
     val showLabelsByDefault: Boolean,
     val useLabelColors: Boolean,
     val showMenuBarTimer: Boolean,
-    val pinnedIssues: List<String>,
+    val pinnedWorkItems: List<String>,
     val openTracking: OpenTracking?,
 )

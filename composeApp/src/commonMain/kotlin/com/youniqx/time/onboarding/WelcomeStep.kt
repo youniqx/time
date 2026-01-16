@@ -60,7 +60,7 @@ fun WelcomeStep(
 
         // Subtitle
         Text(
-            text = "Track your time on GitLab issues with ease",
+            text = "Track your time on GitLab with ease",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center

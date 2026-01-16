@@ -28,7 +28,7 @@ fun SwitchTrackingDialog(
     onShowCurrent: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val currentTitle = currentTracking?.workItemTitle ?: "another issue"
+    val currentTitle = currentTracking?.workItemTitle ?: "another work item"
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -71,12 +71,12 @@ fun SwitchTrackingDialog(
                 ) {
                     Text("Discard time & switch")
                 }
-                // Show current issue
+                // Show current work item
                 TextButton(
                     onClick = onShowCurrent,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Show current issue")
+                    Text("Show current work item")
                 }
                 // Cancel
                 TextButton(

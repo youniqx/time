@@ -124,13 +124,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
-import com.youniqx.time.components.LoadingIssuesList
-import com.youniqx.time.components.NoIssuesEmptyState
+import com.youniqx.time.components.LoadingWorkItemList
 import com.youniqx.time.components.NoSearchResultsEmptyState
+import com.youniqx.time.components.NoWorkItemsEmptyState
 import com.youniqx.time.components.QuickFilter
 import com.youniqx.time.components.QuickFilters
 import com.youniqx.time.components.SimpleTooltip
-import com.youniqx.time.components.SwipeableIssueCard
+import com.youniqx.time.components.SwipeableWorkItemCard
 import com.youniqx.time.components.SwitchTrackingDialog
 import com.youniqx.time.components.TimeBadge
 import com.youniqx.time.components.rememberTimeBadgePlaceholder
@@ -142,7 +142,7 @@ import com.youniqx.time.domain.models.currentTimeSpentString
 import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.domain.models.isOpenTracking
 import com.youniqx.time.domain.models.toTimelog
-import com.youniqx.time.gitlab.models.RefreshIssuesQuery
+import com.youniqx.time.gitlab.models.RefreshWorkItemsQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
@@ -244,7 +244,7 @@ fun App(
         val uiState by viewModel.uiState.collectAsStateWithLifecycle()
         var loading: Boolean = uiState?.isSyncing ?: true
         var isRefreshing by remember(uiState) { mutableStateOf(false) }
-        val issues = uiState?.data?.workItems
+        val workItems = uiState?.data?.workItems
         val currentUserId = uiState?.data?.currentUserId
 
         val singlePaneDirective = remember { PaneScaffoldDirective.Default }
@@ -329,30 +329,30 @@ fun App(
                         val extraPadding = if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
                                 WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
                             )) PaddingValues(vertical = 20.dp) else PaddingValues()
-                        val filteredIssues = issues.orEmpty().filter { issue ->
+                        val filteredWorkItems = workItems.orEmpty().filter { workItem ->
                             // Text search filter
                             val matchesSearch = search.isEmpty() ||
-                                    issue.title.contains(search, ignoreCase = true) ||
-                                    issue.id.toString().contains(search, ignoreCase = true) ||
-                                    issue.id == settings.openTracking?.workItemId ||
-                                    issue.iid.contains(search, ignoreCase = true) ||
-                                    issue.webUrl.orEmpty().contains(search, ignoreCase = true) ||
-                                    issue.assignees?.nodes.orEmpty().filterNotNull().any {
+                                    workItem.title.contains(search, ignoreCase = true) ||
+                                    workItem.id.toString().contains(search, ignoreCase = true) ||
+                                    workItem.id == settings.openTracking?.workItemId ||
+                                    workItem.iid.contains(search, ignoreCase = true) ||
+                                    workItem.webUrl.orEmpty().contains(search, ignoreCase = true) ||
+                                    workItem.assignees?.nodes.orEmpty().filterNotNull().any {
                                         it.name.contains(search, ignoreCase = true) ||
                                                 it.username.contains(search, ignoreCase = true)
                                     } ||
-                                    issue.labels?.nodes.orEmpty().filterNotNull().any {
+                                    workItem.labels?.nodes.orEmpty().filterNotNull().any {
                                         it.title.contains(search, ignoreCase = true)
                                     }
 
                             // Quick filters
                             val matchesQuickFilters = activeFilters.isEmpty() || activeFilters.all { filter ->
                                 when (filter) {
-                                    QuickFilter.MyIssues -> issue.assignees?.nodes.orEmpty()
+                                    QuickFilter.Assigend -> workItem.assignees?.nodes.orEmpty()
                                         .filterNotNull().any { it.id == currentUserId }
-                                    QuickFilter.HasTimeLogged -> issue.timelogs.isNotEmpty()
-                                    QuickFilter.Pinned -> issue.id in settings.pinnedIssues
-                                    QuickFilter.RecentlyTracked -> issue.timelogs.any {
+                                    QuickFilter.HasTimeLogged -> workItem.timelogs.isNotEmpty()
+                                    QuickFilter.Pinned -> workItem.id in settings.pinnedWorkItems
+                                    QuickFilter.RecentlyTracked -> workItem.timelogs.any {
                                         it.user.id == currentUserId
                                     }
                                 }
@@ -363,24 +363,24 @@ fun App(
                         val openTrackingAsTimelog = remember(
                             settings.openTracking, currentUserId, refresh(every = 1.seconds)
                         ) { settings.openTracking?.toTimelog(currentUserId = currentUserId.orEmpty()) }
-                        val openTrackingIssue = remember(issues, settings.openTracking) {
+                        val openTrackingWorkItem = remember(workItems, settings.openTracking) {
                             settings.openTracking?.let { openTracking ->
-                                issues?.firstOrNull { it.id == openTracking.workItemId }
+                                workItems?.firstOrNull { it.id == openTracking.workItemId }
                             }
                         }
-                        // Aggregate timelogs from all issues for history view
+                        // Aggregate timelogs from all work items for history view
                         // Fetch all timelogs (up to 1 year) - filtering by period is done in TimeHistoryScreen
-                        val allTimelogs = remember(openTrackingAsTimelog, issues, currentUserId) {
+                        val allTimelogs = remember(openTrackingAsTimelog, workItems, currentUserId) {
                             val now = Clock.System.now()
                             val cutoff = now - 365.days // Fetch up to 1 year of history
                             val openTrackingAsEntry =
-                                openTrackingAsTimelog?.toTimelogEntry(workItem = openTrackingIssue, cutoff = cutoff)
-                            listOfNotNull(openTrackingAsEntry) + issues.orEmpty()
-                                .flatMap { issue ->
-                                    issue.timelogs
+                                openTrackingAsTimelog?.toTimelogEntry(workItem = openTrackingWorkItem, cutoff = cutoff)
+                            listOfNotNull(openTrackingAsEntry) + workItems.orEmpty()
+                                .flatMap { workItem ->
+                                    workItem.timelogs
                                         .filter { timelog -> timelog.user.id == currentUserId }
                                         .mapNotNull { timelog ->
-                                            timelog.toTimelogEntry(workItem = issue, cutoff = cutoff)
+                                            timelog.toTimelogEntry(workItem = workItem, cutoff = cutoff)
                                         }
                                 }
                                 .sortedByDescending { it.spentAt }
@@ -428,7 +428,7 @@ fun App(
                                 },
                                 onShowCurrent = {
                                     val currentId = settings.openTracking?.workItemId
-                                    val index = filteredIssues.indexOfFirst { issue -> issue.id == currentId }
+                                    val index = filteredWorkItems.indexOfFirst { workItem -> workItem.id == currentId }
                                     if (index >= 0) {
                                         coroutineScope.launch {
                                             lazyListState.animateScrollToItem(index + 1, -100)
@@ -515,8 +515,8 @@ fun App(
 
                             @Composable
                             operator fun BareWorkItem.invoke(modifier: Modifier = Modifier) {
-                                val pinned = id in settings.pinnedIssues
-                                val togglePinned = { settingsRepository.togglePinIssue(id.toString()) }
+                                val pinned = id in settings.pinnedWorkItems
+                                val togglePinned = { settingsRepository.togglePinWorkItem(id.toString()) }
                                 fun startTracking() = settingsRepository.setOpenTracking(
                                     OpenTracking(
                                         workItemId = id.toString(),
@@ -529,7 +529,7 @@ fun App(
                                     var commitTimeTrackingErrors by remember {
                                         mutableStateOf<List<String>?>(null)
                                     }
-                                    Issue(
+                                    WorkItem(
                                         this@invoke,
                                         startTracking = {
                                             if (settings.openTracking?.workItemId == null) {
@@ -567,7 +567,7 @@ fun App(
                                                             "Only refreshing failed (will be ignored)!"
                                                         val manualRefreshResult =
                                                             apolloClient.query(
-                                                                RefreshIssuesQuery.Builder()
+                                                                RefreshWorkItemsQuery.Builder()
                                                                     .namespaceFullPath(namespaceFullPath)
                                                                     .ids(listOf(id)).build()
                                                             ).execute()
@@ -646,17 +646,17 @@ fun App(
                                 }
                             }
 
-                            val groupedIssues = filteredIssues.groupBy { issue ->
+                            val groupedWorkItems = filteredWorkItems.groupBy { workItem ->
                                 when {
-                                    issue.id in settings.pinnedIssues -> Section.Pinned
-                                    issue.state == WorkItemState.CLOSED -> Section.Closed
+                                    workItem.id in settings.pinnedWorkItems -> Section.Pinned
+                                    workItem.state == WorkItemState.CLOSED -> Section.Closed
                                     else -> Section.Open
                                 }
                             }
 
                             fun section(section: Section) {
-                                val sectionIssues = groupedIssues[section]
-                                if (!sectionIssues.isNullOrEmpty()) {
+                                val sectionWorkItems = groupedWorkItems[section]
+                                if (!sectionWorkItems.isNullOrEmpty()) {
                                     val open = section in openSections
                                     stickyHeader(listState = lazyListState) { _, isSticky ->
                                         val corner = if (isSticky) 50 else 0
@@ -672,14 +672,17 @@ fun App(
                                             Section(
                                                 title = { Text(section.name) },
                                                 open = open,
-                                                count = sectionIssues.size
+                                                count = sectionWorkItems.size
                                             )
                                         }
                                     }
 
 
-                                    if (open) items(sectionIssues, key = { issue -> issue.id }) { sectionIssue ->
-                                        sectionIssue(modifier = Modifier.animateItem())
+                                    if (open) items(
+                                        sectionWorkItems,
+                                        key = { workItem -> workItem.id }
+                                    ) { sectionWorkItem ->
+                                        sectionWorkItem(modifier = Modifier.animateItem())
                                     }
                                 }
                             }
@@ -689,9 +692,9 @@ fun App(
                             section(Section.Closed)
 
                             // Show shimmer loading when loading
-                            if (loading && filteredIssues.isEmpty()) {
+                            if (loading && filteredWorkItems.isEmpty()) {
                                 item {
-                                    LoadingIssuesList(
+                                    LoadingWorkItemList(
                                         count = 5,
                                         modifier = Modifier
                                             .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
@@ -700,8 +703,8 @@ fun App(
                                 }
                             }
 
-                            // Show empty state when no issues
-                            if (!loading && filteredIssues.isEmpty()) {
+                            // Show empty state when no work items
+                            if (!loading && filteredWorkItems.isEmpty()) {
                                 item {
                                     if (search.isNotEmpty()) {
                                         NoSearchResultsEmptyState(
@@ -709,7 +712,7 @@ fun App(
                                                 .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
                                         )
                                     } else {
-                                        NoIssuesEmptyState(
+                                        NoWorkItemsEmptyState(
                                             modifier = Modifier
                                                 .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
                                         )
@@ -718,7 +721,7 @@ fun App(
                             }
 
                             // Small loading indicator when refreshing with existing data
-                            if (loading && filteredIssues.isNotEmpty()) item {
+                            if (loading && filteredWorkItems.isNotEmpty()) item {
                                 Box(
                                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                                     contentAlignment = Alignment.Center
@@ -774,7 +777,7 @@ fun App(
                 }
             )
         }
-        // Fake item to ignore focus requests if an issue is open
+        // Fake item to ignore focus requests if we have an open time tracking
         Box(modifier = Modifier.focusProperties { canFocus = false }.focusRequester(focusRequester))
     }
 }
@@ -788,8 +791,8 @@ val BareWorkItem.timelogs get() = widgets?.firstOrNull { it.bareWorkItemWidgets.
 
 @OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)
 @Composable
-fun Issue(
-    issue: BareWorkItem,
+fun WorkItem(
+    workItem: BareWorkItem,
     startTracking: () -> Unit,
     currentUserId: String?,
     showLabelsByDefault: Boolean,
@@ -805,12 +808,12 @@ fun Issue(
     additionalContent: (@Composable () -> Unit)? = null,
 ) {
     val uriHandler = LocalUriHandler.current
-    val open = openTracking?.workItemId == issue.id
+    val open = openTracking?.workItemId == workItem.id
     var showTimelogs by remember { mutableStateOf(false) }
     val openTrackingAsTimelog = remember(
         openTracking, currentUserId, open, refresh(every = 1.seconds)
     ) { openTracking.takeIf { open }?.toTimelog(currentUserId = currentUserId.orEmpty()) }
-    val allTimelogs = listOfNotNull(openTrackingAsTimelog) + issue.timelogs
+    val allTimelogs = listOfNotNull(openTrackingAsTimelog) + workItem.timelogs
     val myTimelogs = allTimelogs.filter { it.user.id == currentUserId }
     val myTotalTime = myTimelogs.fold(0) { acc, timelog -> acc + timelog.timeSpent }
     val totalMinutes = myTotalTime / 60
@@ -819,7 +822,7 @@ fun Issue(
     val myTotalTimeString = "$hours:${minutes.toString().padStart(length = 2, padChar = '0')}"
     val spacing = LocalSpacing.current
 
-    SwipeableIssueCard(
+    SwipeableWorkItemCard(
         modifier = modifier
             .padding(vertical = 4.dp)
             .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
@@ -841,7 +844,7 @@ fun Issue(
                 .clip(RoundedCornerShape(spacing.cardRadius))
                 .clickable(
                     enabled = !open,
-                    onClickLabel = "Work on issue",
+                    onClickLabel = "Work on work item",
                     role = Role.Switch
                 ) {
                     startTracking()
@@ -855,23 +858,23 @@ fun Issue(
                     .heightIn(min = 48.dp)
                     .padding(spacing.cardPadding)
             ) {
-                val labels = if (showLabelsByDefault) issue.labels?.nodes else null
+                val labels = if (showLabelsByDefault) workItem.labels?.nodes else null
                 Row(
                     modifier = Modifier.fillMaxWidth().heightIn(min = if (labels.isNullOrEmpty()) 48.dp else 0.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    issue.workItemType.name.let { WorkItemTypeIcon(it) }
+                    workItem.workItemType.name.let { WorkItemTypeIcon(it) }
                     Text(
                         text = buildAnnotatedString {
-                            append(issue.title)
+                            append(workItem.title)
                             if (myTotalTime > 0) {
                                 append(" ")
                                 appendInlineContent("time", myTotalTimeString)
                             }
-                            if (issue.promotedToEpicUrl != null) {
+                            if (workItem.promotedToEpicUrl != null) {
                                 append(" ")
                                 appendInlineContent("promoted", "(promoted)")
-                            } else if (issue.state == WorkItemState.CLOSED) {
+                            } else if (workItem.state == WorkItemState.CLOSED) {
                                 append(" ")
                                 appendInlineContent("closed", "(closed)")
                             }
@@ -936,7 +939,7 @@ fun Issue(
                                         imageVector = Icons.Default.ArrowCircleUp,
                                         contentDescription = "promoted",
                                         modifier = Modifier.size(16.dp).clickable {
-                                            issue.promotedToEpicUrl?.let { uri -> uriHandler.openUri(uri) }
+                                            workItem.promotedToEpicUrl?.let { uri -> uriHandler.openUri(uri) }
                                         }
                                     )
                                 }
@@ -1113,7 +1116,7 @@ fun Issue(
                             } else null
                         )
                         FlowRow(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            AdditionalActions(issue, pinned, togglePinned)
+                            AdditionalActions(workItem, pinned, togglePinned)
                             SimpleTooltip("Discard time tracking") {
                                 IconButton(onClick = { onOpenTrackingChange(null) }) {
                                     Icon(

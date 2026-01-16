@@ -165,9 +165,9 @@ fun SettingsScreen(
         Row(
             modifier = Modifier.fillMaxWidth().clickable(
                 onClickLabel = if (settings.groupSprintInEpics) {
-                    "Show individual issues of sprint even if they have parent epics"
+                    "Show individual work items of sprint even if they have parents"
                 } else {
-                    "Show parent epics instead of individual issues if available"
+                    "Show parent instead of individual work items if available"
                 },
                 role = Role.Switch,
                 onClick = updater::toggleGroupSprintInEpics
@@ -330,7 +330,7 @@ fun SettingsPreview() {
                 token = "𐂂",
                 namespaceFullPath = null,
                 iterationCadence = null,
-                pinnedIssues = emptyList(),
+                pinnedWorkItems = emptyList(),
                 openTracking = null,
             ),
             updater = object : UpdateSettingsUseCase {
@@ -344,7 +344,7 @@ fun SettingsPreview() {
                 override fun setToken(token: String) {}
                 override fun setNamespaceFullPath(fullPath: String) {}
                 override fun setIterationCadence(iterationCadence: IterationCadence?) {}
-                override fun togglePinIssue(id: String) {}
+                override fun togglePinWorkItem(id: String) {}
                 override fun setOpenTracking(openTracking: OpenTracking?) {}
             },
             namespaces = null,

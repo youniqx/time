@@ -30,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.youniqx.time.theme.LocalSpacing
 
 @Composable
-fun ShimmerIssueCard(modifier: Modifier = Modifier) {
+fun ShimmerWorkItemCard(modifier: Modifier = Modifier) {
     val spacing = LocalSpacing.current
 
     val shimmerColors = listOf(
@@ -115,7 +115,7 @@ fun ShimmerIssueCard(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun LoadingIssuesList(
+fun LoadingWorkItemList(
     count: Int = 5,
     modifier: Modifier = Modifier
 ) {
@@ -126,7 +126,7 @@ fun LoadingIssuesList(
         verticalArrangement = Arrangement.spacedBy(spacing.sm)
     ) {
         repeat(count) {
-            ShimmerIssueCard()
+            ShimmerWorkItemCard()
         }
     }
 }

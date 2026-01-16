@@ -32,7 +32,7 @@ val defaultSettings = Settings(
     showLabelsByDefault = false,
     useLabelColors = false,
     showMenuBarTimer = true,
-    pinnedIssues = emptyList(),
+    pinnedWorkItems = emptyList(),
     openTracking = null,
 )
 
@@ -73,7 +73,7 @@ class LocalSettingsRepository(
         flowSettings.getStringFlow(
             SettingKey.PinnedIssues.name,
             json.encodeToString(emptyList<String>())
-        ).loadInto { copy(pinnedIssues = json.decodeFromString<List<String>>(it).filter(isGlobalId)) }
+        ).loadInto { copy(pinnedWorkItems = json.decodeFromString<List<String>>(it).filter(isGlobalId)) }
         flowSettings.getStringOrNullFlow(SettingKey.OpenTracking.name)
             .loadInto { copy(openTracking = it?.let { json.decodeFromString(it) }) }
     }
@@ -156,9 +156,9 @@ class LocalSettingsRepository(
         }
     }
 
-    override fun togglePinIssue(id: String) {
+    override fun togglePinWorkItem(id: String) {
         scope.launch {
-            val pinned = settings.value.data.pinnedIssues.toMutableList()
+            val pinned = settings.value.data.pinnedWorkItems.toMutableList()
             if (id in pinned) {
                 pinned.remove(id)
             } else {

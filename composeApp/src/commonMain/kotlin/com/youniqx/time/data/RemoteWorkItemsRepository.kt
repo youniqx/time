@@ -13,7 +13,7 @@ import com.youniqx.time.domain.models.DataSource
 import com.youniqx.time.domain.models.SourceAware
 import com.youniqx.time.domain.models.WorkItemsFromCurrentUser
 import com.youniqx.time.domain.models.dataIfNotFrom
-import com.youniqx.time.gitlab.models.IssuesQuery
+import com.youniqx.time.gitlab.models.WorkItemsQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
@@ -66,9 +66,9 @@ class RemoteWorkItemsRepository(
                 ?: return@launch
             apolloClientFlow.filterNotNull().collect { apolloClient ->
                 if (search.isNotEmpty()) delay(300)
-                val pinnedPlusOpen = settings.pinnedIssues +
+                val pinnedPlusOpen = settings.pinnedWorkItems +
                         (settings.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
-                val query = IssuesQuery.Builder()
+                val query = WorkItemsQuery.Builder()
                     .namespaceFullPath(namespaceFullPath)
                     .iterationCadenceNamespaceFullPath(iterationCadenceNamespaceFullPath)
                     .iterationCadenceId(settings.iterationCadence.id?.let { listOf(it) } ?: emptyList())
@@ -99,7 +99,7 @@ class RemoteWorkItemsRepository(
 }
 
 @Suppress("DEPRECATION") // experimental api
-private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
+private fun ApolloResponse<WorkItemsQuery.Data>.extractIssues(
     groupSprintInEpics: Boolean,
 ): List<BareWorkItem> {
     val searchNamespace = data?.searchNamespace
@@ -117,5 +117,5 @@ private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
     }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
 }
 
-val IssuesQuery.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
+val WorkItemsQuery.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
     ?.onWorkItemWidgetHierarchy?.parent?.bareWorkItem
