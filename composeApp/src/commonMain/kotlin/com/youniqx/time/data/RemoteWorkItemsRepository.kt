@@ -112,8 +112,8 @@ private fun ApolloResponse<IssuesQuery.Data>.extractIssues(
             }
         }.orEmpty())
         addAll(searchNamespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(searchNamespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
         addAll(searchNamespace?.searchIid?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(searchNamespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
     }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
 }
 
