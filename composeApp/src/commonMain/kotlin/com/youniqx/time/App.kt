@@ -549,77 +549,10 @@ fun App(
                                         togglePinned = togglePinned,
                                         commitTimeTrackingEnabled = commitTimeTrackingEnabled,
                                         commitTimeTracking = commitTimeTracking@{
-                                            val namespaceFullPath = settings.namespaceFullPath
-                                                ?: return@commitTimeTracking
                                             if (!commitTimeTrackingEnabled) return@commitTimeTracking
-                                            if (apolloClient == null) {
-                                                commitTimeTrackingErrors = listOf("Please check your settings.")
-                                                return@commitTimeTracking
-                                            }
                                             commitTimeTrackingEnabled = false
-                                            commitTimeTrackingErrors = null
                                             coroutineScope.launch {
-                                                settings.openTracking?.let { openTracking ->
-                                                    suspend fun manualRefresh() {
-                                                        // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
-                                                        val success = "Saved successfully!"
-                                                        val ignoredWarning =
-                                                            "Only refreshing failed (will be ignored)!"
-                                                        val manualRefreshResult =
-                                                            apolloClient.query(
-                                                                RefreshWorkItemsQuery.Builder()
-                                                                    .namespaceFullPath(namespaceFullPath)
-                                                                    .ids(listOf(id)).build()
-                                                            ).execute()
-                                                        if (manualRefreshResult.exception != null) {
-                                                            commitTimeTrackingErrors =
-                                                                listOf(
-                                                                    success,
-                                                                    ignoredWarning,
-                                                                    manualRefreshResult.exception?.message.orEmpty()
-                                                                )
-                                                            delay(4.seconds)
-                                                            commitTimeTrackingErrors = null
-                                                        } else if (manualRefreshResult.hasErrors()) {
-                                                            commitTimeTrackingErrors =
-                                                                listOf(success, ignoredWarning) +
-                                                                        manualRefreshResult.errors
-                                                                            ?.map { it.message }.orEmpty()
-                                                            delay(4.seconds)
-                                                            commitTimeTrackingErrors = null
-                                                        }
-                                                        settingsRepository.setOpenTracking(null)
-                                                    }
-
-                                                    val result = apolloClient.mutation(
-                                                        TimelogCreateMutation(
-                                                            workItemId = listOf(id),
-                                                            input =
-                                                                TimelogCreateInput.Builder()
-                                                                    .issuableId(id)
-                                                                    .summary(openTracking.summary.orEmpty())
-                                                                    .timeSpent(openTracking.currentTimeSpentString)
-                                                                    .build()
-                                                        )
-                                                    ).execute()
-
-                                                    fun failedBecauseOfEpic() =
-                                                        result.errors?.let { errors ->
-                                                            errors.isNotEmpty() && errors.all {
-                                                                it.message == "Cannot return null for non-nullable field Timelog.project"
-                                                            }
-                                                        } == true
-                                                    if (result.exception != null) {
-                                                        commitTimeTrackingErrors =
-                                                            listOf(result.exception?.message.orEmpty())
-                                                    } else if (failedBecauseOfEpic()) {
-                                                        manualRefresh()
-                                                    } else if (result.hasErrors()) {
-                                                        commitTimeTrackingErrors = result.errors?.map { it.message }
-                                                    } else {
-                                                        settingsRepository.setOpenTracking(null)
-                                                    }
-                                                }
+                                                commitTimeTrackingErrors = viewModel.commitTimeTracking()
                                                 commitTimeTrackingEnabled = true
                                             }
                                         },

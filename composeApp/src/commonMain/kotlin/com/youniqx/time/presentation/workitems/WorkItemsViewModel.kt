@@ -1,8 +1,10 @@
 package com.youniqx.time.presentation.workitems
 
 import androidx.lifecycle.ViewModel
+import com.youniqx.time.data.CommitTimeTrackingRepository
 import com.youniqx.time.domain.WorkItemsRepository
 import com.youniqx.time.domain.models.Settings
+import com.youniqx.time.domain.usecases.CommitTimeTrackingUseCase
 import com.youniqx.time.domain.usecases.SearchWorkItemsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import dev.zacsweers.metro.AppScope
@@ -15,7 +17,10 @@ import dev.zacsweers.metrox.viewmodel.ViewModelKey
 @ViewModelKey(WorkItemsViewModel::class)
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class WorkItemsViewModel(
-    workItemsRepository: WorkItemsRepository
-) : ViewModel(), SearchWorkItemsUseCase by workItemsRepository {
+    workItemsRepository: WorkItemsRepository,
+    commitTimeTrackingRepository: CommitTimeTrackingRepository,
+) : ViewModel(),
+    SearchWorkItemsUseCase by workItemsRepository,
+    CommitTimeTrackingUseCase by commitTimeTrackingRepository {
     val uiState = workItemsRepository.workItemsFromCurrentUser
 }

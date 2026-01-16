@@ -43,7 +43,7 @@ class RemoteWorkItemsRepository(
 ): WorkItemsRepository {
 
     private var job: Job? = null
-    val scope = CoroutineScope(dispatchers.IO)
+    private val scope = CoroutineScope(dispatchers.IO)
 
     private val _workItemsFromCurrentUser: MutableStateFlow<SourceAware<WorkItemsFromCurrentUser?>?> =
         MutableStateFlow(null)
