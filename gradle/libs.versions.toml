@@ -23,6 +23,7 @@ apollo = "4.3.3"
 libres = "1.2.4"
 material3 = "1.9.0"
 materialIconsExtended = "1.7.3"
+metro = "0.9.4"
 settings = "1.3.0"
 
 [libraries]
@@ -54,6 +55,8 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 ktor-http = { module = "io.ktor:ktor-http", version.ref = "ktor" }
 libres-compose = { module = "io.github.skeptick.libres:libres-compose", version.ref = "libres" }
 material-icons-extended = { module = "org.jetbrains.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
+metrox-android = { module = "dev.zacsweers.metro:metrox-android", version.ref = "metro" }
+metrox-viewmodel-compose = { module = "dev.zacsweers.metro:metrox-viewmodel-compose", version.ref = "metro" }
 settings-coroutines = { module = "com.russhwolf:multiplatform-settings-coroutines", version.ref = "settings" }
 settings-makeObservable = { module = "com.russhwolf:multiplatform-settings-make-observable", version.ref = "settings" }
 settings-noarg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "settings" }
@@ -67,3 +70,4 @@ composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "k
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 apollo = { id = "com.apollographql.apollo", version.ref = "apollo" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }

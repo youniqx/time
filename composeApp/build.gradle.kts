@@ -11,6 +11,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeHotReload)
+    alias(libs.plugins.metro)
     alias(libs.plugins.apollo)
     alias(libs.plugins.kotlinSerialization)
 }
@@ -45,6 +46,7 @@ kotlin {
             implementation(libs.compose.ui.tooling.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.compose.ui)
+            implementation(libs.metrox.android)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -58,6 +60,7 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.apollo.runtime)
             implementation(libs.apollo.normalized.cache)
+            implementation(libs.metrox.viewmodel.compose)
             implementation(libs.settings.noarg)
             implementation(libs.settings.coroutines)
             implementation(libs.settings.makeObservable)

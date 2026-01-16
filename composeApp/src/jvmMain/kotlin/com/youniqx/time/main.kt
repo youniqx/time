@@ -1,6 +1,6 @@
 package com.youniqx.time
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,17 +28,13 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
-import androidx.lifecycle.ViewModelStore
-import androidx.lifecycle.ViewModelStoreOwner
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
-import com.youniqx.time.opentracking.toDurationOrNull
-import com.youniqx.time.settings.SettingsViewModel
-import com.youniqx.time.settings.UiState
-import com.youniqx.time.theme.themes
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youniqx.time.di.JvmAppGraph
+import com.youniqx.time.domain.models.toDurationOrNull
+import dev.zacsweers.metro.createGraph
+import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import java.awt.Desktop
 import java.awt.Font
 import java.awt.RenderingHints
@@ -46,7 +42,6 @@ import java.awt.SystemTray
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
 import java.awt.image.BufferedImage
-import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
@@ -74,132 +69,129 @@ fun main() {
     if (isMacOs) {
         System.setProperty("apple.awt.UIElement", "true")
     }
+    val graph = createGraph<JvmAppGraph>()
 
     application {
-        LaunchedEffect(true) {
-            println("--------- WE ARE RUNNING ------------")
-        }
-        var isVisible by remember { mutableStateOf(!SystemTray.isSupported()) }
-        val windowState =
-            rememberWindowState(
-                placement = WindowPlacement.Floating,
-                position = WindowPosition(0.dp, 0.dp),
-                size = DpSize(400.dp, 800.dp),
-            )
-        val density = LocalDensity.current
-
-        val systemInDarkTheme = isSystemInDarkTheme()
-        val appViewModelStoreOwner = remember {
-            object : ViewModelStoreOwner {
-                override val viewModelStore = ViewModelStore()
+        CompositionLocalProvider(LocalMetroViewModelFactory provides graph.metroViewModelFactory) {
+            LaunchedEffect(true) {
+                println("--------- WE ARE RUNNING ------------")
             }
-        }
-        val settingsViewModel: SettingsViewModel = viewModel(
-            factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } },
-            viewModelStoreOwner = appViewModelStoreOwner
-        )
-        val settingsUiState by settingsViewModel.uiState.collectAsState()
-
-        // Create dynamic tray icon
-        val trayIcon = remember(
-            settingsUiState.showMenuBarTimer,
-            settingsUiState.openTracking,
-            refresh(every = 1.seconds)
-        ) {
-            val showTimer = settingsUiState.showMenuBarTimer
-            val openTracking = settingsUiState.openTracking
-
-            if (showTimer && openTracking != null) {
-                MenuBarTimerIcon(
-                    title = openTracking.workItemTitle,
-                    elapsed = openTracking.toDurationOrNull() ?: Duration.ZERO
+            var isVisible by remember { mutableStateOf(!SystemTray.isSupported()) }
+            val windowState =
+                rememberWindowState(
+                    placement = WindowPlacement.Floating,
+                    position = WindowPosition(0.dp, 0.dp),
+                    size = DpSize(400.dp, 800.dp),
                 )
-            } else {
-                TrayIcon
-            }
-        }
+            val density = LocalDensity.current
 
-        if (SystemTray.isSupported()) {
-            Tray(
-                icon = trayIcon,
-                onClick = { x, y ->
-                    with(density) {
-                        // Todo: check if we need the * 2 only on macOS
-                        windowState.position = WindowPosition(x.toDp() * 2 - windowState.size.width / 2, 45.dp)
-                    }
-                    // Restore from minimized state if needed
-                    if (windowState.isMinimized) {
-                        windowState.isMinimized = false
-                    }
-                    windowState.placement = WindowPlacement.Floating
-                    isVisible = !isVisible
-                },
-            )
-        }
-        val focusRequester = remember { FocusRequester() }
-        Window(
-            onCloseRequest = ::exitApplication,
-            onPreviewKeyEvent = {
-                if (
-                    !it.isMetaPressed &&
-                    !it.isAltPressed &&
-                    !it.isCtrlPressed &&
-                    !it.isShiftPressed &&
-                    it.type == KeyEventType.KeyDown &&
-                    !it.utf16CodePoint.toChar().isISOControl()
-                ) {
-                    focusRequester.requestFocus()
-                }
-                false
-            },
-            state = windowState,
-            visible = isVisible,
-            alwaysOnTop = true,
-            icon = TrayIcon, // Todo
-        ) {
-            if (isMacOs) {
-                LaunchedEffect(true) {
-                    window.rootPane.putClientProperty("apple.awt.fullWindowContent", true)
-                    window.rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
-                    window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
+            val settingsRepository = graph.settingsRepository
+            val sourceAwareSettings by settingsRepository.settings.collectAsState()
+            val settings = sourceAwareSettings.data
+
+            // Create dynamic tray icon
+            val trayIcon = remember(
+                settings.showMenuBarTimer,
+                settings.openTracking,
+                refresh(every = 1.seconds)
+            ) {
+                val showTimer = settings.showMenuBarTimer
+                val openTracking = settings.openTracking
+
+                if (showTimer && openTracking != null) {
+                    MenuBarTimerIcon(
+                        title = openTracking.workItemTitle,
+                        elapsed = openTracking.toDurationOrNull() ?: Duration.ZERO
+                    )
+                } else {
+                    TrayIcon
                 }
             }
+
             if (SystemTray.isSupported()) {
-                // Hide window instead of minimizing (tray app behavior)
-                LaunchedEffect(windowState.isMinimized) {
-                    if (windowState.isMinimized) {
-                        windowState.isMinimized = false
-                        isVisible = false
-                    }
-                }
-                LaunchedEffect(isVisible) {
-                    if (isVisible) try {
-                        Desktop.getDesktop().requestForeground(true)
-                    } catch (_: Exception) {}
-                }
-                DisposableEffect(window) {
-                    val listener =
-                        object : WindowFocusListener {
-                            override fun windowGainedFocus(p0: WindowEvent?) {
-                            }
-
-                            override fun windowLostFocus(p0: WindowEvent?) {
-                                isVisible = false
-                            }
+                Tray(
+                    icon = trayIcon,
+                    onClick = { x, y ->
+                        with(density) {
+                            // Todo: check if we need the * 2 only on macOS
+                            windowState.position =
+                                WindowPosition(x.toDp() * 2 - windowState.size.width / 2, 45.dp)
                         }
-                    window.addWindowFocusListener(listener)
-                    onDispose {
-                        window.removeWindowFocusListener(listener)
+                        // Restore from minimized state if needed
+                        if (windowState.isMinimized) {
+                            windowState.isMinimized = false
+                        }
+                        windowState.placement = WindowPlacement.Floating
+                        isVisible = !isVisible
+                    },
+                )
+            }
+            val focusRequester = remember { FocusRequester() }
+            Window(
+                onCloseRequest = ::exitApplication,
+                onPreviewKeyEvent = {
+                    if (
+                        !it.isMetaPressed &&
+                        !it.isAltPressed &&
+                        !it.isCtrlPressed &&
+                        !it.isShiftPressed &&
+                        it.type == KeyEventType.KeyDown &&
+                        !it.utf16CodePoint.toChar().isISOControl()
+                    ) {
+                        focusRequester.requestFocus()
+                    }
+                    false
+                },
+                state = windowState,
+                visible = isVisible,
+                alwaysOnTop = true,
+                icon = TrayIcon, // Todo
+            ) {
+                if (isMacOs) {
+                    LaunchedEffect(true) {
+                        window.rootPane.putClientProperty("apple.awt.fullWindowContent", true)
+                        window.rootPane.putClientProperty("apple.awt.transparentTitleBar", true)
+                        window.rootPane.putClientProperty("apple.awt.windowTitleVisible", false)
                     }
                 }
+                if (SystemTray.isSupported()) {
+                    // Hide window instead of minimizing (tray app behavior)
+                    LaunchedEffect(windowState.isMinimized) {
+                        if (windowState.isMinimized) {
+                            windowState.isMinimized = false
+                            isVisible = false
+                        }
+                    }
+                    LaunchedEffect(isVisible) {
+                        if (isVisible) try {
+                            Desktop.getDesktop().requestForeground(true)
+                        } catch (_: Exception) {
+                        }
+                    }
+                    DisposableEffect(window) {
+                        val listener =
+                            object : WindowFocusListener {
+                                override fun windowGainedFocus(p0: WindowEvent?) {
+                                }
+
+                                override fun windowLostFocus(p0: WindowEvent?) {
+                                    isVisible = false
+                                }
+                            }
+                        window.addWindowFocusListener(listener)
+                        onDispose {
+                            window.removeWindowFocusListener(listener)
+                        }
+                    }
+                }
+                App(
+                    focusRequester = focusRequester,
+                    setWindowBackground = {
+                        window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
+                    },
+                    settingsRepository = settingsRepository,
+                )
             }
-            App(
-                focusRequester = focusRequester,
-                setWindowBackground = {
-                    window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
-                },
-                settingsViewModel = settingsViewModel,
-            )
         }
     }
 }

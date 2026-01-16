@@ -119,15 +119,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.window.core.layout.WindowSizeClass
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
@@ -149,6 +145,13 @@ import com.youniqx.time.components.SwipeableIssueCard
 import com.youniqx.time.components.SwitchTrackingDialog
 import com.youniqx.time.components.TimeBadge
 import com.youniqx.time.components.rememberTimeBadgePlaceholder
+import com.youniqx.time.domain.SettingsRepository
+import com.youniqx.time.domain.models.DataSource
+import com.youniqx.time.domain.models.OpenTracking
+import com.youniqx.time.domain.models.currentTimeSpentString
+import com.youniqx.time.domain.models.dataIfNotFrom
+import com.youniqx.time.domain.models.isOpenTracking
+import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.IssuesQuery
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.RefreshIssuesQuery
@@ -165,17 +168,12 @@ import com.youniqx.time.modifier.changeFocusOnTab
 import com.youniqx.time.modifier.clip
 import com.youniqx.time.modifier.onCtrlOrMetaEnter
 import com.youniqx.time.onboarding.OnboardingScreen
-import com.youniqx.time.opentracking.OpenTracking
 import com.youniqx.time.opentracking.RepresentingIndicator
-import com.youniqx.time.opentracking.currentTimeSpentString
 import com.youniqx.time.opentracking.customTimeSpentHasErrorMessage
-import com.youniqx.time.opentracking.isOpenTracking
 import com.youniqx.time.opentracking.representingColors
-import com.youniqx.time.opentracking.toTimelog
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import com.youniqx.time.settings.Settings
-import com.youniqx.time.settings.SettingsViewModel
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.LocalSpacing
 import com.youniqx.time.theme.Theme
@@ -204,31 +202,23 @@ operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingVa
     bottom = this.calculateBottomPadding() + other.calculateBottomPadding(),
 )
 
-@Composable
-fun alwaysShowSearch() = true // for the time being always show the search
-//    !hasPhysicalOrShowingKeyboard() || currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
-//    WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
-//)
-
 enum class Section {
     Pinned, Open, Closed
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-@Preview
 fun App(
     focusRequester: FocusRequester = remember { FocusRequester() },
-    alwaysShowSearch: Boolean = alwaysShowSearch(),
     setWindowBackground: ((Color) -> Unit)? = null,
-    systemInDarkTheme: Boolean = isSystemInDarkTheme(),
-    settingsViewModel: SettingsViewModel = viewModel(
-        factory = viewModelFactory { initializer { SettingsViewModel(systemInDarkTheme) } }
-    ),
+    settingsRepository: SettingsRepository,
     theme: Theme = com.youniqx.time.theme.teal.theme,
 ) {
-    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-    AppTheme(darkTheme = settingsUiState.darkTheme, useHighContrastColors = settingsUiState.highContrastColors, theme = theme) {
+    val sourceAwareSettings by settingsRepository.settings.collectAsStateWithLifecycle()
+    val settings = sourceAwareSettings.data
+    val darkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
+        ?: isSystemInDarkTheme()
+    AppTheme(darkTheme = darkTheme, useHighContrastColors = settings.highContrastColors, theme = theme) {
         if (setWindowBackground != null) {
             MaterialTheme.colorScheme.surface.let { color ->
                 LaunchedEffect(setWindowBackground, color) {
@@ -237,17 +227,17 @@ fun App(
             }
         }
 
-        var showOnboarding by remember(settingsUiState.settingsLoaded) {
-            mutableStateOf(settingsUiState.instanceUrl.isNullOrEmpty() || settingsUiState.token.isNullOrEmpty())
+        var showOnboarding by remember(sourceAwareSettings.source) {
+            mutableStateOf(settings.instanceUrl.isNullOrEmpty() || settings.token.isNullOrEmpty())
         }
         // Show onboarding for new users
         if (showOnboarding) {
             OnboardingScreen(
-                loading = !settingsUiState.settingsLoaded,
-                instanceUrl = settingsUiState.instanceUrl,
-                onInstanceUrlChange = settingsViewModel::setInstanceUrl,
-                token = settingsUiState.token,
-                onTokenChange = settingsViewModel::setToken,
+                loading = sourceAwareSettings.source != DataSource.Default,
+                instanceUrl = settings.instanceUrl,
+                onInstanceUrlChange = settingsRepository::setInstanceUrl,
+                token = settings.token,
+                onTokenChange = settingsRepository::setToken,
                 onComplete = { showOnboarding = false }
             )
             return@AppTheme
@@ -268,9 +258,9 @@ fun App(
             onFocusChanged { disableGlobalSearch = it.hasFocus }
         }
         val isPreview = LocalInspectionMode.current
-        val apolloClient = remember(settingsUiState.instanceUrl, settingsUiState.token) {
-            val instanceUrl = settingsUiState.instanceUrl ?: return@remember null
-            val token = settingsUiState.token ?: return@remember null
+        val apolloClient = remember(settings.instanceUrl, settings.token) {
+            val instanceUrl = settings.instanceUrl ?: return@remember null
+            val token = settings.token ?: return@remember null
             val cacheFactory = MemoryCacheFactory(maxSizeBytes = 30 * 1024 * 1024)
             val cacheKeyGenerator = object : CacheKeyGenerator {
                 override fun cacheKeyForObject(obj: Map<String, Any?>, context: CacheKeyGeneratorContext): CacheKey? {
@@ -285,7 +275,7 @@ fun App(
                         appendPathSegments("api", "graphql")
                     }.toString()
                 )
-                .addHttpHeader("Authorization", "Bearer ${token}")
+                .addHttpHeader("Authorization", "Bearer $token")
                 .normalizedCache(
                     normalizedCacheFactory = cacheFactory,
                     cacheKeyGenerator = cacheKeyGenerator
@@ -303,10 +293,10 @@ fun App(
         }
         LaunchedEffect(
             search,
-            settingsUiState.namespaceFullPath,
-            settingsUiState.iterationCadence,
-            settingsUiState.pinnedIssues,
-            settingsUiState.groupSprintInEpics,
+            settings.namespaceFullPath,
+            settings.iterationCadence,
+            settings.pinnedIssues,
+            settings.groupSprintInEpics,
             apolloClient,
             refreshTrigger
         ) {
@@ -316,17 +306,17 @@ fun App(
                 return@LaunchedEffect
             }
             if (apolloClient == null) return@LaunchedEffect
-            val namespaceFullPath = settingsUiState.namespaceFullPath ?: return@LaunchedEffect
-            val iterationCadenceNamespaceFullPath = settingsUiState.iterationCadence?.namespaceFullPath
+            val namespaceFullPath = settings.namespaceFullPath ?: return@LaunchedEffect
+            val iterationCadenceNamespaceFullPath = settings.iterationCadence?.namespaceFullPath
                 ?: return@LaunchedEffect
             if (!isRefreshing) loading = true
             if (search.isNotEmpty()) delay(300)
-            val pinnedPlusOpen = settingsUiState.pinnedIssues +
-                    (settingsUiState.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
+            val pinnedPlusOpen = settings.pinnedIssues +
+                    (settings.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
             val query = IssuesQuery.Builder()
                 .namespaceFullPath(namespaceFullPath)
                 .iterationCadenceNamespaceFullPath(iterationCadenceNamespaceFullPath)
-                .iterationCadenceId(settingsUiState.iterationCadence?.id?.let { listOf(it) } ?: emptyList())
+                .iterationCadenceId(settings.iterationCadence.id?.let { listOf(it) } ?: emptyList())
                 .pinnedIds(pinnedPlusOpen)
                 // skip when searching to reduce query complexity
                 .doPinnedSearch(pinnedPlusOpen.isNotEmpty() && search.isBlank())
@@ -336,7 +326,7 @@ fun App(
             apolloClient.query(query).fetchPolicy(FetchPolicy.NetworkFirst).watch().collect {
                 currentUserId = it.data?.currentUser?.id.toString()
                 issues = it.extractIssues(
-                    groupSprintInEpics = settingsUiState.groupSprintInEpics,
+                    groupSprintInEpics = settings.groupSprintInEpics,
                 )
                 loading = false
                 isRefreshing = false
@@ -399,7 +389,8 @@ fun App(
                 supportingPane = {
                     AnimatedPane(Modifier.clip(align = Alignment.Start, minWidth = 290.dp)) {
                         Settings(
-                            viewModel = settingsViewModel,
+                            settings = settings,
+                            updater = settingsRepository,
                             namespaces = namespaces,
                             disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
                             onBack = if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
@@ -431,7 +422,7 @@ fun App(
                             val matchesSearch = search.isEmpty() ||
                                     issue.title.contains(search, ignoreCase = true) ||
                                     issue.id.toString().contains(search, ignoreCase = true) ||
-                                    issue.id == settingsUiState.openTracking?.workItemId ||
+                                    issue.id == settings.openTracking?.workItemId ||
                                     issue.iid.contains(search, ignoreCase = true) ||
                                     issue.webUrl.orEmpty().contains(search, ignoreCase = true) ||
                                     issue.assignees?.nodes.orEmpty().filterNotNull().any {
@@ -448,7 +439,7 @@ fun App(
                                     QuickFilter.MyIssues -> issue.assignees?.nodes.orEmpty()
                                         .filterNotNull().any { it.id == currentUserId }
                                     QuickFilter.HasTimeLogged -> issue.timelogs.isNotEmpty()
-                                    QuickFilter.Pinned -> issue.id in settingsUiState.pinnedIssues
+                                    QuickFilter.Pinned -> issue.id in settings.pinnedIssues
                                     QuickFilter.RecentlyTracked -> issue.timelogs.any {
                                         it.user.id == currentUserId
                                     }
@@ -458,10 +449,10 @@ fun App(
                             matchesSearch && matchesQuickFilters
                         }
                         val openTrackingAsTimelog = remember(
-                            settingsUiState.openTracking, currentUserId, refresh(every = 1.seconds)
-                        ) { settingsUiState.openTracking?.toTimelog(currentUserId = currentUserId.orEmpty()) }
-                        val openTrackingIssue = remember(issues, settingsUiState.openTracking) {
-                            settingsUiState.openTracking?.let { openTracking ->
+                            settings.openTracking, currentUserId, refresh(every = 1.seconds)
+                        ) { settings.openTracking?.toTimelog(currentUserId = currentUserId.orEmpty()) }
+                        val openTrackingIssue = remember(issues, settings.openTracking) {
+                            settings.openTracking?.let { openTracking ->
                                 issues?.firstOrNull { it.id == openTracking.workItemId }
                             }
                         }
@@ -490,7 +481,7 @@ fun App(
                                 selectedRange = selectedTimeRange,
                                 onRangeChange = { selectedTimeRange = it },
                                 onBack = { showHistory = false },
-                                openTracking = settingsUiState.openTracking
+                                openTracking = settings.openTracking
                             )
                         } else {
                         val lazyListState = rememberLazyListState()
@@ -501,10 +492,10 @@ fun App(
                         switchTrackingTarget?.let { (targetId, targetTitle) ->
                             SwitchTrackingDialog(
                                 targetTitle = targetTitle,
-                                currentTracking = settingsUiState.openTracking,
+                                currentTracking = settings.openTracking,
                                 onKeepTimeAndSwitch = {
-                                    settingsUiState.openTracking?.let { currentTracking ->
-                                        settingsViewModel.setOpenTracking(
+                                    settings.openTracking?.let { currentTracking ->
+                                        settingsRepository.setOpenTracking(
                                             currentTracking.copy(
                                                 workItemId = targetId,
                                                 workItemTitle = targetTitle
@@ -514,7 +505,7 @@ fun App(
                                     switchTrackingTarget = null
                                 },
                                 onDiscardAndSwitch = {
-                                    settingsViewModel.setOpenTracking(
+                                    settingsRepository.setOpenTracking(
                                         OpenTracking(
                                             workItemId = targetId,
                                             workItemTitle = targetTitle,
@@ -524,7 +515,7 @@ fun App(
                                     switchTrackingTarget = null
                                 },
                                 onShowCurrent = {
-                                    val currentId = settingsUiState.openTracking?.workItemId
+                                    val currentId = settings.openTracking?.workItemId
                                     val index = filteredIssues.indexOfFirst { issue -> issue.id == currentId }
                                     if (index >= 0) {
                                         coroutineScope.launch {
@@ -552,7 +543,7 @@ fun App(
                             state = lazyListState,
                             contentPadding = insets + extraPadding,
                         ) {
-                            stickyHeader(listState = lazyListState) { _, isSticky ->
+                            stickyHeader(listState = lazyListState) { _, _ ->
                                 Column(
                                     modifier = Modifier
                                         .background(MaterialTheme.colorScheme.background)
@@ -596,7 +587,7 @@ fun App(
                                                 showHistory = true
                                             }),
                                     heading = { Text(text = "Today") },
-                                    openTracking = settingsUiState.openTracking,
+                                    openTracking = settings.openTracking,
                                     timelogs = remember(allTimelogs) { allTimelogs.filter {
                                         val now = Clock.System.now()
                                         val timeZone = TimeZone.currentSystemDefault()
@@ -608,9 +599,9 @@ fun App(
 
                             @Composable
                             operator fun BareWorkItem.invoke(modifier: Modifier = Modifier) {
-                                val pinned = id in settingsUiState.pinnedIssues
-                                val togglePinned = { settingsViewModel.togglePinIssue(id.toString()) }
-                                fun startTracking() = settingsViewModel.setOpenTracking(
+                                val pinned = id in settings.pinnedIssues
+                                val togglePinned = { settingsRepository.togglePinIssue(id.toString()) }
+                                fun startTracking() = settingsRepository.setOpenTracking(
                                     OpenTracking(
                                         workItemId = id.toString(),
                                         workItemTitle = title,
@@ -625,24 +616,24 @@ fun App(
                                     Issue(
                                         this@invoke,
                                         startTracking = {
-                                            if (settingsUiState.openTracking?.workItemId == null) {
+                                            if (settings.openTracking?.workItemId == null) {
                                                 startTracking()
                                             } else {
                                                 switchTrackingTarget = id.toString() to title
                                             }
                                         },
                                         currentUserId = currentUserId,
-                                        settingsUiState.showLabelsByDefault,
-                                        settingsUiState.useLabelColors,
-                                        openTracking = settingsUiState.openTracking,
+                                        settings.showLabelsByDefault,
+                                        settings.useLabelColors,
+                                        openTracking = settings.openTracking,
                                         onOpenTrackingChange = { openTracking ->
-                                            settingsViewModel.setOpenTracking(openTracking)
+                                            settingsRepository.setOpenTracking(openTracking)
                                         },
                                         pinned = pinned,
                                         togglePinned = togglePinned,
                                         commitTimeTrackingEnabled = commitTimeTrackingEnabled,
                                         commitTimeTracking = commitTimeTracking@{
-                                            val namespaceFullPath = settingsUiState.namespaceFullPath
+                                            val namespaceFullPath = settings.namespaceFullPath
                                                 ?: return@commitTimeTracking
                                             if (!commitTimeTrackingEnabled) return@commitTimeTracking
                                             if (apolloClient == null) {
@@ -652,7 +643,7 @@ fun App(
                                             commitTimeTrackingEnabled = false
                                             commitTimeTrackingErrors = null
                                             coroutineScope.launch {
-                                                settingsUiState.openTracking?.let { openTracking ->
+                                                settings.openTracking?.let { openTracking ->
                                                     suspend fun manualRefresh() {
                                                         // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
                                                         val success = "Saved successfully!"
@@ -681,7 +672,7 @@ fun App(
                                                             delay(4.seconds)
                                                             commitTimeTrackingErrors = null
                                                         }
-                                                        settingsViewModel.setOpenTracking(null)
+                                                        settingsRepository.setOpenTracking(null)
                                                     }
 
                                                     val result = apolloClient.mutation(
@@ -710,7 +701,7 @@ fun App(
                                                     } else if (result.hasErrors()) {
                                                         commitTimeTrackingErrors = result.errors?.map { it.message }
                                                     } else {
-                                                        settingsViewModel.setOpenTracking(null)
+                                                        settingsRepository.setOpenTracking(null)
                                                     }
                                                 }
                                                 commitTimeTrackingEnabled = true
@@ -741,7 +732,7 @@ fun App(
 
                             val groupedIssues = filteredIssues.groupBy { issue ->
                                 when {
-                                    issue.id in settingsUiState.pinnedIssues -> Section.Pinned
+                                    issue.id in settings.pinnedIssues -> Section.Pinned
                                     issue.state == WorkItemState.CLOSED -> Section.Closed
                                     else -> Section.Open
                                 }
@@ -867,7 +858,7 @@ fun App(
                 }
             )
         }
-        // Fake item to ignore focus requests if a issue is open
+        // Fake item to ignore focus requests if an issue is open
         Box(modifier = Modifier.focusProperties { canFocus = false }.focusRequester(focusRequester))
     }
 }

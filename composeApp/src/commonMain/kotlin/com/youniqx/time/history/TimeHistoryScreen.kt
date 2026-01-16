@@ -54,11 +54,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.domain.models.OpenTracking
+import com.youniqx.time.domain.models.isOpenTracking
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
-import com.youniqx.time.opentracking.OpenTracking
 import com.youniqx.time.opentracking.RepresentingIndicator
-import com.youniqx.time.opentracking.isOpenTracking
 import com.youniqx.time.opentracking.representingColors
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration

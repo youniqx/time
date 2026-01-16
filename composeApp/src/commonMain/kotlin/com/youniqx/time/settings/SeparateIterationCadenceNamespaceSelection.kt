@@ -19,6 +19,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
+import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.gitlab.models.NamespaceQuery
 
 @Composable

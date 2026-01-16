@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.opentracking.OpenTracking
+import com.youniqx.time.domain.models.OpenTracking
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)

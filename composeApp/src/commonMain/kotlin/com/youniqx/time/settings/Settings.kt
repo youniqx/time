@@ -40,10 +40,13 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youniqx.time.Label
 import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.domain.models.IterationCadence
+import com.youniqx.time.domain.models.OpenTracking
+import com.youniqx.time.domain.models.Settings
+import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.systemBarsForVisualComponents
@@ -51,35 +54,17 @@ import com.youniqx.time.theme.AppTheme
 
 @Composable
 fun Settings(
-    viewModel: SettingsViewModel,
+    settings: Settings,
+    updater: UpdateSettingsUseCase,
     namespaces: NamespaceQuery.Data?,
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
     onBack: (() -> Unit)? = null
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
+        settings = settings,
+        updater = updater,
         onBack = onBack,
-        darkTheme = uiState.darkTheme,
-        toggleDarkTheme = viewModel::toggleDarkTheme,
-        highContrastColors = uiState.highContrastColors,
-        toggleHighContrastColors = viewModel::toggleHighContrastColors,
-        groupSprintInEpics = uiState.groupSprintInEpics,
-        toggleGroupSprintInEpics = viewModel::toggleGroupSprintInEpics,
-        showLabelsByDefault = uiState.showLabelsByDefault,
-        toggleShowLabelsByDefault = viewModel::toggleShowLabelsByDefault,
-        useLabelColors = uiState.useLabelColors,
-        toggleUseLabelColors = viewModel::toggleUseLabelColors,
-        showMenuBarTimer = uiState.showMenuBarTimer,
-        toggleShowMenuBarTimer = viewModel::toggleShowMenuBarTimer,
-        instanceUrl = uiState.instanceUrl,
-        onInstanceUrlChange = viewModel::setInstanceUrl,
-        token = uiState.token,
-        onTokenChange = viewModel::setToken,
-        iterationCadence = uiState.iterationCadence,
         namespaces = namespaces,
-        namespaceFullPath = uiState.namespaceFullPath,
-        onNamespaceChange = viewModel::setNamespaceFullPath,
-        onIterationCadenceChange = viewModel::setIterationCadence,
         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
     )
 }
@@ -87,29 +72,11 @@ fun Settings(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+    settings: Settings,
+    updater: UpdateSettingsUseCase,
     onBack: (() -> Unit)? = null,
-    darkTheme: Boolean,
-    toggleDarkTheme: () -> Unit,
-    highContrastColors: Boolean,
-    toggleHighContrastColors: () -> Unit,
-    groupSprintInEpics: Boolean,
-    toggleGroupSprintInEpics: () -> Unit,
-    showLabelsByDefault: Boolean,
-    toggleShowLabelsByDefault: () -> Unit,
-    useLabelColors: Boolean,
-    toggleUseLabelColors: () -> Unit,
-    showMenuBarTimer: Boolean,
-    toggleShowMenuBarTimer: () -> Unit,
-    instanceUrl: String?,
-    onInstanceUrlChange: (String) -> Unit,
-    token: String?,
-    onTokenChange: (String) -> Unit,
-    iterationCadence: IterationCadence?,
     namespaces: NamespaceQuery.Data?,
-    namespaceFullPath: String?,
-    onNamespaceChange: (id: String) -> Unit,
-    onIterationCadenceChange: (iterationCadence: IterationCadence?) -> Unit,
-    disableGlobalSearchIfFocused: Modifier.() -> Modifier,
+    disableGlobalSearchIfFocused: Modifier.() -> Modifier
 ) {
     Column(
         modifier = Modifier
@@ -143,9 +110,9 @@ fun SettingsScreen(
         Row(
             modifier = Modifier.fillMaxWidth().clickable(
                 // enabled = !lightIsHovered && !darkIsHovered,
-                onClickLabel = if (darkTheme) "Enable light theme" else "Enable dark theme",
+                onClickLabel = if (settings.darkTheme) "Enable light theme" else "Enable dark theme",
                 role = Role.Switch,
-                onClick = toggleDarkTheme
+                onClick = updater::toggleDarkTheme
             ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -156,8 +123,8 @@ fun SettingsScreen(
                     shape = SegmentedButtonDefaults.itemShape(
                         index = 0, count = 2
                     ),
-                    onClick = { if (darkTheme) toggleDarkTheme() },
-                    selected = !darkTheme,
+                    onClick = { if (settings.darkTheme) updater.toggleDarkTheme() },
+                    selected = !settings.darkTheme,
                     interactionSource = lightInteractionSource,
                     icon = {
                         Icon(
@@ -170,8 +137,8 @@ fun SettingsScreen(
                     shape = SegmentedButtonDefaults.itemShape(
                         index = 1, count = 2
                     ),
-                    onClick = { if (!darkTheme) toggleDarkTheme() },
-                    selected = darkTheme,
+                    onClick = { if (!settings.darkTheme) updater.toggleDarkTheme() },
+                    selected = settings.darkTheme,
                     interactionSource = darkInteractionSource,
                     icon = {
                         Icon(
@@ -184,37 +151,37 @@ fun SettingsScreen(
         }
         Row(
             modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (highContrastColors) "Disable high contrast colors" else "Enable high contrast colors",
+                onClickLabel = if (settings.highContrastColors) "Disable high contrast colors" else "Enable high contrast colors",
                 role = Role.Switch,
-                onClick = toggleHighContrastColors
+                onClick = updater::toggleHighContrastColors
             ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Use high contrast colors")
-            Switch(checked = highContrastColors, onCheckedChange = { toggleHighContrastColors() })
+            Switch(checked = settings.highContrastColors, onCheckedChange = { updater.toggleHighContrastColors() })
         }
         Row(
             modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (groupSprintInEpics) {
+                onClickLabel = if (settings.groupSprintInEpics) {
                     "Show individual issues of sprint even if they have parent epics"
                 } else {
                     "Show parent epics instead of individual issues if available"
                 },
                 role = Role.Switch,
-                onClick = toggleGroupSprintInEpics
+                onClick = updater::toggleGroupSprintInEpics
             ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text("Group sprint in epics")
-            Switch(checked = groupSprintInEpics, onCheckedChange = { toggleGroupSprintInEpics() })
+            Switch(checked = settings.groupSprintInEpics, onCheckedChange = { updater.toggleGroupSprintInEpics() })
         }
         FlowRow (
             modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (showLabelsByDefault) "Hide labels" else "Show labels",
+                onClickLabel = if (settings.showLabelsByDefault) "Hide labels" else "Show labels",
                 role = Role.Switch,
-                onClick = toggleShowLabelsByDefault
+                onClick = updater::toggleShowLabelsByDefault
             ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             itemVerticalAlignment = Alignment.CenterVertically
@@ -225,8 +192,8 @@ fun SettingsScreen(
                     shape = SegmentedButtonDefaults.itemShape(
                         index = 0, count = 3
                     ),
-                    onClick = { if(showLabelsByDefault) toggleShowLabelsByDefault() },
-                    selected = !showLabelsByDefault,
+                    onClick = { if(settings.showLabelsByDefault) updater.toggleShowLabelsByDefault() },
+                    selected = !settings.showLabelsByDefault,
                     label = { Text("None", style = MaterialTheme.typography.labelSmall) }
                 )
                 SegmentedButton(
@@ -234,10 +201,10 @@ fun SettingsScreen(
                         index = 1, count = 3
                     ),
                     onClick = {
-                        if (!showLabelsByDefault) toggleShowLabelsByDefault()
-                        if (useLabelColors) toggleUseLabelColors()
+                        if (!settings.showLabelsByDefault) updater.toggleShowLabelsByDefault()
+                        if (settings.useLabelColors) updater.toggleUseLabelColors()
                     },
-                    selected = showLabelsByDefault && !useLabelColors,
+                    selected = settings.showLabelsByDefault && !settings.useLabelColors,
                     label = { Label(BareWorkItemWidgets.Node(__typename = "", id = "", color = "#a4c639", title = "Simple"), useColors = false) }
                 )
                 SegmentedButton(
@@ -245,33 +212,33 @@ fun SettingsScreen(
                         index = 2, count = 3
                     ),
                     onClick = {
-                        if (!showLabelsByDefault) toggleShowLabelsByDefault()
-                        if (!useLabelColors) toggleUseLabelColors()
+                        if (!settings.showLabelsByDefault) updater.toggleShowLabelsByDefault()
+                        if (!settings.useLabelColors) updater.toggleUseLabelColors()
                     },
-                    selected = showLabelsByDefault && useLabelColors,
+                    selected = settings.showLabelsByDefault && settings.useLabelColors,
                     label = { Label(BareWorkItemWidgets.Node(__typename = "", id = "", color = "#a4c639", title = "Color"), useColors = true) }
                 )
             }
         }
         if (additionalTimerSupport.isSupported) Row(
             modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (showMenuBarTimer) "Hide timer in menu bar" else "Show timer in menu bar",
+                onClickLabel = if (settings.showMenuBarTimer) "Hide timer in menu bar" else "Show timer in menu bar",
                 role = Role.Switch,
-                onClick = toggleShowMenuBarTimer
+                onClick = updater::toggleShowMenuBarTimer
             ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(additionalTimerSupport.settingsText.orEmpty())
-            Switch(checked = showMenuBarTimer, onCheckedChange = { toggleShowMenuBarTimer() })
+            Switch(checked = settings.showMenuBarTimer, onCheckedChange = { updater.toggleShowMenuBarTimer() })
         }
         InstanceUrlInput(
             modifier = Modifier
                 .disableGlobalSearchIfFocused()
                 .padding(vertical = 8.dp)
                 .padding(horizontal = 12.dp),
-            instanceUrl = instanceUrl,
-            onInstanceUrlChange = onInstanceUrlChange
+            instanceUrl = settings.instanceUrl,
+            onInstanceUrlChange = updater::setInstanceUrl
         )
         val uriHandler = LocalUriHandler.current
         TokenInput(
@@ -279,16 +246,16 @@ fun SettingsScreen(
                 .disableGlobalSearchIfFocused()
                 .padding(vertical = 8.dp)
                 .padding(horizontal = 12.dp),
-            token = token,
-            onTokenChange = onTokenChange,
+            token = settings.token,
+            onTokenChange = updater::setToken,
             trailingIcon = {
-                SimpleTooltip("Create new GitLab token" + if (instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "") {
+                SimpleTooltip("Create new GitLab token" + if (settings.instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "") {
                     IconButton(
                         modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
-                        enabled = !instanceUrl.isNullOrEmpty(),
+                        enabled = !settings.instanceUrl.isNullOrEmpty(),
                         onClick = {
-                            instanceUrl?.let {
-                                val tokenUrl = createTokenUrl(fromInstanceUrl = instanceUrl)
+                            settings.instanceUrl?.let {
+                                val tokenUrl = createTokenUrl(fromInstanceUrl = settings.instanceUrl)
                                 uriHandler.openUri(tokenUrl.toString())
                             }
                         }) {
@@ -305,15 +272,15 @@ fun SettingsScreen(
             it.fullPath.contains(namespaceSelectionState.search, ignoreCase = true) ||
                     it.name.contains(namespaceSelectionState.search, ignoreCase = true)
         }
-        val namespaceName = namespaceFullPath?.let {
-            namespaces?.getNameByFullPath(fullPath = namespaceFullPath)
+        val namespaceName = settings.namespaceFullPath?.let {
+            namespaces?.getNameByFullPath(fullPath = settings.namespaceFullPath)
         }
         NamespaceSelection(
             selected = namespaceName?.let {
-                { NamespaceItem(fullPath = namespaceFullPath, name = it) }
+                { NamespaceItem(fullPath = settings.namespaceFullPath, name = it) }
             },
             namespaces = namespaces,
-            onNamespaceChange = onNamespaceChange,
+            onNamespaceChange = updater::setNamespaceFullPath,
             state = namespaceSelectionState,
             label = { Text("Namespace") },
             supportingText = { Text("Search scope (decedent namespaces included).") },
@@ -322,24 +289,24 @@ fun SettingsScreen(
                     UserNamespace(
                         namespace = it,
                         state = namespaceSelectionState,
-                        onNamespaceChange = onNamespaceChange
+                        onNamespaceChange = updater::setNamespaceFullPath
                     )
                 }
             },
         )
         if (namespaceSelectionState.search.isEmpty() && !(namespaces?.groups?.pageInfo?.containsAllResults ?: false)) {
             SeparateIterationCadenceNamespaceSelection(
-                iterationCadence = iterationCadence,
-                searchScopeNamespaceFullPath = namespaceFullPath,
+                iterationCadence = settings.iterationCadence,
+                searchScopeNamespaceFullPath = settings.namespaceFullPath,
                 searchScopeNamespaceName = namespaceName,
                 namespaces = namespaces,
-                onIterationCadenceChange = onIterationCadenceChange,
+                onIterationCadenceChange = updater::setIterationCadence,
             )
         }
         IterationCadenceSelection(
-            iterationCadence = iterationCadence,
+            iterationCadence = settings.iterationCadence,
             namespaces = namespaces,
-            onIterationCadenceChange = onIterationCadenceChange,
+            onIterationCadenceChange = updater::setIterationCadence,
         )
     }
 }
@@ -351,28 +318,36 @@ val NamespaceQuery.PageInfo.containsAllResults get() = !hasPreviousPage && !hasN
 fun SettingsPreview() {
     AppTheme {
         SettingsScreen(
-            darkTheme = true,
-            toggleDarkTheme = {},
-            highContrastColors = false,
-            toggleHighContrastColors = {},
-            groupSprintInEpics = false,
-            toggleGroupSprintInEpics = {},
-            showLabelsByDefault = true,
-            toggleShowLabelsByDefault = {},
-            useLabelColors = true,
-            toggleUseLabelColors = {},
-            showMenuBarTimer = true,
-            toggleShowMenuBarTimer = {},
-            instanceUrl = null,
-            onInstanceUrlChange = {},
-            token = "𐂂",
-            onTokenChange = {},
+            settings = Settings(
+                darkTheme = true,
+                highContrastColors = false,
+                groupSprintInEpics = false,
+                showLabelsByDefault = true,
+                useLabelColors = true,
+                showMenuBarTimer = true,
+                instanceUrl = null,
+                token = "𐂂",
+                namespaceFullPath = null,
+                iterationCadence = null,
+                pinnedIssues = emptyList(),
+                openTracking = null,
+            ),
+            updater = object : UpdateSettingsUseCase {
+                override fun toggleDarkTheme() {}
+                override fun toggleHighContrastColors() {}
+                override fun toggleGroupSprintInEpics() {}
+                override fun toggleShowLabelsByDefault() {}
+                override fun toggleUseLabelColors() {}
+                override fun toggleShowMenuBarTimer() {}
+                override fun setInstanceUrl(instanceUrl: String) {}
+                override fun setToken(token: String) {}
+                override fun setNamespaceFullPath(fullPath: String) {}
+                override fun setIterationCadence(iterationCadence: IterationCadence?) {}
+                override fun togglePinIssue(id: String) {}
+                override fun setOpenTracking(openTracking: OpenTracking?) {}
+            },
             namespaces = null,
-            namespaceFullPath = null,
-            onNamespaceChange = {},
-            iterationCadence = null,
-            onIterationCadenceChange = {},
-            disableGlobalSearchIfFocused = { this },
+            disableGlobalSearchIfFocused = { this }
         )
     }
 }
