@@ -21,6 +21,21 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
+val defaultSettings = Settings(
+    instanceUrl = null,
+    token = null,
+    namespaceFullPath = null,
+    iterationCadence = null,
+    darkTheme = true,
+    highContrastColors = false,
+    groupSprintInEpics = false,
+    showLabelsByDefault = false,
+    useLabelColors = false,
+    showMenuBarTimer = true,
+    pinnedIssues = emptyList(),
+    openTracking = null,
+)
+
 @OptIn(ExperimentalSettingsApi::class)
 @Inject
 @ContributesBinding(AppScope::class)
@@ -34,20 +49,7 @@ class LocalSettingsRepository(
     private val _settings =
         MutableStateFlow(
             SourceAware(
-                data = Settings(
-                    instanceUrl = null,
-                    token = null,
-                    namespaceFullPath = null,
-                    iterationCadence = null,
-                    darkTheme = true,
-                    highContrastColors = false,
-                    groupSprintInEpics = false,
-                    showLabelsByDefault = false,
-                    useLabelColors = false,
-                    showMenuBarTimer = true,
-                    pinnedIssues = emptyList(),
-                    openTracking = null,
-                ),
+                data = defaultSettings,
                 source = DataSource.Default
             )
         )

@@ -145,6 +145,7 @@ import com.youniqx.time.components.SwipeableIssueCard
 import com.youniqx.time.components.SwitchTrackingDialog
 import com.youniqx.time.components.TimeBadge
 import com.youniqx.time.components.rememberTimeBadgePlaceholder
+import com.youniqx.time.data.toApolloClientOrNull
 import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.DataSource
 import com.youniqx.time.domain.models.OpenTracking
@@ -245,7 +246,6 @@ fun App(
 
         var currentUserId: String? by remember { mutableStateOf(null) }
         var issues: List<BareWorkItem>? by remember { mutableStateOf(null) }
-        var namespaces: NamespaceQuery.Data? by remember { mutableStateOf(null) }
         var search: String by remember { mutableStateOf("") }
         var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
         var loading: Boolean by remember { mutableStateOf(false) }
@@ -258,39 +258,9 @@ fun App(
             onFocusChanged { disableGlobalSearch = it.hasFocus }
         }
         val isPreview = LocalInspectionMode.current
-        val apolloClient = remember(settings.instanceUrl, settings.token) {
-            val instanceUrl = settings.instanceUrl ?: return@remember null
-            val token = settings.token ?: return@remember null
-            val cacheFactory = MemoryCacheFactory(maxSizeBytes = 30 * 1024 * 1024)
-            val cacheKeyGenerator = object : CacheKeyGenerator {
-                override fun cacheKeyForObject(obj: Map<String, Any?>, context: CacheKeyGeneratorContext): CacheKey? {
-                    // Generate the cache ID based on the object's id field
-                    return (obj["id"] as? String)?.let(::CacheKey)
-                }
-            }
-            ApolloClient.Builder()
-                .serverUrl(
-                    buildUrl {
-                        takeFrom(instanceUrl)
-                        appendPathSegments("api", "graphql")
-                    }.toString()
-                )
-                .addHttpHeader("Authorization", "Bearer $token")
-                .normalizedCache(
-                    normalizedCacheFactory = cacheFactory,
-                    cacheKeyGenerator = cacheKeyGenerator
-                )
-                .build()
-        }
-        LaunchedEffect(apolloClient) {
-            if (isPreview) {
-                namespaces = previewNamespaces
-                return@LaunchedEffect
-            }
-            if (apolloClient == null) return@LaunchedEffect
-            val response = apolloClient.query(NamespaceQuery()).execute()
-            namespaces = response.data
-        }
+
+        val apolloClient = remember(sourceAwareSettings) { sourceAwareSettings.toApolloClientOrNull() }
+
         LaunchedEffect(
             search,
             settings.namespaceFullPath,
@@ -389,9 +359,6 @@ fun App(
                 supportingPane = {
                     AnimatedPane(Modifier.clip(align = Alignment.Start, minWidth = 290.dp)) {
                         Settings(
-                            settings = settings,
-                            updater = settingsRepository,
-                            namespaces = namespaces,
                             disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
                             onBack = if (navigator.scaffoldValue.primary == PaneAdaptedValue.Hidden) {
                                 {

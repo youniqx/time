@@ -40,6 +40,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youniqx.time.Label
 import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.components.SimpleTooltip
@@ -51,20 +52,20 @@ import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
+import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 @Composable
 fun Settings(
-    settings: Settings,
-    updater: UpdateSettingsUseCase,
-    namespaces: NamespaceQuery.Data?,
+    viewModel: SettingsViewModel = metroViewModel(),
     disableGlobalSearchIfFocused: Modifier.() -> Modifier,
     onBack: (() -> Unit)? = null
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
-        settings = settings,
-        updater = updater,
+        settings = uiState.settings,
+        updater = viewModel,
         onBack = onBack,
-        namespaces = namespaces,
+        namespaces = uiState.namespaces,
         disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
     )
 }
