@@ -75,7 +75,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youniqx.time.AddedTextVisualTransformation
 import com.youniqx.time.AdditionalActions
-import com.youniqx.time.Label
 import com.youniqx.time.WorkItemTypeIcon
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.components.SwipeableWorkItemCard
@@ -263,17 +262,7 @@ operator fun BareWorkItem.invoke(
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
                 }
-                labels?.let {
-                    AnimatedVisibility(visible = labels.isNotEmpty()) {
-                        FlowRow(
-                            modifier = Modifier.padding(vertical = 4.dp),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            it.filterNotNull().forEach { label -> Label(label = label, useColors = useLabelColors) }
-                        }
-                    }
-                }
+                labels(useLabelColors)
                 AnimatedVisibility(visible = showTimelogs) {
                     Column(modifier = Modifier.padding(top = 8.dp)) {
                         myTimelogs.forEachIndexed { index, timelog ->

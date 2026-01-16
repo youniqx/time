@@ -170,8 +170,7 @@ fun SearchPlaceholder() {
                 )
             ) {
                 SimpleTooltip("Labels") {
-                    Label(
-                        label = BareWorkItemWidgets.Node(__typename = "", id = "", color = "#BC8F8F", title = "L"),
+                    Label(__typename = "", id = "", color = "#BC8F8F", title = "L")(
                         useColors = false
                     )
                 }

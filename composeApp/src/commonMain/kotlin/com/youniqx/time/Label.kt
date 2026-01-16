@@ -15,18 +15,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 
+typealias Label = BareWorkItemWidgets.Node
+
 @Composable
-fun Label(label: BareWorkItemWidgets.Node, useColors: Boolean) {
+operator fun Label.invoke(useColors: Boolean) {
     val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
     val defaultText = MaterialTheme.colorScheme.onSurfaceVariant
 
     val (bgColor, textColor) = if (useColors) {
-        remember(label.color) {
+        remember(color) {
             val color = try {
-                Color(label.color.toColorInt()).copy(alpha = 0.85f)
+                Color(color.toColorInt()).copy(alpha = 0.85f)
             } catch (_: Exception) {
                 defaultBg
             }
@@ -36,7 +37,7 @@ fun Label(label: BareWorkItemWidgets.Node, useColors: Boolean) {
         defaultBg to defaultText
     }
 
-    val displayText = label.title.replace("::", " | ")
+    val displayText = title.replace("::", " | ")
 
     Box(
         modifier = Modifier

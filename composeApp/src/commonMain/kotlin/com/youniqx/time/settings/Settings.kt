@@ -41,7 +41,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.youniqx.time.Label
 import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.domain.models.IterationCadence
@@ -49,7 +48,8 @@ import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.Settings
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
-import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.invoke
+import com.youniqx.time.Label
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -206,7 +206,7 @@ fun SettingsScreen(
                         if (settings.useLabelColors) updater.toggleUseLabelColors()
                     },
                     selected = settings.showLabelsByDefault && !settings.useLabelColors,
-                    label = { Label(BareWorkItemWidgets.Node(__typename = "", id = "", color = "#a4c639", title = "Simple"), useColors = false) }
+                    label = { Label(__typename = "", id = "", color = "#a4c639", title = "Simple")(useColors = false) }
                 )
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(
@@ -217,7 +217,7 @@ fun SettingsScreen(
                         if (!settings.useLabelColors) updater.toggleUseLabelColors()
                     },
                     selected = settings.showLabelsByDefault && settings.useLabelColors,
-                    label = { Label(BareWorkItemWidgets.Node(__typename = "", id = "", color = "#a4c639", title = "Color"), useColors = true) }
+                    label = { Label(__typename = "", id = "", color = "#a4c639", title = "Color")(useColors = true) }
                 )
             }
         }

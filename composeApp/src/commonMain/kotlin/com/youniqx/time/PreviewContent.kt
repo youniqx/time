@@ -162,7 +162,7 @@ val previewIssues: List<BareWorkItem> by lazy {
                                         __typename = "",
                                         nodes = labels.shuffled().take(Random.nextInt(1, labels.size))
                                             .map { (title, color) ->
-                                                BareWorkItemWidgets.Node(
+                                                Label(
                                                     __typename = "",
                                                     title = title,
                                                     id = "0",
