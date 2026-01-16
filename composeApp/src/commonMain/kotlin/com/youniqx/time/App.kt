@@ -233,7 +233,7 @@ fun App(
         // Show onboarding for new users
         if (showOnboarding) {
             OnboardingScreen(
-                loading = sourceAwareSettings.source != DataSource.Default,
+                loading = sourceAwareSettings.source == DataSource.Default,
                 instanceUrl = settings.instanceUrl,
                 onInstanceUrlChange = settingsRepository::setInstanceUrl,
                 token = settings.token,
