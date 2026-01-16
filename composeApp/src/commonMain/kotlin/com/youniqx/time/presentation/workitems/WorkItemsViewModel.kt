@@ -11,11 +11,6 @@ import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 
-data class UiState(
-    val settings: Settings,
-    val namespaces: NamespaceQuery.Data?,
-)
-
 @Inject
 @ViewModelKey(WorkItemsViewModel::class)
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
