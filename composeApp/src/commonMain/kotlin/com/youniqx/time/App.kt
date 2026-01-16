@@ -139,7 +139,6 @@ import com.apollographql.apollo.cache.normalized.api.MemoryCacheFactory
 import com.apollographql.apollo.cache.normalized.fetchPolicy
 import com.apollographql.apollo.cache.normalized.normalizedCache
 import com.apollographql.apollo.cache.normalized.watch
-import com.youniqx.time.animation.FadeInItem
 import com.youniqx.time.components.LoadingIssuesList
 import com.youniqx.time.components.NoIssuesEmptyState
 import com.youniqx.time.components.NoSearchResultsEmptyState
@@ -607,7 +606,7 @@ fun App(
                             }
 
                             @Composable
-                            operator fun BareWorkItem.invoke() {
+                            operator fun BareWorkItem.invoke(modifier: Modifier = Modifier) {
                                 val pinned = id in settingsUiState.pinnedIssues
                                 val togglePinned = { settingsViewModel.togglePinIssue(id.toString()) }
                                 fun startTracking() = settingsViewModel.setOpenTracking(
@@ -617,7 +616,7 @@ fun App(
                                         timeOfOpen = Clock.System.now()
                                     )
                                 )
-                                Column {
+                                Column(modifier = modifier) {
                                     var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
                                     var commitTimeTrackingErrors by remember {
                                         mutableStateOf<List<String>?>(null)
@@ -772,9 +771,7 @@ fun App(
 
 
                                     if (open) items(sectionIssues, key = { issue -> issue.id }) { sectionIssue ->
-                                        FadeInItem {
-                                            sectionIssue()
-                                        }
+                                        sectionIssue(modifier = Modifier.animateItem())
                                     }
                                 }
                             }
