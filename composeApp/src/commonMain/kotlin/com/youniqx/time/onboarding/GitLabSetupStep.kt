@@ -23,7 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.settings.InstanceUrlInput
 import com.youniqx.time.presentation.settings.TokenInput
 import com.youniqx.time.presentation.settings.createTokenUrl

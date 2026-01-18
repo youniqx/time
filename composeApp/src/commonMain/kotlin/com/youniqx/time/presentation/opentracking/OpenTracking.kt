@@ -10,7 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.domain.models.OpenTracking
 import kotlin.time.ExperimentalTime
 

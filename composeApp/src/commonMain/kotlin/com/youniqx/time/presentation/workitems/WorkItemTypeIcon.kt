@@ -9,7 +9,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.presentation.SimpleTooltip
 
 @Composable
 fun WorkItemTypeIcon(type: String, text: String = type) {

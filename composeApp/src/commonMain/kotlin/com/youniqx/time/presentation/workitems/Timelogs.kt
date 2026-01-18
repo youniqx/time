@@ -17,7 +17,7 @@ import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets

@@ -30,7 +30,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
-import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.modifier.changeFocusOnTab
 import kotlinx.coroutines.flow.drop

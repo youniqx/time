@@ -1,4 +1,4 @@
-package com.youniqx.time.components
+package com.youniqx.time.presentation
 
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.PlainTooltip

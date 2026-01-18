@@ -42,7 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.youniqx.time.additionalTimerSupport
-import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.Settings
