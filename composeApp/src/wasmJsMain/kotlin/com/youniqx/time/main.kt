@@ -12,6 +12,7 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.toFontFamily
 import androidx.compose.ui.window.ComposeViewport
 import com.youniqx.time.di.WasmAppGraph
+import com.youniqx.time.presentation.App
 import dev.zacsweers.metro.createGraph
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import kotlinx.browser.document

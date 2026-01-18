@@ -72,7 +72,7 @@ import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
-import com.youniqx.time.labels
+import com.youniqx.time.presentation.labels
 import com.youniqx.time.presentation.modifier.adaptivePadding
 import com.youniqx.time.presentation.modifier.changeFocusOnTab
 import com.youniqx.time.presentation.modifier.onCtrlOrMetaEnter
@@ -81,7 +81,7 @@ import com.youniqx.time.presentation.opentracking.customTimeSpentHasErrorMessage
 import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.refresh
 import com.youniqx.time.presentation.theme.LocalSpacing
-import com.youniqx.time.timelogs
+import com.youniqx.time.presentation.timelogs
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes

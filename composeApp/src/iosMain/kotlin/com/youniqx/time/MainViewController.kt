@@ -3,6 +3,7 @@ package com.youniqx.time
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.youniqx.time.di.IosAppGraph
+import com.youniqx.time.presentation.App
 import dev.zacsweers.metro.createGraph
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import platform.UIKit.UIViewController

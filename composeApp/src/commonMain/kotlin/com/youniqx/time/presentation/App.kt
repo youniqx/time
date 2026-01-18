@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class, ExperimentalTime::class)
 
-package com.youniqx.time
+package com.youniqx.time.presentation
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -89,7 +89,7 @@ import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
-import com.youniqx.time.presentation.Section
+import com.youniqx.time.onSet
 import com.youniqx.time.presentation.history.HistorySummaryCard
 import com.youniqx.time.presentation.history.TimeHistoryScreen
 import com.youniqx.time.presentation.history.TimeRange
@@ -99,12 +99,12 @@ import com.youniqx.time.presentation.modifier.clip
 import com.youniqx.time.presentation.onboarding.OnboardingScreen
 import com.youniqx.time.presentation.workitems.WorkItemsViewModel
 import com.youniqx.time.presentation.workitems.invoke
-import com.youniqx.time.presentation.plus
 import com.youniqx.time.presentation.settings.Settings
-import com.youniqx.time.presentation.stickyHeader
 import com.youniqx.time.presentation.workitems.Search
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.Theme
+import com.youniqx.time.refresh
+import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
