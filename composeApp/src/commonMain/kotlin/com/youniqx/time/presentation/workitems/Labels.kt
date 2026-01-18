@@ -21,7 +21,7 @@ operator fun List<Label?>?.invoke(
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                it.filterNotNull().forEach { label -> label.invoke(useColors = useLabelColors) }
+                it.filterNotNull().forEach { label -> label(useColors = useLabelColors) }
             }
         }
     }

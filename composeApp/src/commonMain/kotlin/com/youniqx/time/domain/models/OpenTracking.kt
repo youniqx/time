@@ -1,18 +1,9 @@
 @file:OptIn(ExperimentalTime::class)
 package com.youniqx.time.domain.models
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.PauseCircle
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.history.TimelogEntry
-import com.youniqx.time.opentracking.PulsingDot
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration
