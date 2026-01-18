@@ -2,7 +2,6 @@ package com.youniqx.time.presentation.modifier
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.unit.Constraints.Companion.Infinity
 import androidx.compose.ui.unit.Dp
 
 /**
