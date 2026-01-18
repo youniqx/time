@@ -7,8 +7,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.Label
-import com.youniqx.time.invoke
+import com.youniqx.time.presentation.Label
+import com.youniqx.time.presentation.invoke
 
 @Composable
 operator fun List<Label?>?.invoke(

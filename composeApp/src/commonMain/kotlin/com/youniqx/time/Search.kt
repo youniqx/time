@@ -39,7 +39,9 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.youniqx.time.presentation.Label
 import com.youniqx.time.presentation.SimpleTooltip
+import com.youniqx.time.presentation.invoke
 import com.youniqx.time.presentation.workitems.WorkItemTypeIcon
 
 @Composable

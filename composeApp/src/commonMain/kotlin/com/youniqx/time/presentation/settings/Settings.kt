@@ -48,8 +48,8 @@ import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.Settings
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
-import com.youniqx.time.invoke
-import com.youniqx.time.Label
+import com.youniqx.time.presentation.Label
+import com.youniqx.time.presentation.invoke
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.AppTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel

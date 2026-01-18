@@ -1,4 +1,4 @@
-package com.youniqx.time
+package com.youniqx.time.presentation
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -15,7 +15,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.youniqx.time.contrastingTextColor
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.toColorInt
 
 typealias Label = BareWorkItemWidgets.Node
 
