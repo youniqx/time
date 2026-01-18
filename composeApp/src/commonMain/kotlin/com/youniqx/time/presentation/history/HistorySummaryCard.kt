@@ -1,4 +1,4 @@
-package com.youniqx.time.history
+package com.youniqx.time.presentation.history
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

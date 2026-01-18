@@ -89,10 +89,10 @@ import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
-import com.youniqx.time.history.HistorySummaryCard
-import com.youniqx.time.history.TimeHistoryScreen
-import com.youniqx.time.history.TimeRange
-import com.youniqx.time.history.toTimelogEntry
+import com.youniqx.time.presentation.history.HistorySummaryCard
+import com.youniqx.time.presentation.history.TimeHistoryScreen
+import com.youniqx.time.presentation.history.TimeRange
+import com.youniqx.time.presentation.history.toTimelogEntry
 import com.youniqx.time.modifier.adaptivePadding
 import com.youniqx.time.modifier.clip
 import com.youniqx.time.onboarding.OnboardingScreen

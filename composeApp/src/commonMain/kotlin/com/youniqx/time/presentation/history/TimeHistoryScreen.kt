@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
 
-package com.youniqx.time.history
+package com.youniqx.time.presentation.history
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
