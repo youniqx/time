@@ -1,4 +1,4 @@
-package com.youniqx.time.components
+package com.youniqx.time.presentation.workitems
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -42,6 +42,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.theme.LocalSpacing
 import kotlin.math.roundToInt
 
