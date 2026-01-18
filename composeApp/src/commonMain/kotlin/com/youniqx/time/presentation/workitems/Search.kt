@@ -1,4 +1,4 @@
-package com.youniqx.time
+package com.youniqx.time.presentation.workitems
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.sp
 import com.youniqx.time.presentation.Label
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.invoke
-import com.youniqx.time.presentation.workitems.WorkItemTypeIcon
 
 @Composable
 fun Search(
