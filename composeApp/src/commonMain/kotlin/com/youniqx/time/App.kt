@@ -89,6 +89,7 @@ import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
+import com.youniqx.time.presentation.Section
 import com.youniqx.time.presentation.history.HistorySummaryCard
 import com.youniqx.time.presentation.history.TimeHistoryScreen
 import com.youniqx.time.presentation.history.TimeRange
