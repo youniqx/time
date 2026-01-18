@@ -1,4 +1,4 @@
-package com.youniqx.time
+package com.youniqx.time.presentation.workitems
 
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping

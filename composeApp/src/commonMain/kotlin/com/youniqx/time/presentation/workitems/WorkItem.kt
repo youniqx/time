@@ -67,7 +67,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.youniqx.time.AddedTextVisualTransformation
+import com.youniqx.time.presentation.workitems.AddedTextVisualTransformation
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.toTimelog
