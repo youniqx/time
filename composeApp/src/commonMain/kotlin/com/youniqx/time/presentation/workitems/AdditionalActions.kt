@@ -1,4 +1,4 @@
-package com.youniqx.time
+package com.youniqx.time.presentation.workitems
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
+import com.youniqx.time.clipEntryOf
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import kotlinx.coroutines.launch
