@@ -1,4 +1,4 @@
-package com.youniqx.time.modifier
+package com.youniqx.time.presentation.modifier
 
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout

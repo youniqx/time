@@ -9,7 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import com.youniqx.time.modifier.changeFocusOnTab
+import com.youniqx.time.presentation.modifier.changeFocusOnTab
 
 @Composable
 fun TokenInput(

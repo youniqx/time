@@ -74,9 +74,9 @@ import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.labels
-import com.youniqx.time.modifier.adaptivePadding
-import com.youniqx.time.modifier.changeFocusOnTab
-import com.youniqx.time.modifier.onCtrlOrMetaEnter
+import com.youniqx.time.presentation.modifier.adaptivePadding
+import com.youniqx.time.presentation.modifier.changeFocusOnTab
+import com.youniqx.time.presentation.modifier.onCtrlOrMetaEnter
 import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.customTimeSpentHasErrorMessage
 import com.youniqx.time.presentation.opentracking.representingColors

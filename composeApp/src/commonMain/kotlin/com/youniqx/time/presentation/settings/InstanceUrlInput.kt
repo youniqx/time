@@ -1,7 +1,6 @@
 package com.youniqx.time.presentation.settings
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material3.Icon
@@ -9,8 +8,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
-import com.youniqx.time.modifier.changeFocusOnTab
+import com.youniqx.time.presentation.modifier.changeFocusOnTab
 import io.ktor.http.Url
 
 @Composable
