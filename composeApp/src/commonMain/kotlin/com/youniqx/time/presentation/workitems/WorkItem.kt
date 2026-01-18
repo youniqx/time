@@ -69,7 +69,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youniqx.time.AddedTextVisualTransformation
 import com.youniqx.time.AdditionalActions
-import com.youniqx.time.WorkItemTypeIcon
 import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.components.SwipeableWorkItemCard
 import com.youniqx.time.components.TimeBadge

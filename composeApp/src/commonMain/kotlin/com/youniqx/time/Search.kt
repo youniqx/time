@@ -39,8 +39,8 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.components.SimpleTooltip
+import com.youniqx.time.presentation.workitems.WorkItemTypeIcon
 
 @Composable
 fun Search(
