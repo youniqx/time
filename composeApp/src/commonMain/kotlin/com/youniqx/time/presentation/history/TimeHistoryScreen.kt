@@ -60,8 +60,8 @@ import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.representingColors
-import com.youniqx.time.relativetime.RelativeTime
-import com.youniqx.time.relativetime.formatDuration
+import com.youniqx.time.presentation.relativetime.RelativeTime
+import com.youniqx.time.presentation.relativetime.formatDuration
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.theme.LocalSpacing
 import kotlin.time.Clock

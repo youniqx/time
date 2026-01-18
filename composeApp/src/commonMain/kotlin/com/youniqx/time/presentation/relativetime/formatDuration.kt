@@ -1,4 +1,4 @@
-package com.youniqx.time.relativetime
+package com.youniqx.time.presentation.relativetime
 
 import kotlin.math.roundToInt
 import kotlin.time.Duration

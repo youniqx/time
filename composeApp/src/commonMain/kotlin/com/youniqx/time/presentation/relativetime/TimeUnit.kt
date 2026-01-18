@@ -1,4 +1,4 @@
-package com.youniqx.time.relativetime
+package com.youniqx.time.presentation.relativetime
 
 import io.github.skeptick.libres.strings.PluralForms
 import io.github.skeptick.libres.strings.VoidPluralString

@@ -1,4 +1,4 @@
-package com.youniqx.time.relativetime
+package com.youniqx.time.presentation.relativetime
 
 /**
  * Indicates in what time frame the requested time unit needs
