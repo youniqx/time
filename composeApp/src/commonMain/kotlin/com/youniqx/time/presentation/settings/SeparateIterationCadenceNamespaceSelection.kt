@@ -1,4 +1,4 @@
-package com.youniqx.time.settings
+package com.youniqx.time.presentation.settings
 
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding

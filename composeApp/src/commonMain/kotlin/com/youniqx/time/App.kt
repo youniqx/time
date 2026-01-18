@@ -15,8 +15,6 @@ import androidx.compose.foundation.layout.MutableWindowInsets
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
@@ -75,7 +73,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Transparent
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
@@ -102,7 +99,7 @@ import com.youniqx.time.onboarding.OnboardingScreen
 import com.youniqx.time.presentation.workitems.WorkItemsViewModel
 import com.youniqx.time.presentation.workitems.invoke
 import com.youniqx.time.presentation.plus
-import com.youniqx.time.settings.Settings
+import com.youniqx.time.presentation.settings.Settings
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.Theme
 import dev.zacsweers.metrox.viewmodel.metroViewModel

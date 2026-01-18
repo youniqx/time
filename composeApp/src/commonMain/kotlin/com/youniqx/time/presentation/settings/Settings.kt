@@ -1,4 +1,4 @@
-package com.youniqx.time.settings
+package com.youniqx.time.presentation.settings
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource

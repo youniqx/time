@@ -1,4 +1,4 @@
-package com.youniqx.time.settings
+package com.youniqx.time.presentation.settings
 
 import io.ktor.http.appendPathSegments
 import io.ktor.http.buildUrl
