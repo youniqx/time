@@ -27,7 +27,7 @@ import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.settings.InstanceUrlInput
 import com.youniqx.time.presentation.settings.TokenInput
 import com.youniqx.time.presentation.settings.createTokenUrl
-import com.youniqx.time.theme.LocalSpacing
+import com.youniqx.time.presentation.theme.LocalSpacing
 
 @Composable
 fun GitLabSetupStep(

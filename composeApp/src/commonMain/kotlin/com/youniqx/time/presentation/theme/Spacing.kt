@@ -1,4 +1,4 @@
-package com.youniqx.time.theme
+package com.youniqx.time.presentation.theme
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.unit.Dp

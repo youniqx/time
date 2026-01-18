@@ -103,8 +103,8 @@ import com.youniqx.time.presentation.plus
 import com.youniqx.time.presentation.settings.Settings
 import com.youniqx.time.presentation.stickyHeader
 import com.youniqx.time.presentation.workitems.Search
-import com.youniqx.time.theme.AppTheme
-import com.youniqx.time.theme.Theme
+import com.youniqx.time.presentation.theme.AppTheme
+import com.youniqx.time.presentation.theme.Theme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
@@ -125,7 +125,7 @@ fun App(
     focusRequester: FocusRequester = remember { FocusRequester() },
     setWindowBackground: ((Color) -> Unit)? = null,
     settingsRepository: SettingsRepository,
-    theme: Theme = com.youniqx.time.theme.teal.theme,
+    theme: Theme = com.youniqx.time.presentation.theme.teal.theme,
 ) {
     val sourceAwareSettings by settingsRepository.settings.collectAsStateWithLifecycle()
     val settings = sourceAwareSettings.data

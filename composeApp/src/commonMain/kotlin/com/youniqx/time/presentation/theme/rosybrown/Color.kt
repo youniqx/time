@@ -1,4 +1,4 @@
-package com.youniqx.time.theme.rosybrown
+package com.youniqx.time.presentation.theme.rosybrown
 
 import androidx.compose.ui.graphics.Color
 

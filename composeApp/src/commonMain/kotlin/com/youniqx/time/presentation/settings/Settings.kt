@@ -51,7 +51,7 @@ import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.presentation.Label
 import com.youniqx.time.presentation.invoke
 import com.youniqx.time.systemBarsForVisualComponents
-import com.youniqx.time.theme.AppTheme
+import com.youniqx.time.presentation.theme.AppTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 
 @Composable

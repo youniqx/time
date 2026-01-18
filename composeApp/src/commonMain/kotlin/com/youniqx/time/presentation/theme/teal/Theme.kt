@@ -1,8 +1,8 @@
-package com.youniqx.time.theme.teal
+package com.youniqx.time.presentation.theme.teal
 
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
-import com.youniqx.time.theme.Theme
+import com.youniqx.time.presentation.theme.Theme
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,

@@ -63,7 +63,7 @@ import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.presentation.relativetime.RelativeTime
 import com.youniqx.time.presentation.relativetime.formatDuration
 import com.youniqx.time.systemBarsForVisualComponents
-import com.youniqx.time.theme.LocalSpacing
+import com.youniqx.time.presentation.theme.LocalSpacing
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime

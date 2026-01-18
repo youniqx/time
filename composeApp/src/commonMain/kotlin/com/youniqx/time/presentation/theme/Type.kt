@@ -1,4 +1,4 @@
-package com.youniqx.time.theme
+package com.youniqx.time.presentation.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

@@ -24,7 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.presentation.modifier.adaptivePadding
-import com.youniqx.time.theme.LocalSpacing
+import com.youniqx.time.presentation.theme.LocalSpacing
 
 enum class QuickFilter {
     Assigend,

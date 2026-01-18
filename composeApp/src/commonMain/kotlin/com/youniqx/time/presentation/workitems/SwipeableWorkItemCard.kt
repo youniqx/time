@@ -43,7 +43,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.presentation.SimpleTooltip
-import com.youniqx.time.theme.LocalSpacing
+import com.youniqx.time.presentation.theme.LocalSpacing
 import kotlin.math.roundToInt
 
 @Composable

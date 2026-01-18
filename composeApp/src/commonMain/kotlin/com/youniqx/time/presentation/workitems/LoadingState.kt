@@ -27,7 +27,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.theme.LocalSpacing
+import com.youniqx.time.presentation.theme.LocalSpacing
 
 @Composable
 fun ShimmerWorkItemCard(modifier: Modifier = Modifier) {

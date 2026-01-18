@@ -1,4 +1,4 @@
-package com.youniqx.time.theme.teal
+package com.youniqx.time.presentation.theme.teal
 
 import androidx.compose.ui.graphics.Color
 

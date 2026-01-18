@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.youniqx.time.theme.AppTheme
+import com.youniqx.time.presentation.theme.AppTheme
 
 @Composable
 fun Section(title: @Composable () -> Unit, open: Boolean, count: Int, modifier: Modifier = Modifier) {
