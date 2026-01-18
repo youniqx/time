@@ -1,4 +1,4 @@
-package com.youniqx.time.components
+package com.youniqx.time.presentation.workitems
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable

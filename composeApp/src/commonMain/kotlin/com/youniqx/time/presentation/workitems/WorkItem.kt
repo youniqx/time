@@ -70,8 +70,6 @@ import androidx.compose.ui.unit.sp
 import com.youniqx.time.AddedTextVisualTransformation
 import com.youniqx.time.AdditionalActions
 import com.youniqx.time.components.SimpleTooltip
-import com.youniqx.time.components.TimeBadge
-import com.youniqx.time.components.rememberTimeBadgePlaceholder
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
