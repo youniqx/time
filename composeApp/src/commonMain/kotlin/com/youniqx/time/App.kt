@@ -101,6 +101,7 @@ import com.youniqx.time.modifier.clip
 import com.youniqx.time.onboarding.OnboardingScreen
 import com.youniqx.time.presentation.workitems.WorkItemsViewModel
 import com.youniqx.time.presentation.workitems.invoke
+import com.youniqx.time.presentation.plus
 import com.youniqx.time.settings.Settings
 import com.youniqx.time.theme.AppTheme
 import com.youniqx.time.theme.Theme
@@ -113,15 +114,6 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-
-operator fun PaddingValues.plus(other: PaddingValues): PaddingValues = PaddingValues(
-    start = this.calculateStartPadding(LayoutDirection.Ltr) +
-            other.calculateStartPadding(LayoutDirection.Ltr),
-    top = this.calculateTopPadding() + other.calculateTopPadding(),
-    end = this.calculateEndPadding(LayoutDirection.Ltr) +
-            other.calculateEndPadding(LayoutDirection.Ltr),
-    bottom = this.calculateBottomPadding() + other.calculateBottomPadding(),
-)
 
 enum class Section {
     Pinned, Open, Closed
