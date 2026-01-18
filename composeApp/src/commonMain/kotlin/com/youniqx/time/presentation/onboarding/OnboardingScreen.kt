@@ -1,4 +1,4 @@
-package com.youniqx.time.onboarding
+package com.youniqx.time.presentation.onboarding
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn

@@ -95,7 +95,7 @@ import com.youniqx.time.presentation.history.TimeRange
 import com.youniqx.time.presentation.history.toTimelogEntry
 import com.youniqx.time.modifier.adaptivePadding
 import com.youniqx.time.modifier.clip
-import com.youniqx.time.onboarding.OnboardingScreen
+import com.youniqx.time.presentation.onboarding.OnboardingScreen
 import com.youniqx.time.presentation.workitems.WorkItemsViewModel
 import com.youniqx.time.presentation.workitems.invoke
 import com.youniqx.time.presentation.plus

@@ -1,4 +1,4 @@
-package com.youniqx.time.onboarding
+package com.youniqx.time.presentation.onboarding
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
