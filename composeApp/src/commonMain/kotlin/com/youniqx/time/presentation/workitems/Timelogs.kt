@@ -21,8 +21,8 @@ import com.youniqx.time.components.SimpleTooltip
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
-import com.youniqx.time.opentracking.RepresentingIndicator
-import com.youniqx.time.opentracking.representingColors
+import com.youniqx.time.presentation.opentracking.RepresentingIndicator
+import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.relativetime.RelativeTime
 import com.youniqx.time.relativetime.formatDuration
 import kotlin.time.Clock

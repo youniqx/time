@@ -81,9 +81,9 @@ import com.youniqx.time.labels
 import com.youniqx.time.modifier.adaptivePadding
 import com.youniqx.time.modifier.changeFocusOnTab
 import com.youniqx.time.modifier.onCtrlOrMetaEnter
-import com.youniqx.time.opentracking.RepresentingIndicator
-import com.youniqx.time.opentracking.customTimeSpentHasErrorMessage
-import com.youniqx.time.opentracking.representingColors
+import com.youniqx.time.presentation.opentracking.RepresentingIndicator
+import com.youniqx.time.presentation.opentracking.customTimeSpentHasErrorMessage
+import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.refresh
 import com.youniqx.time.theme.LocalSpacing
 import com.youniqx.time.timelogs

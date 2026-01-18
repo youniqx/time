@@ -1,4 +1,4 @@
-package com.youniqx.time.opentracking
+package com.youniqx.time.presentation.opentracking
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.StartOffset

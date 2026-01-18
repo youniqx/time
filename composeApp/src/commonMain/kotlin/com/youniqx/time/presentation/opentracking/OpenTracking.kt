@@ -1,5 +1,6 @@
 @file:OptIn(ExperimentalTime::class)
-package com.youniqx.time.opentracking
+
+package com.youniqx.time.presentation.opentracking
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline

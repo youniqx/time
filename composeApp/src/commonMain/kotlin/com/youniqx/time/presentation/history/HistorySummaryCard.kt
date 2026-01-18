@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
-import com.youniqx.time.opentracking.RepresentingIndicator
-import com.youniqx.time.opentracking.representingColors
+import com.youniqx.time.presentation.opentracking.RepresentingIndicator
+import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.theme.LocalSpacing
 
 @Composable
