@@ -5,6 +5,7 @@ import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.gitlab.models.fragment.GroupWithIterationCadences
 import com.youniqx.time.gitlab.models.type.WorkItemState
+import com.youniqx.time.presentation.Label
 import kotlin.random.Random
 
 val previewUserId by lazy { "gid://gitlab/User/123" }
