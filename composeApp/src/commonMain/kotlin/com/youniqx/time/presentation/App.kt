@@ -76,12 +76,6 @@ import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass
-import com.youniqx.time.presentation.workitems.LoadingWorkItemList
-import com.youniqx.time.presentation.workitems.NoSearchResultsEmptyState
-import com.youniqx.time.presentation.workitems.NoWorkItemsEmptyState
-import com.youniqx.time.presentation.workitems.QuickFilter
-import com.youniqx.time.presentation.workitems.QuickFilters
-import com.youniqx.time.presentation.workitems.SwitchTrackingDialog
 import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.DataSource
 import com.youniqx.time.domain.models.OpenTracking
@@ -97,12 +91,18 @@ import com.youniqx.time.presentation.history.toTimelogEntry
 import com.youniqx.time.presentation.modifier.adaptivePadding
 import com.youniqx.time.presentation.modifier.clip
 import com.youniqx.time.presentation.onboarding.OnboardingScreen
-import com.youniqx.time.presentation.workitems.WorkItemsViewModel
-import com.youniqx.time.presentation.workitems.invoke
 import com.youniqx.time.presentation.settings.Settings
-import com.youniqx.time.presentation.workitems.Search
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.Theme
+import com.youniqx.time.presentation.workitems.LoadingWorkItemList
+import com.youniqx.time.presentation.workitems.NoSearchResultsEmptyState
+import com.youniqx.time.presentation.workitems.NoWorkItemsEmptyState
+import com.youniqx.time.presentation.workitems.QuickFilter
+import com.youniqx.time.presentation.workitems.QuickFilters
+import com.youniqx.time.presentation.workitems.Search
+import com.youniqx.time.presentation.workitems.SwitchTrackingDialog
+import com.youniqx.time.presentation.workitems.WorkItemsViewModel
+import com.youniqx.time.presentation.workitems.invoke
 import com.youniqx.time.refresh
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -443,13 +443,17 @@ fun App(
                                 val workItem = this
                                 val pinned = id in settings.pinnedWorkItems
                                 val togglePinned = { settingsRepository.togglePinWorkItem(id.toString()) }
-                                fun startTracking() = settingsRepository.setOpenTracking(
-                                    OpenTracking(
+                                var openTracking by rememberSyncedSource(
+                                    from = settings.openTracking,
+                                    save = settingsRepository::setOpenTracking
+                                )
+                                fun startTracking() {
+                                    openTracking = OpenTracking(
                                         workItemId = id.toString(),
                                         workItemTitle = title,
                                         timeOfOpen = Clock.System.now()
                                     )
-                                )
+                                }
                                 Column(modifier = modifier) {
                                     var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
                                     var commitTimeTrackingErrors by remember {
@@ -457,7 +461,7 @@ fun App(
                                     }
                                     workItem(
                                         startTracking = {
-                                            if (settings.openTracking?.workItemId == null) {
+                                            if (openTracking?.workItemId == null) {
                                                 startTracking()
                                             } else {
                                                 switchTrackingTarget = id.toString() to title
@@ -466,10 +470,8 @@ fun App(
                                         currentUserId = currentUserId,
                                         settings.showLabelsByDefault,
                                         settings.useLabelColors,
-                                        openTracking = settings.openTracking,
-                                        onOpenTrackingChange = { openTracking ->
-                                            settingsRepository.setOpenTracking(openTracking)
-                                        },
+                                        openTracking = openTracking,
+                                        onOpenTrackingChange = { new -> openTracking = new },
                                         pinned = pinned,
                                         togglePinned = togglePinned,
                                         commitTimeTrackingEnabled = commitTimeTrackingEnabled,
