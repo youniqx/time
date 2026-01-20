@@ -72,6 +72,9 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.libres.compose)
             implementation(libs.ktor.http)
+            implementation(libs.androidx.navigation3.ui)
+            implementation(libs.androidx.lifecycle.viewmodel.navigation3)
+            implementation(libs.androidx.material3.adaptive.navigation3)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
