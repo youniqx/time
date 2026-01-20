@@ -393,6 +393,11 @@ fun App(
                                             loading = true
                                             viewModel.search(it)
                                         },
+                                        loading = loading,
+                                        refresh = {
+                                            loading = true
+                                            viewModel.search("")
+                                        },
                                         show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                                         canFocus = !disableGlobalSearch,
                                         modifier = Modifier

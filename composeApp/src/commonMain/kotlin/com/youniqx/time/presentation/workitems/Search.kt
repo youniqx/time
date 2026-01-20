@@ -11,15 +11,18 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.key.Key
@@ -42,11 +45,14 @@ import androidx.compose.ui.unit.sp
 import com.youniqx.time.presentation.Label
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.invoke
+import com.youniqx.time.presentation.rememberRotationAnimation
 
 @Composable
 fun Search(
     search: String,
     onSearchChange: (String) -> Unit,
+    loading: Boolean,
+    refresh: () -> Unit,
     show: Boolean,
     canFocus: Boolean,
     modifier: Modifier = Modifier,
@@ -89,8 +95,24 @@ fun Search(
                 }
             ),
         placeholder = { SearchPlaceholder() },
-        trailingIcon = if (search.isEmpty()) null else {
-            {
+        trailingIcon = {
+            if (search.isEmpty()) {
+                val rotation by rememberRotationAnimation(loading)
+                SimpleTooltip("Refresh") {
+                    IconButton(
+                        modifier = Modifier
+                            .rotate(degrees = rotation)
+                            .focusProperties { this.canFocus = canFocus }
+                            .pointerHoverIcon(PointerIcon.Default),
+                        onClick = refresh
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = "Refresh",
+                        )
+                    }
+                }
+            } else {
                 SimpleTooltip("Clear search") {
                     IconButton(
                         modifier = Modifier
