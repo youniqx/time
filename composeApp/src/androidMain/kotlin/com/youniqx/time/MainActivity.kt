@@ -17,6 +17,7 @@ import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.DataSource
 import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.presentation.App
+import com.youniqx.time.presentation.navscopes.NavScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
 import dev.zacsweers.metro.binding
@@ -28,6 +29,7 @@ import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 @ActivityKey(MainActivity::class)
 class MainActivity(
     private val metroVmf: MetroViewModelFactory,
+    private val navScopes: Set<NavScope>,
     private val settingsRepository: SettingsRepository,
 ) : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,7 +59,7 @@ class MainActivity(
                     onDispose {}
                 }
 
-                App(settingsRepository = settingsRepository)
+                App(navScopes = navScopes, settingsRepository = settingsRepository)
             }
         }
     }

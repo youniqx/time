@@ -12,7 +12,7 @@ fun MainViewController(): UIViewController {
     val graph = createGraph<IosAppGraph>()
     return ComposeUIViewController {
         CompositionLocalProvider(LocalMetroViewModelFactory provides graph.metroViewModelFactory) {
-            App(settingsRepository = graph.settingsRepository)
+            App(navScopes = graph.navScopes, settingsRepository = graph.settingsRepository)
         }
     }
 }

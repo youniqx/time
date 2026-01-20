@@ -36,7 +36,11 @@ fun main() {
             LaunchedEffect(emojiFont) {
                 emojiFont?.let { fontFamilyResolver.preload(it.toFontFamily()) }
             }
-            App(focusRequester = focusRequester, settingsRepository = graph.settingsRepository)
+            App(
+                navScopes = graph.navScopes,
+                settingsRepository = graph.settingsRepository,
+                focusRequester = focusRequester
+            )
             DisposableEffect(focusRequester) {
                 val handleKeyDown: (Event) -> Unit = { event ->
                     with(event as KeyboardEvent) {

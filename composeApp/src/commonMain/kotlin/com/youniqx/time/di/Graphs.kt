@@ -8,7 +8,9 @@ import com.russhwolf.settings.coroutines.toFlowSettings
 import com.russhwolf.settings.observable.makeObservable
 import com.youniqx.time.data.toApolloClientOrNull
 import com.youniqx.time.domain.SettingsRepository
+import com.youniqx.time.presentation.navscopes.NavScope
 import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Multibinds
 import dev.zacsweers.metro.Provides
 import dev.zacsweers.metro.SingleIn
 import dev.zacsweers.metrox.viewmodel.ViewModelGraph
@@ -24,6 +26,9 @@ import kotlinx.serialization.json.Json
 interface AppGraph : ViewModelGraph {
 
     val settingsRepository: SettingsRepository
+
+    @Multibinds
+    val navScopes: Set<NavScope>
 
     @Provides
     @SingleIn(AppScope::class)

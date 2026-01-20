@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
@@ -75,6 +76,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavKey
+import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.ui.NavDisplay
+import androidx.savedstate.serialization.SavedStateConfiguration
 import androidx.window.core.layout.WindowSizeClass
 import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.DataSource
@@ -90,6 +97,8 @@ import com.youniqx.time.presentation.history.TimeRange
 import com.youniqx.time.presentation.history.toTimelogEntry
 import com.youniqx.time.presentation.modifier.adaptivePadding
 import com.youniqx.time.presentation.modifier.clip
+import com.youniqx.time.presentation.navscopes.NavScope
+import com.youniqx.time.presentation.navscopes.NotFoundRoute
 import com.youniqx.time.presentation.onboarding.OnboardingScreen
 import com.youniqx.time.presentation.settings.Settings
 import com.youniqx.time.presentation.theme.AppTheme
@@ -110,6 +119,8 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.polymorphic
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
@@ -119,18 +130,29 @@ enum class Section {
     Pinned, Open, Closed
 }
 
+private val config = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(NotFoundRoute::class, NotFoundRoute.serializer())
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun App(
+    navScopes: Set<NavScope>,
+    settingsRepository: SettingsRepository,
     focusRequester: FocusRequester = remember { FocusRequester() },
     setWindowBackground: ((Color) -> Unit)? = null,
-    settingsRepository: SettingsRepository,
     theme: Theme = com.youniqx.time.presentation.theme.teal.theme,
 ) {
     val sourceAwareSettings by settingsRepository.settings.collectAsStateWithLifecycle()
     val settings = sourceAwareSettings.data
     val darkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
         ?: isSystemInDarkTheme()
+    val backStack = rememberNavBackStack(configuration = config, NotFoundRoute)
+
     AppTheme(darkTheme = darkTheme, useHighContrastColors = settings.highContrastColors, theme = theme) {
         if (setWindowBackground != null) {
             MaterialTheme.colorScheme.surface.let { color ->
@@ -139,6 +161,30 @@ fun App(
                 }
             }
         }
+
+        NavDisplay(
+            backStack = backStack,
+            modifier =
+                Modifier
+                    // .padding(innerPadding)
+                    .fillMaxSize(),
+            onBack = { backStack.removeLastOrNull() },
+            entryProvider =
+                entryProvider(fallback = { key ->
+                    NavEntry(key) {
+                        LaunchedEffect(key) {
+                            println("Unknown key: $key")
+                            backStack.removeLastOrNull()
+                            backStack.add(NotFoundRoute)
+                        }
+                    }
+                }) {
+                    navScopes.forEach { scope ->
+                        scope(backStack)
+                    }
+                },
+        )
+        return@AppTheme
 
         var showOnboarding by remember(sourceAwareSettings.source) {
             mutableStateOf(settings.instanceUrl.isNullOrEmpty() || settings.token.isNullOrEmpty())

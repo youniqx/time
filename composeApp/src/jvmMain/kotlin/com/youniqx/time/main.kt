@@ -183,11 +183,12 @@ fun main() {
                     }
                 }
                 App(
+                    navScopes = graph.navScopes,
+                    settingsRepository = settingsRepository,
                     focusRequester = focusRequester,
                     setWindowBackground = {
                         window.background = java.awt.Color(it.red, it.green, it.blue, it.alpha)
                     },
-                    settingsRepository = settingsRepository,
                 )
             }
         }
