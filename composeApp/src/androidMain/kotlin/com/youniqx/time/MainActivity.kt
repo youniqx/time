@@ -19,7 +19,6 @@ import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.presentation.App
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.android.ActivityKey
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
@@ -27,7 +26,6 @@ import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
 
 @ContributesIntoMap(AppScope::class, binding<Activity>())
 @ActivityKey(MainActivity::class)
-@Inject
 class MainActivity(
     private val metroVmf: MetroViewModelFactory,
     private val settingsRepository: SettingsRepository,

@@ -11,7 +11,6 @@ import com.youniqx.time.domain.models.Settings
 import com.youniqx.time.domain.models.SourceAware
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -37,7 +36,6 @@ val defaultSettings = Settings(
 )
 
 @OptIn(ExperimentalSettingsApi::class)
-@Inject
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
 class LocalSettingsRepository(

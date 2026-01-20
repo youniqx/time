@@ -13,7 +13,6 @@ import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.previewNamespaces
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -27,7 +26,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalSettingsApi::class)
-@Inject
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
 class RemoteNamespacesRepository(

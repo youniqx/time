@@ -9,7 +9,6 @@ import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.binding
 import dev.zacsweers.metrox.viewmodel.ViewModelKey
 import kotlinx.coroutines.flow.SharingStarted
@@ -24,7 +23,6 @@ data class UiState(
     val namespaces: NamespaceQuery.Data?,
 )
 
-@Inject
 @ViewModelKey(SettingsViewModel::class)
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class SettingsViewModel(

@@ -17,7 +17,6 @@ import com.youniqx.time.gitlab.models.WorkItemsQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -33,7 +32,6 @@ import kotlinx.coroutines.launch
 import kotlin.time.Clock
 
 @OptIn(ExperimentalSettingsApi::class)
-@Inject
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
 class RemoteWorkItemsRepository(

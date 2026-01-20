@@ -11,20 +11,16 @@ import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import kotlin.collections.orEmpty
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalSettingsApi::class)
-@Inject
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
 class CommitTimeTrackingRepository(

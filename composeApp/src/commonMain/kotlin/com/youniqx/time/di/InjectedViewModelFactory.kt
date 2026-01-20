@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
-import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.Provider
 import dev.zacsweers.metrox.viewmodel.ManualViewModelAssistedFactory
 import dev.zacsweers.metrox.viewmodel.MetroViewModelFactory
@@ -16,7 +15,6 @@ import kotlin.reflect.KClass
  * to create ViewModels.
  */
 @ContributesBinding(AppScope::class)
-@Inject
 class InjectedViewModelFactory(
     override val viewModelProviders: Map<KClass<out ViewModel>, Provider<ViewModel>>,
     override val assistedFactoryProviders: Map<KClass<out ViewModel>, Provider<ViewModelAssistedFactory>>,
