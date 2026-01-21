@@ -177,6 +177,7 @@ fun App(
                 modifier =
                     Modifier
                         // .padding(innerPadding)
+                        .background(MaterialTheme.colorScheme.background)
                         .fillMaxSize(),
                 onBack = { backStack.removeLastOrNull() },
                 entryProvider =
