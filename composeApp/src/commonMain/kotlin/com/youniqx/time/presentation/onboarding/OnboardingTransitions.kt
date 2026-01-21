@@ -1,44 +1,63 @@
 package com.youniqx.time.presentation.onboarding
 
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.NavDisplay
+import androidx.navigation3.ui.defaultPopTransitionSpec
+import androidx.navigation3.ui.defaultPredictivePopTransitionSpec
+import androidx.navigation3.ui.defaultTransitionSpec
 
 private const val ONBOARDING_STEP_SPEC = "onboardingStepSpec"
 
 fun onboardingStep(index: Int) = mapOf(ONBOARDING_STEP_SPEC to index)
 
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> makeUsable(input: (AnimatedContentTransitionScope<Scene<T>>.() -> ContentTransform?)) =
+    input as AnimatedContentTransitionScope<Scene<*>>.() -> ContentTransform?
+
+@Suppress("UNCHECKED_CAST")
+fun <T : Any> makeUsable(input: (AnimatedContentTransitionScope<Scene<T>>.(Int) -> ContentTransform?)) =
+    input as AnimatedContentTransitionScope<Scene<*>>.(Int) -> ContentTransform?
+
 val onboardingTransitions = NavDisplay.transitionSpec {
     val initialIndex = initialState.entries.last().metadata[ONBOARDING_STEP_SPEC] as? Int
     val targetIndex = targetState.entries.last().metadata[ONBOARDING_STEP_SPEC] as? Int
+    val default = makeUsable(defaultTransitionSpec())
+
     when {
-        targetIndex == null || initialIndex == null -> EnterTransition.None togetherWith ExitTransition.None
+        targetIndex == null || initialIndex == null -> default()
         targetIndex > initialIndex -> (slideInHorizontally { width -> width } + fadeIn()) togetherWith
                 (slideOutHorizontally { width -> -width } + fadeOut())
-
         targetIndex < initialIndex -> (slideInHorizontally { width -> -width } + fadeIn()) togetherWith
                 (slideOutHorizontally { width -> width } + fadeOut())
-        else -> EnterTransition.None togetherWith ExitTransition.None
+        else -> default()
     }
 } + NavDisplay.popTransitionSpec {
-    // Slide old content down, revealing the new content in place underneath
-    EnterTransition.None togetherWith
-            slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(1000)
-            )
+    val initialIndex = initialState.entries.last().metadata[ONBOARDING_STEP_SPEC] as? Int
+    val targetIndex = targetState.entries.last().metadata[ONBOARDING_STEP_SPEC] as? Int
+    val default = makeUsable(defaultPopTransitionSpec())
+
+    when {
+        targetIndex == null || initialIndex == null -> default()
+        targetIndex < initialIndex -> (slideInHorizontally { width -> -width } + fadeIn()) togetherWith
+                (slideOutHorizontally { width -> width } + fadeOut())
+        else -> default()
+    }
 } + NavDisplay.predictivePopTransitionSpec {
-    // Slide old content down, revealing the new content in place underneath
-    EnterTransition.None togetherWith
-            slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(1000)
-            )
+    val initialIndex = initialState.entries.last().metadata[ONBOARDING_STEP_SPEC] as? Int
+    val targetIndex = targetState.entries.last().metadata[ONBOARDING_STEP_SPEC] as? Int
+    val default = makeUsable(defaultPredictivePopTransitionSpec())
+
+    when {
+        targetIndex == null || initialIndex == null -> default(it)
+        targetIndex < initialIndex -> (slideInHorizontally { width -> -width } + fadeIn()) togetherWith
+                (slideOutHorizontally { width -> width } + fadeOut())
+        else -> default(it)
+    }
 }
