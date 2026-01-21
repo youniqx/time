@@ -5,6 +5,8 @@ import com.youniqx.time.presentation.onboarding.GitLabSetup
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
 import com.youniqx.time.presentation.onboarding.Welcome
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
+import com.youniqx.time.presentation.onboarding.onboardingStep
+import com.youniqx.time.presentation.onboarding.onboardingTransitions
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -18,10 +20,11 @@ class OnboardingNavScope {
     @IntoSet
     fun provideNavScope(): NavScope =
         { backStack ->
-            entry<WelcomeRoute> {
+            entry<WelcomeRoute>(
+                metadata = onboardingStep(0) + onboardingTransitions
+            ) {
                 Welcome(
                     stepFinished = {
-                        backStack.removeLastOrNull()
                         backStack += GitLabSetupRoute
                     },
                     hideOnboarding = {
@@ -31,10 +34,12 @@ class OnboardingNavScope {
                 )
             }
 
-            entry<GitLabSetupRoute> {
+            entry<GitLabSetupRoute>(
+                metadata = onboardingStep(1) + onboardingTransitions
+            ) {
                 GitLabSetup(
                     stepFinished = {
-                        backStack.removeLastOrNull()
+                        backStack.clear()
                         backStack += AppRoute
                     }
                 )
