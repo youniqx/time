@@ -91,6 +91,7 @@ import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.onSet
+import com.youniqx.time.presentation.errors.NotFoundRoute
 import com.youniqx.time.presentation.history.HistorySummaryCard
 import com.youniqx.time.presentation.history.TimeHistoryScreen
 import com.youniqx.time.presentation.history.TimeRange
@@ -98,8 +99,8 @@ import com.youniqx.time.presentation.history.toTimelogEntry
 import com.youniqx.time.presentation.modifier.adaptivePadding
 import com.youniqx.time.presentation.modifier.clip
 import com.youniqx.time.presentation.navscopes.NavScope
-import com.youniqx.time.presentation.navscopes.NotFoundRoute
-import com.youniqx.time.presentation.onboarding.OnboardingScreen
+import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
+import com.youniqx.time.presentation.onboarding.WelcomeRoute
 import com.youniqx.time.presentation.settings.Settings
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.Theme
@@ -119,6 +120,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlin.time.Clock
@@ -130,10 +132,17 @@ enum class Section {
     Pinned, Open, Closed
 }
 
+// Fallback route to just render the rest of the app which is not migrated to nav3 yet.
+@Serializable
+object AppRoute: NavKey
+
 private val config = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(NotFoundRoute::class, NotFoundRoute.serializer())
+            subclass(WelcomeRoute::class, WelcomeRoute.serializer())
+            subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
+            subclass(AppRoute::class, AppRoute.serializer())
         }
     }
 }
@@ -151,7 +160,7 @@ fun App(
     val settings = sourceAwareSettings.data
     val darkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
         ?: isSystemInDarkTheme()
-    val backStack = rememberNavBackStack(configuration = config, NotFoundRoute)
+    val backStack = rememberNavBackStack(configuration = config, WelcomeRoute)
 
     AppTheme(darkTheme = darkTheme, useHighContrastColors = settings.highContrastColors, theme = theme) {
         if (setWindowBackground != null) {
@@ -162,42 +171,28 @@ fun App(
             }
         }
 
-        NavDisplay(
-            backStack = backStack,
-            modifier =
-                Modifier
-                    // .padding(innerPadding)
-                    .fillMaxSize(),
-            onBack = { backStack.removeLastOrNull() },
-            entryProvider =
-                entryProvider(fallback = { key ->
-                    NavEntry(key) {
-                        LaunchedEffect(key) {
-                            println("Unknown key: $key")
-                            backStack.removeLastOrNull()
-                            backStack.add(NotFoundRoute)
+        if (backStack.last() != AppRoute) {
+            NavDisplay(
+                backStack = backStack,
+                modifier =
+                    Modifier
+                        // .padding(innerPadding)
+                        .fillMaxSize(),
+                onBack = { backStack.removeLastOrNull() },
+                entryProvider =
+                    entryProvider(fallback = { key ->
+                        NavEntry(key) {
+                            LaunchedEffect(key) {
+                                println("Unknown key: $key")
+                                backStack.removeLastOrNull()
+                                backStack.add(NotFoundRoute)
+                            }
                         }
-                    }
-                }) {
-                    navScopes.forEach { scope ->
-                        scope(backStack)
-                    }
-                },
-        )
-        return@AppTheme
-
-        var showOnboarding by remember(sourceAwareSettings.source) {
-            mutableStateOf(settings.instanceUrl.isNullOrEmpty() || settings.token.isNullOrEmpty())
-        }
-        // Show onboarding for new users
-        if (showOnboarding) {
-            OnboardingScreen(
-                loading = sourceAwareSettings.source == DataSource.Default,
-                instanceUrl = settings.instanceUrl,
-                onInstanceUrlChange = settingsRepository::setInstanceUrl,
-                token = settings.token,
-                onTokenChange = settingsRepository::setToken,
-                onComplete = { showOnboarding = false }
+                    }) {
+                        navScopes.forEach { scope ->
+                            scope(backStack)
+                        }
+                    },
             )
             return@AppTheme
         }

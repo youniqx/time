@@ -4,10 +4,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,18 +21,45 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.settings.InstanceUrlInput
 import com.youniqx.time.presentation.settings.TokenInput
 import com.youniqx.time.presentation.settings.createTokenUrl
+import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.LocalSpacing
+import com.youniqx.time.systemBarsForVisualComponents
+import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.serialization.Serializable
+
+@Serializable
+object GitLabSetupRoute: NavKey
 
 @Composable
-fun GitLabSetupStep(
+fun GitLabSetup(
+    viewModel: OnboardingViewModel = metroViewModel(),
+    stepFinished: () -> Unit,
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    GitLabSetupScreen(
+        instanceUrl = uiState.settings.instanceUrl,
+        onInstanceUrlChange = viewModel::setInstanceUrl,
+        token = uiState.settings.token,
+        onTokenChange = viewModel::setToken,
+        onComplete = stepFinished,
+        onSkip = stepFinished,
+    )
+}
+
+@Composable
+fun GitLabSetupScreen(
     instanceUrl: String?,
     onInstanceUrlChange: (String) -> Unit,
     token: String?,
@@ -46,6 +75,7 @@ fun GitLabSetupStep(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
             .padding(spacing.screenPadding)
             .padding(top = 32.dp) // Extra padding for window title bar / traffic lights
     ) {
@@ -129,5 +159,20 @@ fun GitLabSetupStep(
                 Text("Continue")
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun GitLabSetupPreview() {
+    AppTheme {
+        GitLabSetupScreen(
+            instanceUrl = "",
+            onInstanceUrlChange = {},
+            token = "",
+            onTokenChange = {},
+            onComplete = {},
+            onSkip = {}
+        )
     }
 }
