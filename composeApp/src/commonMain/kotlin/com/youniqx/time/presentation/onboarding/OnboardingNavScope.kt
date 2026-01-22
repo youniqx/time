@@ -1,12 +1,7 @@
-package com.youniqx.time.presentation.navscopes
+package com.youniqx.time.presentation.onboarding
 
 import com.youniqx.time.presentation.AppRoute
-import com.youniqx.time.presentation.onboarding.GitLabSetup
-import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
-import com.youniqx.time.presentation.onboarding.Welcome
-import com.youniqx.time.presentation.onboarding.WelcomeRoute
-import com.youniqx.time.presentation.onboarding.onboardingStep
-import com.youniqx.time.presentation.onboarding.onboardingTransitions
+import com.youniqx.time.presentation.navscopes.NavScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
