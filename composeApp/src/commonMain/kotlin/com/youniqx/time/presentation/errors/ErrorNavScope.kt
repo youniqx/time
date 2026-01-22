@@ -1,7 +1,6 @@
-package com.youniqx.time.presentation.navscopes
+package com.youniqx.time.presentation.errors
 
-import com.youniqx.time.presentation.errors.NotFound
-import com.youniqx.time.presentation.errors.NotFoundRoute
+import com.youniqx.time.presentation.navscopes.NavScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
