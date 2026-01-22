@@ -20,8 +20,14 @@ class OnboardingNavScope {
     @IntoSet
     fun provideNavScope(): NavScope =
         { backStack ->
+
+            var stepCount = 0
+            val onboardingSteps = iterator {
+                while (true) yield(onboardingStep(stepCount++))
+            }
+
             entry<WelcomeRoute>(
-                metadata = onboardingStep(0) + onboardingTransitions
+                metadata = onboardingSteps.next() + onboardingTransitions
             ) {
                 Welcome(
                     stepFinished = {
@@ -35,13 +41,14 @@ class OnboardingNavScope {
             }
 
             entry<GitLabSetupRoute>(
-                metadata = onboardingStep(1) + onboardingTransitions
+                metadata = onboardingSteps.next() + onboardingTransitions
             ) {
                 GitLabSetup(
+                    stepCount = stepCount,
                     stepFinished = {
                         backStack.clear()
                         backStack += AppRoute
-                    }
+                    },
                 )
             }
         }

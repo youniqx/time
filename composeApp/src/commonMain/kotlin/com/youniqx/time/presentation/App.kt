@@ -3,6 +3,7 @@
 package com.youniqx.time.presentation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -58,6 +59,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
@@ -77,9 +79,12 @@ import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
+import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
+import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import androidx.window.core.layout.WindowSizeClass
@@ -132,6 +137,22 @@ enum class Section {
     Pinned, Open, Closed
 }
 
+val LocalNavEntries = compositionLocalOf<List<NavEntry<*>>> { emptyList() }
+val LocalNavEntry = compositionLocalOf<NavEntry<*>?> { null }
+
+class NavEntryProviderDecorator<T : Any> :
+    NavEntryDecorator<T>(
+        decorate = { entry ->
+            CompositionLocalProvider(
+                LocalNavEntry provides entry,
+                content = entry::Content
+            )
+        },
+    )
+
+@Composable
+fun <T : Any> rememberNavEntryProviderDecorator() = remember { NavEntryProviderDecorator<T>() }
+
 // Fallback route to just render the rest of the app which is not migrated to nav3 yet.
 @Serializable
 object AppRoute: NavKey
@@ -161,6 +182,28 @@ fun App(
     val darkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
         ?: isSystemInDarkTheme()
     val backStack = rememberNavBackStack(configuration = config, WelcomeRoute)
+    val entries =
+        rememberDecoratedNavEntries(
+            backStack = backStack,
+            entryDecorators = listOf(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberNavEntryProviderDecorator(),
+            ),
+            entryProvider =
+                entryProvider(fallback = { key ->
+                    NavEntry(key) {
+                        LaunchedEffect(key) {
+                            println("Unknown key: $key")
+                            backStack.removeLastOrNull()
+                            backStack.add(NotFoundRoute)
+                        }
+                    }
+                }) {
+                    navScopes.forEach { scope ->
+                        scope(backStack)
+                    }
+                },
+        )
 
     AppTheme(darkTheme = darkTheme, useHighContrastColors = settings.highContrastColors, theme = theme) {
         if (setWindowBackground != null) {
@@ -172,29 +215,23 @@ fun App(
         }
 
         if (backStack.last() != AppRoute) {
-            NavDisplay(
-                backStack = backStack,
-                modifier =
-                    Modifier
-                        // .padding(innerPadding)
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize(),
-                onBack = { backStack.removeLastOrNull() },
-                entryProvider =
-                    entryProvider(fallback = { key ->
-                        NavEntry(key) {
-                            LaunchedEffect(key) {
-                                println("Unknown key: $key")
-                                backStack.removeLastOrNull()
-                                backStack.add(NotFoundRoute)
-                            }
-                        }
-                    }) {
-                        navScopes.forEach { scope ->
-                            scope(backStack)
-                        }
-                    },
-            )
+            SharedTransitionLayout {
+                CompositionLocalProvider(
+                    LocalSharedTransitionScope provides this,
+                    LocalNavEntries provides entries,
+                ) {
+                    NavDisplay(
+                        entries = entries,
+                        modifier =
+                            Modifier
+                                // .padding(innerPadding)
+                                .background(MaterialTheme.colorScheme.background)
+                                .fillMaxSize(),
+                        onBack = { backStack.removeLastOrNull() },
+                        sharedTransitionScope = this,
+                    )
+                }
+            }
             return@AppTheme
         }
 

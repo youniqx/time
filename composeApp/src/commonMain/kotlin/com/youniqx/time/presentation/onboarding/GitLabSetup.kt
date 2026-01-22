@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.presentation.SimpleTooltip
@@ -45,11 +43,13 @@ object GitLabSetupRoute: NavKey
 
 @Composable
 fun GitLabSetup(
-    viewModel: OnboardingViewModel = metroViewModel(),
+    stepCount: Int,
     stepFinished: () -> Unit,
+    viewModel: OnboardingViewModel = metroViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     GitLabSetupScreen(
+        stepCount = stepCount,
         instanceUrl = uiState.settings.instanceUrl,
         onInstanceUrlChange = viewModel::setInstanceUrl,
         token = uiState.settings.token,
@@ -61,13 +61,14 @@ fun GitLabSetup(
 
 @Composable
 fun GitLabSetupScreen(
+    stepCount: Int,
     instanceUrl: String?,
     onInstanceUrlChange: (String) -> Unit,
     token: String?,
     onTokenChange: (String) -> Unit,
     onComplete: () -> Unit,
     onSkip: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
     val uriHandler = LocalUriHandler.current
@@ -80,11 +81,7 @@ fun GitLabSetupScreen(
                 .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
                 .padding(spacing.screenPadding)
         ) {
-            // Progress indicator
-            LinearProgressIndicator(
-                progress = { 0.5f },
-                modifier = Modifier.fillMaxWidth()
-            )
+            OnboardingProgressIndicator(stepCount)
 
             Spacer(modifier = Modifier.height(spacing.xxl))
 
@@ -168,12 +165,13 @@ fun GitLabSetupScreen(
 fun GitLabSetupPreview() {
     AppTheme {
         GitLabSetupScreen(
+            stepCount = 3,
             instanceUrl = "",
             onInstanceUrlChange = {},
             token = "",
             onTokenChange = {},
             onComplete = {},
-            onSkip = {}
+            onSkip = {},
         )
     }
 }
