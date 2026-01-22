@@ -104,6 +104,7 @@ import com.youniqx.time.presentation.history.toTimelogEntry
 import com.youniqx.time.presentation.modifier.adaptivePadding
 import com.youniqx.time.presentation.modifier.clip
 import com.youniqx.time.presentation.navigation.NavScope
+import com.youniqx.time.presentation.navigation.rememberNavEntryProviderDecorator
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
 import com.youniqx.time.presentation.settings.Settings
@@ -136,22 +137,6 @@ import kotlin.time.ExperimentalTime
 enum class Section {
     Pinned, Open, Closed
 }
-
-val LocalNavEntries = compositionLocalOf<List<NavEntry<*>>> { emptyList() }
-val LocalNavEntry = compositionLocalOf<NavEntry<*>?> { null }
-
-class NavEntryProviderDecorator<T : Any> :
-    NavEntryDecorator<T>(
-        decorate = { entry ->
-            CompositionLocalProvider(
-                LocalNavEntry provides entry,
-                content = entry::Content
-            )
-        },
-    )
-
-@Composable
-fun <T : Any> rememberNavEntryProviderDecorator() = remember { NavEntryProviderDecorator<T>() }
 
 // Fallback route to just render the rest of the app which is not migrated to nav3 yet.
 @Serializable
@@ -218,7 +203,6 @@ fun App(
             SharedTransitionLayout {
                 CompositionLocalProvider(
                     LocalSharedTransitionScope provides this,
-                    LocalNavEntries provides entries,
                 ) {
                     NavDisplay(
                         entries = entries,

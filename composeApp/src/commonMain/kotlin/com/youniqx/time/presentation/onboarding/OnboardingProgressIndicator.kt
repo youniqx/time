@@ -10,8 +10,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
-import com.youniqx.time.presentation.LocalNavEntry
 import com.youniqx.time.presentation.LocalSharedTransitionScope
+import com.youniqx.time.presentation.navigation.LocalNavEntry
 import kotlin.math.sign
 
 @Composable
