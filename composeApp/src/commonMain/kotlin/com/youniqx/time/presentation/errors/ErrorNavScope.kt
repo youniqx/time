@@ -1,6 +1,6 @@
 package com.youniqx.time.presentation.errors
 
-import com.youniqx.time.presentation.navscopes.NavScope
+import com.youniqx.time.presentation.navigation.NavScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo

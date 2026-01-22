@@ -103,7 +103,7 @@ import com.youniqx.time.presentation.history.TimeRange
 import com.youniqx.time.presentation.history.toTimelogEntry
 import com.youniqx.time.presentation.modifier.adaptivePadding
 import com.youniqx.time.presentation.modifier.clip
-import com.youniqx.time.presentation.navscopes.NavScope
+import com.youniqx.time.presentation.navigation.NavScope
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
 import com.youniqx.time.presentation.settings.Settings
