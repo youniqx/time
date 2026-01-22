@@ -53,6 +53,8 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
@@ -62,12 +64,34 @@ import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.presentation.relativetime.RelativeTime
 import com.youniqx.time.presentation.relativetime.formatDuration
+import com.youniqx.time.presentation.settings.SettingsScreen
+import com.youniqx.time.presentation.settings.SettingsViewModel
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.presentation.theme.LocalSpacing
+import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
+
+@Serializable
+object HistoryRoute: NavKey
+
+@Composable
+fun History(
+    onBack: (() -> Unit)? = null
+) {
+    // Todo
+    TimeHistoryScreen(
+        timelogs = emptyList(),
+        isLoading = false,
+        selectedRange = TimeRange.Today,
+        onRangeChange = {  },
+        onBack = {  },
+        openTracking = null
+    )
+}
 
 enum class TimeRange(val label: String, val daysBack: Int) {
     Today("Today", 1),

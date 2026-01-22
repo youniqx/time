@@ -18,11 +18,11 @@ private const val ONBOARDING_STEP_SPEC = "onboardingStepSpec"
 
 fun onboardingStep(index: Int) = mapOf(ONBOARDING_STEP_SPEC to index)
 
-val NavEntry<*>.onBoardingIndex: Int?
+val NavEntry<*>.onboardingIndex: Int?
     get() = metadata[ONBOARDING_STEP_SPEC] as? Int
 
 val Scene<*>.index: Int?
-    get() = entries.last().onBoardingIndex
+    get() = entries.last().onboardingIndex
 
 @Suppress("UNCHECKED_CAST")
 fun <T : Any> makeUsable(input: (AnimatedContentTransitionScope<Scene<T>>.() -> ContentTransform?)) =

@@ -39,7 +39,7 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
-object GitLabSetupRoute: NavKey
+object GitLabSetupRoute : NavKey
 
 @Composable
 fun GitLabSetup(
@@ -73,88 +73,86 @@ fun GitLabSetupScreen(
     val spacing = LocalSpacing.current
     val uriHandler = LocalUriHandler.current
 
-    Surface {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
-                .padding(spacing.screenPadding)
-        ) {
-            OnboardingProgressIndicator(stepCount)
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
+            .padding(spacing.screenPadding)
+    ) {
+        OnboardingProgressIndicator(stepCount)
 
-            Spacer(modifier = Modifier.height(spacing.xxl))
+        Spacer(modifier = Modifier.height(spacing.xxl))
 
-            // Title
-            Text(
-                text = "Connect to GitLab",
-                style = MaterialTheme.typography.headlineMedium,
-            )
+        // Title
+        Text(
+            text = "Connect to GitLab",
+            style = MaterialTheme.typography.headlineMedium,
+        )
 
-            Spacer(modifier = Modifier.height(spacing.sm))
+        Spacer(modifier = Modifier.height(spacing.sm))
 
-            // Description
-            Text(
-                text = "Enter your GitLab instance URL and personal access token to start tracking time.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        // Description
+        Text(
+            text = "Enter your GitLab instance URL and personal access token to start tracking time.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
 
-            Spacer(modifier = Modifier.height(spacing.xl))
+        Spacer(modifier = Modifier.height(spacing.xl))
 
-            // GitLab URL input
-            InstanceUrlInput(
-                instanceUrl = instanceUrl,
-                onInstanceUrlChange = onInstanceUrlChange
-            )
+        // GitLab URL input
+        InstanceUrlInput(
+            instanceUrl = instanceUrl,
+            onInstanceUrlChange = onInstanceUrlChange
+        )
 
-            Spacer(modifier = Modifier.height(spacing.lg))
+        Spacer(modifier = Modifier.height(spacing.lg))
 
-            // Token input
-            TokenInput(
-                token = token,
-                onTokenChange = onTokenChange,
-            )
+        // Token input
+        TokenInput(
+            token = token,
+            onTokenChange = onTokenChange,
+        )
 
-            Spacer(modifier = Modifier.height(spacing.sm))
+        Spacer(modifier = Modifier.height(spacing.sm))
 
-            SimpleTooltip("Open browser" + if (instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "") {
-                TextButton(
-                    enabled = !instanceUrl.isNullOrEmpty(),
-                    onClick = {
-                        instanceUrl?.let {
-                            val tokenUrl = createTokenUrl(fromInstanceUrl = instanceUrl)
-                            uriHandler.openUri(tokenUrl.toString())
-                        }
+        SimpleTooltip("Open browser" + if (instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "") {
+            TextButton(
+                enabled = !instanceUrl.isNullOrEmpty(),
+                onClick = {
+                    instanceUrl?.let {
+                        val tokenUrl = createTokenUrl(fromInstanceUrl = instanceUrl)
+                        uriHandler.openUri(tokenUrl.toString())
                     }
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.OpenInNew,
-                        contentDescription = null,
-                        modifier = Modifier.padding(end = spacing.sm)
-                    )
-                    Text("Create a new access token")
                 }
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Filled.OpenInNew,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = spacing.sm)
+                )
+                Text("Create a new access token")
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        // Bottom buttons
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            TextButton(onClick = onSkip) {
+                Text("Skip for now")
             }
 
-            Spacer(modifier = Modifier.weight(1f))
-
-            // Bottom buttons
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Button(
+                onClick = onComplete,
+                enabled = !instanceUrl.isNullOrBlank() && !token.isNullOrBlank()
             ) {
-                TextButton(onClick = onSkip) {
-                    Text("Skip for now")
-                }
-
-                Button(
-                    onClick = onComplete,
-                    enabled = !instanceUrl.isNullOrBlank() && !token.isNullOrBlank()
-                ) {
-                    Text("Continue")
-                }
+                Text("Continue")
             }
         }
     }

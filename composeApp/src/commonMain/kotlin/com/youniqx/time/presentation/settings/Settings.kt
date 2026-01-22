@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.domain.models.IterationCadence
@@ -53,6 +54,10 @@ import com.youniqx.time.presentation.invoke
 import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.presentation.theme.AppTheme
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.serialization.Serializable
+
+@Serializable
+object SettingsRoute: NavKey
 
 @Composable
 fun Settings(

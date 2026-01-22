@@ -36,7 +36,7 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
-object WelcomeRoute: NavKey
+object WelcomeRoute : NavKey
 
 @Composable
 fun Welcome(viewModel: OnboardingViewModel = metroViewModel(), stepFinished: () -> Unit, hideOnboarding: () -> Unit) {
@@ -58,54 +58,52 @@ fun WelcomeScreen(
 ) {
     val spacing = LocalSpacing.current
 
-    Surface {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
-                .padding(spacing.screenPadding),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            // App icon
-            Icon(
-                imageVector = Icons.Default.Timer,
-                contentDescription = null,
-                modifier = Modifier.size(80.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
+            .padding(spacing.screenPadding),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // App icon
+        Icon(
+            imageVector = Icons.Default.Timer,
+            contentDescription = null,
+            modifier = Modifier.size(80.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
 
-            Spacer(modifier = Modifier.height(spacing.xl))
+        Spacer(modifier = Modifier.height(spacing.xl))
 
-            // Welcome text
-            Text(
-                text = "Welcome to Time",
-                style = MaterialTheme.typography.headlineLarge,
-                textAlign = TextAlign.Center,
-            )
+        // Welcome text
+        Text(
+            text = "Welcome to Time",
+            style = MaterialTheme.typography.headlineLarge,
+            textAlign = TextAlign.Center,
+        )
 
-            Spacer(modifier = Modifier.height(spacing.md))
+        Spacer(modifier = Modifier.height(spacing.md))
 
-            // Subtitle
-            Text(
-                text = "Track your time on GitLab with ease",
-                style = MaterialTheme.typography.bodyLarge,
-                color = LocalContentColor.current.copy(alpha = 0.8f),
-                textAlign = TextAlign.Center
-            )
+        // Subtitle
+        Text(
+            text = "Track your time on GitLab with ease",
+            style = MaterialTheme.typography.bodyLarge,
+            color = LocalContentColor.current.copy(alpha = 0.8f),
+            textAlign = TextAlign.Center
+        )
 
-            Spacer(modifier = Modifier.height(spacing.xxxl))
+        Spacer(modifier = Modifier.height(spacing.xxxl))
 
-            if (loading) {
-                CircularProgressIndicator()
-            } else {
-                // Get Started button
-                Button(
-                    onClick = onNext,
-                    modifier = Modifier.fillMaxWidth(0.6f)
-                ) {
-                    Text("Get Started")
-                }
+        if (loading) {
+            CircularProgressIndicator()
+        } else {
+            // Get Started button
+            Button(
+                onClick = onNext,
+                modifier = Modifier.fillMaxWidth(0.6f)
+            ) {
+                Text("Get Started")
             }
         }
     }

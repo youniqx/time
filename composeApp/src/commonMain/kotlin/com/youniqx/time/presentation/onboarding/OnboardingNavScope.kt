@@ -1,7 +1,7 @@
 package com.youniqx.time.presentation.onboarding
 
-import com.youniqx.time.presentation.AppRoute
 import com.youniqx.time.presentation.navigation.NavScope
+import com.youniqx.time.presentation.workitems.WorkItemsRoute
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo
@@ -30,7 +30,7 @@ class OnboardingNavScope {
                     },
                     hideOnboarding = {
                         backStack.removeLastOrNull()
-                        backStack += AppRoute
+                        backStack += WorkItemsRoute
                     }
                 )
             }
@@ -42,7 +42,7 @@ class OnboardingNavScope {
                     stepCount = stepCount,
                     stepFinished = {
                         backStack.clear()
-                        backStack += AppRoute
+                        backStack += WorkItemsRoute
                     },
                 )
             }
