@@ -64,17 +64,12 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlin.time.ExperimentalTime
 
-// Fallback route to just render the rest of the app which is not migrated to nav3 yet.
-@Serializable
-object AppRoute: NavKey
-
 private val config = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(NavKey::class) {
             subclass(NotFoundRoute::class, NotFoundRoute.serializer())
             subclass(WelcomeRoute::class, WelcomeRoute.serializer())
             subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
-            subclass(AppRoute::class, AppRoute.serializer())
             subclass(WorkItemsRoute::class, WorkItemsRoute.serializer())
             subclass(HistoryRoute::class, HistoryRoute.serializer())
             subclass(SettingsRoute::class, SettingsRoute.serializer())
@@ -146,41 +141,39 @@ fun App(
             )
         )
         val singlePaneStrategy: SinglePaneSceneStrategy<NavKey> = remember { SinglePaneSceneStrategy() }
-        if (backStack.last() != AppRoute) {
-            SharedTransitionLayout {
-                CompositionLocalProvider(
-                    LocalSharedTransitionScope provides this,
-                ) {
-                    Scaffold(
-                        floatingActionButton = {
-                            if (entries.last().onboardingIndex == null) CompositionLocalProvider(
-                                LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+        SharedTransitionLayout {
+            CompositionLocalProvider(
+                LocalSharedTransitionScope provides this,
+            ) {
+                Scaffold(
+                    floatingActionButton = {
+                        if (entries.last().onboardingIndex == null) CompositionLocalProvider(
+                            LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+                        ) {
+                            val interactionSource = remember { MutableInteractionSource() }
+                            val isHovered by interactionSource.collectIsHoveredAsState()
+                            SmallFloatingActionButton(
+                                onClick = {
+                                    backStack += SettingsRoute
+                                },
+                                interactionSource = interactionSource,
                             ) {
-                                val interactionSource = remember { MutableInteractionSource() }
-                                val isHovered by interactionSource.collectIsHoveredAsState()
-                                SmallFloatingActionButton(
-                                    onClick = {
-                                        backStack += SettingsRoute
-                                    },
-                                    interactionSource = interactionSource,
-                                ) {
-                                    val icon = if (isHovered) Icons.Filled.Settings else Icons.Outlined.Settings
-                                    Icon(imageVector = icon, contentDescription = null)
-                                }
+                                val icon = if (isHovered) Icons.Filled.Settings else Icons.Outlined.Settings
+                                Icon(imageVector = icon, contentDescription = null)
                             }
                         }
-                    ) {
-                        NavDisplay(
-                            entries = entries,
-                            modifier =
-                                Modifier
-                                    // .padding(innerPadding)
-                                    .fillMaxSize(),
-                            sceneStrategy = supportingPaneStrategy then singlePaneStrategy,
-                            onBack = { backStack.removeLastOrNull() },
-                            sharedTransitionScope = this,
-                        )
                     }
+                ) {
+                    NavDisplay(
+                        entries = entries,
+                        modifier =
+                            Modifier
+                                // .padding(innerPadding)
+                                .fillMaxSize(),
+                        sceneStrategy = supportingPaneStrategy then singlePaneStrategy,
+                        onBack = { backStack.removeLastOrNull() },
+                        sharedTransitionScope = this,
+                    )
                 }
             }
         }
