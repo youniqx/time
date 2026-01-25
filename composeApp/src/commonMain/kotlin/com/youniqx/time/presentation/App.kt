@@ -124,7 +124,7 @@ fun App(
         }
         // Override the defaults so that there isn't a horizontal or vertical space between the panes.
         // See b/444438086
-        val windowAdaptiveInfo = currentWindowAdaptiveInfo()
+        val windowAdaptiveInfo = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true)
         // if (forceSinglePane) singlePaneDirective else defaultPaneDirective // Todo
         val directive = remember(windowAdaptiveInfo) {
             calculatePaneScaffoldDirective(windowAdaptiveInfo)
