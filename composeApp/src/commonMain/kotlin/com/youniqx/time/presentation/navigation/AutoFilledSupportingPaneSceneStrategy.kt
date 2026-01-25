@@ -124,29 +124,30 @@ class AutoFilledSupportingPaneSceneStrategy<T : Any>(
 
         if (scaffoldEntries.isEmpty()) return null
 
-fun injectGhostEntry(role: ThreePaneScaffoldRole) {
-    if (entriesAsNavItems.any { item -> item.pane == role }) return
-    val ghostEntry = ghostEntries.findLast { entry -> getPaneMetadata(entry)?.role == role } ?: return
-    scaffoldEntryIndices.add(0, -1)
-    scaffoldEntries.add(0, ghostEntry)
-    entriesAsNavItems.add(
-        0,
-        ThreePaneScaffoldDestinationItem(
-            pane = role,
-            contentKey = ghostEntry.contentKey,
-        ),
-    )
-}
+        fun injectGhostEntry(role: ThreePaneScaffoldRole) {
+            if (entriesAsNavItems.any { item -> item.pane == role }) return
+            val ghostEntry = ghostEntries.findLast { entry -> getPaneMetadata(entry)?.role == role } ?: return
+            scaffoldEntryIndices.add(0, -1)
+            scaffoldEntries.add(0, ghostEntry)
+            entriesAsNavItems.add(
+                0,
+                ThreePaneScaffoldDestinationItem(
+                    pane = role,
+                    contentKey = ghostEntry.contentKey,
+                ),
+            )
+        }
 
-when {
-    directive.maxHorizontalPartitions >= 3 -> {
-        injectGhostEntry(Supporting)
-        injectGhostEntry(Extra)
-    }
-    directive.maxHorizontalPartitions >= 2 -> {
-        injectGhostEntry(Supporting)
-    }
-}
+        when {
+            directive.maxHorizontalPartitions >= 3 -> {
+                injectGhostEntry(Supporting)
+                injectGhostEntry(Extra)
+            }
+
+            directive.maxHorizontalPartitions >= 2 -> {
+                injectGhostEntry(Supporting)
+            }
+        }
 
         val scene =
             ThreePaneScaffoldScene(

@@ -112,18 +112,18 @@ fun App(
             }
         }
     }
-val entries =
-    rememberDecoratedNavEntries(
-        backStack = backStack,
-        entryDecorators = entryDecorators,
-        entryProvider = entryProvider,
-    )
-val ghostEntries =
-    rememberDecoratedNavEntries(
-        backStack = listOf(HistoryRoute, SettingsRoute),
-        entryDecorators = entryDecorators,
-        entryProvider = entryProvider,
-    )
+    val entries =
+        rememberDecoratedNavEntries(
+            backStack = backStack,
+            entryDecorators = entryDecorators,
+            entryProvider = entryProvider,
+        )
+    val ghostEntries =
+        rememberDecoratedNavEntries(
+            backStack = listOf(HistoryRoute, SettingsRoute),
+            entryDecorators = entryDecorators,
+            entryProvider = entryProvider,
+        )
 
     AppTheme(darkTheme = darkTheme, useHighContrastColors = settings.highContrastColors, theme = theme) {
         if (setWindowBackground != null) {
