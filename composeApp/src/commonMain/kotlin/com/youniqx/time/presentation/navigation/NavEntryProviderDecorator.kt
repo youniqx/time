@@ -10,7 +10,9 @@ class NavEntryProviderDecorator<T : Any> :
         decorate = { entry ->
             CompositionLocalProvider(
                 LocalNavEntry provides entry,
-                content = entry::Content
+                content = {
+                    entry.Content()
+                }
             )
         },
     )
