@@ -21,8 +21,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
+import com.youniqx.time.presentation.LocalSharedTransitionScope
 import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.presentation.theme.LocalSpacing
@@ -38,56 +40,64 @@ fun HistorySummaryCard(
     val spacing = LocalSpacing.current
     // Calculate totals
     val totalTime = timelogs.sumOf { it.timeSpent }
-    Card(
-        modifier = modifier.clip(CardDefaults.shape),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-        )
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(spacing.cardPadding),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    with(LocalSharedTransitionScope.current) {
+        if (this == null) return@with
+        Card(
+            modifier = modifier
+                .clip(CardDefaults.shape)
+                .sharedElement(
+                    sharedContentState = rememberSharedContentState("historySummaryCard"),
+                    animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                ),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+            )
         ) {
-            Column {
-                CompositionLocalProvider(
-                    LocalTextStyle provides MaterialTheme.typography.labelMedium,
-                    LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                    content = heading
-                )
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = formatTimeSpent(totalTime),
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(spacing.cardPadding),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    CompositionLocalProvider(
+                        LocalTextStyle provides MaterialTheme.typography.labelMedium,
+                        LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                        content = heading
                     )
-                    if (timelogs.firstOrNull()?.isOpenTracking ?: false) {
-                        Spacer(Modifier.width(spacing.sm))
-                        openTracking?.RepresentingIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = openTracking.representingColors.color
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = formatTimeSpent(totalTime),
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
                         )
+                        if (timelogs.firstOrNull()?.isOpenTracking ?: false) {
+                            Spacer(Modifier.width(spacing.sm))
+                            openTracking?.RepresentingIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = openTracking.representingColors.color
+                            )
+                        }
                     }
                 }
-            }
-            Column(
-                horizontalAlignment = Alignment.End
-            ) {
-                groupedByDay?.let {
+                Column(
+                    horizontalAlignment = Alignment.End
+                ) {
+                    groupedByDay?.let {
+                        Text(
+                            text = "${it.size} ${if (it.size == 1) "day" else "days"}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    } ?: Text("")
                     Text(
-                        text = "${it.size} ${if (it.size == 1) "day" else "days"}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        text = "${timelogs.size} ${if (timelogs.size == 1) "entry" else "entries"}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                } ?: Text("")
-                Text(
-                    text = "${timelogs.size} ${if (timelogs.size == 1) "entry" else "entries"}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
+                }
             }
         }
     }

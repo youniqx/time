@@ -42,6 +42,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +61,8 @@ import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
+import com.youniqx.time.presentation.navigation.LocalSceneRole
 import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.presentation.relativetime.RelativeTime
@@ -137,7 +140,7 @@ data class DayGroup(
     val totalSeconds: Int
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun TimeHistoryScreen(
     timelogs: List<TimelogEntry>,
@@ -196,18 +199,22 @@ fun TimeHistoryScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Time History") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                modifier = Modifier.windowInsetsPadding(WindowInsets.systemBarsForVisualComponents),
-                windowInsets = WindowInsets(0)
-            )
+        topBar = if (LocalSceneRole.current == AutoFilledSupportingPaneSceneStrategy.Role.Supporting) {
+            {}
+        } else {
+            {
+                TopAppBar(
+                    title = { Text("Time History") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    windowInsets = WindowInsets.systemBarsForVisualComponents
+                )
+            }
         },
+        contentWindowInsets = WindowInsets.systemBarsForVisualComponents,
         modifier = modifier
     ) { paddingValues ->
         Column(

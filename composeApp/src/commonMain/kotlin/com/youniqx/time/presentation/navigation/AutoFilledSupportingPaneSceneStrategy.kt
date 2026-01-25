@@ -95,6 +95,12 @@ class AutoFilledSupportingPaneSceneStrategy<T : Any>(
     val ghostEntries: List<NavEntry<T>>,
 ) : SceneStrategy<T> {
 
+    sealed interface Role : SceneRole {
+        data object Main : Role
+        data object Supporting : Role
+        data object Extra : Role
+    }
+
     override fun SceneStrategyScope<T>.calculateScene(entries: List<NavEntry<T>>): Scene<T>? {
         val lastPaneMetadata = getPaneMetadata(entries.last()) ?: return null
         val sceneKey = lastPaneMetadata.sceneKey

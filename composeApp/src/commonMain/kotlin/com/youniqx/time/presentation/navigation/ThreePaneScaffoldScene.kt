@@ -39,7 +39,9 @@ import androidx.compose.material3.adaptive.layout.ThreePaneScaffoldValue
 import androidx.compose.material3.adaptive.layout.calculateThreePaneScaffoldValue
 import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.scene.Scene
@@ -55,6 +57,23 @@ internal sealed interface ThreePaneScaffoldType {
         ThreePaneScaffoldType
 
     object SupportingPane : ThreePaneScaffoldType
+}
+
+@Composable
+private fun <T : Any> NavEntry<T>.ContentForRole(role: SceneRole) {
+    CompositionLocalProvider(LocalSceneRole provides role) {
+        Content()
+    }
+}
+
+/**
+ * This `CompositionLocal` can be used by a `NavEntry` to determine what role it is playing in the
+ * current scene.
+ */
+val LocalSceneRole = compositionLocalOf<SceneRole> { SceneRole.Unknown }
+
+interface SceneRole {
+    data object Unknown : SceneRole
 }
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -277,9 +296,15 @@ internal class ThreePaneScaffoldScene<T : Any>(
         SupportingPaneScaffold(
             directive = directive,
             scaffoldState = scaffoldState,
-            mainPane = lastMain?.let { { AnimatedPane { it.Content() } } } ?: {},
-            supportingPane = lastSupporting?.let { { AnimatedPane { it.Content() } } } ?: {},
-            extraPane = lastExtra?.let { { AnimatedPane { it.Content() } } },
+            mainPane = lastMain?.let {
+                { AnimatedPane { it.ContentForRole(AutoFilledSupportingPaneSceneStrategy.Role.Main) } }
+            } ?: {},
+            supportingPane = lastSupporting?.let {
+                { AnimatedPane { it.ContentForRole(AutoFilledSupportingPaneSceneStrategy.Role.Supporting) } }
+            } ?: {},
+            extraPane = lastExtra?.let {
+                { AnimatedPane { it.ContentForRole(AutoFilledSupportingPaneSceneStrategy.Role.Extra) } }
+            },
         )
     }
 

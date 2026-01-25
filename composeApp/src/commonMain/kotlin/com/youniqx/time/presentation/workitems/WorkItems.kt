@@ -25,6 +25,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -53,6 +54,8 @@ import com.youniqx.time.presentation.Section
 import com.youniqx.time.presentation.history.HistorySummaryCard
 import com.youniqx.time.presentation.history.toTimelogEntry
 import com.youniqx.time.presentation.modifier.adaptivePadding
+import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
+import com.youniqx.time.presentation.navigation.LocalSceneRole
 import com.youniqx.time.presentation.plus
 import com.youniqx.time.presentation.rememberSyncedSource
 import com.youniqx.time.presentation.settings.SettingsViewModel
@@ -91,6 +94,7 @@ enum class Section {
     Pinned, Open, Closed
 }
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun WorkItemsScreen(
     settings: Settings,
@@ -227,6 +231,7 @@ fun WorkItemsScreen(
     }
 
     val openSections = remember { mutableStateListOf(Section.Pinned, Section.Open) }
+    val sceneRole = LocalSceneRole.current
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = {
@@ -281,7 +286,7 @@ fun WorkItemsScreen(
                 }
             }
 
-            item(key = "daySummary") {
+            if (sceneRole != AutoFilledSupportingPaneSceneStrategy.Role.Main) item(key = "daySummary") {
                 HistorySummaryCard(
                     modifier = Modifier
                         .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
