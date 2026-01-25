@@ -54,7 +54,7 @@ class LocalSettingsRepository(
         )
     override val settings = _settings.asStateFlow()
 
-    private val scope = CoroutineScope(dispatchers.IO)
+    private val scope = CoroutineScope(dispatchers.Default)
 
     init {
         flowSettings.getStringOrNullFlow(SettingKey.InstanceUrl.name).loadInto { copy(instanceUrl = it) }

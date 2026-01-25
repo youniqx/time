@@ -2,6 +2,7 @@ package com.youniqx.time.presentation.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.youniqx.time.di.IDispatchers
 import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.DataSource
 import com.youniqx.time.domain.models.Settings
@@ -32,13 +33,15 @@ fun SourceAware<Settings>.toInitialUiState() = UiState(
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class OnboardingViewModel(
     settingsRepository: SettingsRepository,
+    dispatchers: IDispatchers,
 ) : ViewModel(), UpdateSettingsUseCase by settingsRepository {
     private val initialSettings = settingsRepository.settings.value
     private val _uiState = MutableStateFlow(initialSettings.toInitialUiState())
     val uiState = _uiState.asStateFlow()
 
     init {
-        viewModelScope.launch {
+        // specifying the context here is a quickfix for an issue in wasmJs
+        viewModelScope.launch(dispatchers.Default) {
             var lastDataSource: DataSource? = null
             settingsRepository.settings.collect { newSettings ->
                 _uiState.update { it.copy(
