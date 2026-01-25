@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
+import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
@@ -51,6 +52,7 @@ import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.presentation.errors.NotFoundRoute
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.navigation.NavScope
+import com.youniqx.time.presentation.navigation.rememberAutoFilledSupportingPaneSceneStrategy
 import com.youniqx.time.presentation.navigation.rememberNavEntryProviderDecorator
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
@@ -91,28 +93,37 @@ fun App(
     val darkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
         ?: isSystemInDarkTheme()
     val backStack = rememberNavBackStack(configuration = config, WelcomeRoute)
-    val entries =
-        rememberDecoratedNavEntries(
-            backStack = backStack,
-            entryDecorators = listOf(
-                rememberSaveableStateHolderNavEntryDecorator(),
-                rememberNavEntryProviderDecorator(),
-            ),
-            entryProvider =
-                entryProvider(fallback = { key ->
-                    NavEntry(key) {
-                        LaunchedEffect(key) {
-                            println("Unknown key: $key")
-                            backStack.removeLastOrNull()
-                            backStack.add(NotFoundRoute)
-                        }
-                    }
-                }) {
-                    navScopes.forEach { scope ->
-                        scope(backStack)
-                    }
-                },
-        )
+    val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
+        rememberSaveableStateHolderNavEntryDecorator(),
+        rememberNavEntryProviderDecorator(),
+    )
+    val entryProvider = remember {
+        entryProvider(fallback = { key ->
+            NavEntry(key) {
+                LaunchedEffect(key) {
+                    println("Unknown key: $key")
+                    backStack.removeLastOrNull()
+                    backStack.add(NotFoundRoute)
+                }
+            }
+        }) {
+            navScopes.forEach { scope ->
+                scope(backStack)
+            }
+        }
+    }
+val entries =
+    rememberDecoratedNavEntries(
+        backStack = backStack,
+        entryDecorators = entryDecorators,
+        entryProvider = entryProvider,
+    )
+val ghostEntries =
+    rememberDecoratedNavEntries(
+        backStack = listOf(HistoryRoute, SettingsRoute),
+        entryDecorators = entryDecorators,
+        entryProvider = entryProvider,
+    )
 
     AppTheme(darkTheme = darkTheme, useHighContrastColors = settings.highContrastColors, theme = theme) {
         if (setWindowBackground != null) {
@@ -133,12 +144,13 @@ fun App(
 
         // Override the defaults so that the supporting pane can be dismissed by pressing back.
         // See b/445826749
-        val supportingPaneStrategy = rememberSupportingPaneSceneStrategy<NavKey>(
+        val supportingPaneStrategy = rememberAutoFilledSupportingPaneSceneStrategy<NavKey>(
             backNavigationBehavior = BackNavigationBehavior.PopUntilCurrentDestinationChange,
             directive = directive,
             adaptStrategies = SupportingPaneScaffoldDefaults.adaptStrategies(
                 supportingPaneAdaptStrategy = AdaptStrategy.Hide
-            )
+            ),
+            ghostEntries = ghostEntries
         )
         val singlePaneStrategy: SinglePaneSceneStrategy<NavKey> = remember { SinglePaneSceneStrategy() }
         SharedTransitionLayout {

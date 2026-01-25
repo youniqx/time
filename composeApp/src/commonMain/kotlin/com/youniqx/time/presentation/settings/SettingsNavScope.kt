@@ -1,7 +1,7 @@
 package com.youniqx.time.presentation.settings
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.navigation3.SupportingPaneSceneStrategy
+import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
 import com.youniqx.time.presentation.navigation.NavScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -19,7 +19,7 @@ class SettingsNavScope {
         { backStack ->
 
             entry<SettingsRoute>(
-                metadata = SupportingPaneSceneStrategy.extraPane()
+                metadata = AutoFilledSupportingPaneSceneStrategy.extraPane()
             ) {
                 Settings(
                     disableGlobalSearchIfFocused = { this },
