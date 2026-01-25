@@ -30,7 +30,7 @@ class CommitTimeTrackingRepository(
 ) : CommitTimeTrackingUseCase {
 
     private var job: Job? = null
-    private val scope = CoroutineScope(dispatchers.IO)
+    private val scope = CoroutineScope(dispatchers.Default)
 
     override suspend fun commitTimeTracking(): List<String>? {
         val settings = settingsRepository.settings.value.data

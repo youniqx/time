@@ -33,7 +33,7 @@ class RemoteNamespacesRepository(
     dispatchers: IDispatchers
 ): NamespacesRepository {
 
-    private val scope = CoroutineScope(dispatchers.IO)
+    private val scope = CoroutineScope(dispatchers.Default)
 
     private val _namespaces: MutableStateFlow<SourceAware<NamespaceQuery.Data?>?> =
         MutableStateFlow(null)
