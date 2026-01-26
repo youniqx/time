@@ -1,0 +1,54 @@
+---
+Generate SBOM:
+  stage: build
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/mobile-sbom-generator:1.1.0
+  variables:
+    GRADLE_MODULE_PATH: composeApp
+    PLATFORM: android
+    APP_NAME: $CI_PROJECT_NAME
+    APP_DESCRIPTION: "Time - CMP App"
+    PROJECT_PATH: "."
+    VERSION_NAME: $CI_COMMIT_TAG
+    KUBERNETES_MEMORY_REQUEST: 20Gi
+    KUBERNETES_MEMORY_LIMIT: 20Gi
+  rules:
+    - if: $CI_COMMIT_TAG || $CI_COMMIT_REF_PROTECTED == "true"
+      when: on_success  # automatic run
+    - when: manual      # else run manual
+      allow_failure: true
+  script:
+    - mkdir -p sbom-output
+    - python3 /home/youniqx/generate_sbom.py
+  artifacts:
+    paths:
+      - sbom-output/
+    reports:
+      cyclonedx: sbom-output/sbom.cdx.json
+
+Upload SBOM:
+  stage: task
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/infrastructure/youniqx-ubuntu:1.8.99
+  tags:
+    - linux-unprivileged
+  needs:
+    - job: "Generate SBOM"
+      artifacts: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: on_success  # automatic run
+    - when: manual      # else run manual
+      allow_failure: true
+  script:
+    - |
+      echo "Uploading SBOM to GitLab Package Registry..."
+      VERSION="${CI_COMMIT_TAG:-$CI_COMMIT_SHORT_SHA}"
+      SBOM_URL="${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/sbom/${VERSION}/sbom.cdx.json"
+      echo "Version: ${VERSION}"
+
+      curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" \
+           --upload-file "sbom-output/sbom.cdx.json" \
+           "${SBOM_URL}"
+
+      echo ""
+      echo "✓ SBOM uploaded successfully!"
+      echo "Uploaded to: ${SBOM_URL}"

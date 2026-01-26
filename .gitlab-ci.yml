@@ -6,6 +6,7 @@ include:
   - project: 'youniqx/infrastructure/ci-commons'
     ref: v1.88.146
     file: 'release.yaml'
+  - local: 'gitlab/sbom.yml'
   - component: $CI_SERVER_FQDN/youniqx/mia/ci-templates/disable-ltex@main
 
 default:
