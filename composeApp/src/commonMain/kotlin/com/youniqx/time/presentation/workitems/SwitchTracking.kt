@@ -6,17 +6,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -121,13 +119,16 @@ fun SwitchTrackingScreen(
             Spacer(Modifier.size(spacing.sm))
             Column(
                 modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(spacing.xs)
+                verticalArrangement = Arrangement.spacedBy(spacing.xs),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 // Keep time and switch
                 if (currentTracking != null) {
                     Button(
                         onClick = onKeepTimeAndSwitch,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .widthIn(max = spacing.maxButtonWidth)
+                            .fillMaxWidth()
                     ) {
                         Text("Keep time & switch")
                     }
@@ -135,21 +136,27 @@ fun SwitchTrackingScreen(
                 // Discard and start new
                 OutlinedButton(
                     onClick = onDiscardAndSwitch,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .widthIn(max = spacing.maxButtonWidth)
+                        .fillMaxWidth()
                 ) {
                     Text("Discard time & switch")
                 }
                 // Show current work item
                 TextButton(
                     onClick = onShowCurrent,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .widthIn(max = spacing.maxButtonWidth)
+                        .fillMaxWidth()
                 ) {
                     Text("Show current work item")
                 }
                 // Cancel
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .widthIn(max = spacing.maxButtonWidth)
+                        .fillMaxWidth()
                 ) {
                     Text("Cancel")
                 }
