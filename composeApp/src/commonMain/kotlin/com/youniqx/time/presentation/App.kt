@@ -184,7 +184,6 @@ fun App(
                                 .fillMaxSize(),
                         sceneStrategy = supportingPaneStrategy then singlePaneStrategy,
                         onBack = { backStack.removeLastOrNull() },
-                        sharedTransitionScope = this,
                     )
                 }
             }
