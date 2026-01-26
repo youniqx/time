@@ -1,6 +1,7 @@
 package com.youniqx.time.presentation.workitems
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.navigation3.scene.DialogSceneStrategy
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
 import com.youniqx.time.presentation.navigation.NavScope
@@ -25,6 +26,21 @@ class WorkItemsNavScope {
                 WorkItems(
                     showHistory = {
                         if (HistoryRoute !in backStack) backStack += HistoryRoute
+                    },
+                    showSwitchTracking = { targetId: String, targetTitle: String ->
+                        backStack += SwitchTrackingRoute(targetId = targetId, targetTitle = targetTitle)
+                    }
+                )
+            }
+
+            entry<SwitchTrackingRoute>(
+                metadata = DialogSceneStrategy.dialog()
+            ) {
+                SwitchTracking(
+                    targetId = it.targetId,
+                    targetTitle = it.targetTitle,
+                    onDismiss = {
+                        backStack.remove(it)
                     }
                 )
             }

@@ -80,13 +80,15 @@ fun WorkItems(
     showHistory: () -> Unit,
     viewModel: WorkItemsViewModel = metroViewModel(),
     settingsViewModel: SettingsViewModel = metroViewModel(),
+    showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
 ) {
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle() // Todo
 
     WorkItemsScreen(
         settings = settingsUiState.settings,
         settingsUpdater = settingsViewModel, // Todo
-        showHistory = showHistory
+        showHistory = showHistory,
+        showSwitchTracking = showSwitchTracking,
     )
 }
 
@@ -100,6 +102,7 @@ fun WorkItemsScreen(
     settings: Settings,
     settingsUpdater: UpdateSettingsUseCase,
     showHistory: () -> Unit,
+    showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
 ) {
     var search: String by remember { mutableStateOf("") }
     var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
@@ -187,48 +190,6 @@ fun WorkItemsScreen(
             .sortedByDescending { it.spentAt }
     }
     val lazyListState = rememberLazyListState()
-    // State for tracking switch confirmation dialog
-    var switchTrackingTarget by remember { mutableStateOf<Pair<String, String>?>(null) } // (id, title)
-
-    // Confirmation dialog for switching tracking
-    switchTrackingTarget?.let { (targetId, targetTitle) ->
-        SwitchTrackingDialog(
-            targetTitle = targetTitle,
-            currentTracking = settings.openTracking,
-            onKeepTimeAndSwitch = {
-                settings.openTracking?.let { currentTracking ->
-                    settingsUpdater.setOpenTracking(
-                        currentTracking.copy(
-                            workItemId = targetId,
-                            workItemTitle = targetTitle
-                        )
-                    )
-                }
-                switchTrackingTarget = null
-            },
-            onDiscardAndSwitch = {
-                settingsUpdater.setOpenTracking(
-                    OpenTracking(
-                        workItemId = targetId,
-                        workItemTitle = targetTitle,
-                        timeOfOpen = Clock.System.now()
-                    )
-                )
-                switchTrackingTarget = null
-            },
-            onShowCurrent = {
-                val currentId = settings.openTracking?.workItemId
-                val index = filteredWorkItems.indexOfFirst { workItem -> workItem.id == currentId }
-                if (index >= 0) {
-                    coroutineScope.launch {
-                        lazyListState.animateScrollToItem(index + 1, -100)
-                    }
-                }
-                switchTrackingTarget = null
-            },
-            onDismiss = { switchTrackingTarget = null }
-        )
-    }
 
     val openSections = remember { mutableStateListOf(Section.Pinned, Section.Open) }
     val sceneRole = LocalSceneRole.current
@@ -337,7 +298,10 @@ fun WorkItemsScreen(
                             if (openTracking?.workItemId == null) {
                                 startTracking()
                             } else {
-                                switchTrackingTarget = id.toString() to title
+                                showSwitchTracking(
+                                    id.toString(),
+                                    title
+                                )
                             }
                         },
                         currentUserId = currentUserId,

@@ -43,6 +43,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
@@ -152,7 +153,8 @@ fun App(
             ),
             ghostEntries = ghostEntries
         )
-        val singlePaneStrategy: SinglePaneSceneStrategy<NavKey> = remember { SinglePaneSceneStrategy() }
+        val singlePaneStrategy = remember { SinglePaneSceneStrategy<NavKey>() }
+        val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
         SharedTransitionLayout {
             CompositionLocalProvider(
                 LocalSharedTransitionScope provides this,
@@ -182,7 +184,7 @@ fun App(
                             Modifier
                                 // .padding(innerPadding)
                                 .fillMaxSize(),
-                        sceneStrategy = supportingPaneStrategy then singlePaneStrategy,
+                        sceneStrategy = dialogStrategy then supportingPaneStrategy then singlePaneStrategy,
                         onBack = { backStack.removeLastOrNull() },
                     )
                 }
