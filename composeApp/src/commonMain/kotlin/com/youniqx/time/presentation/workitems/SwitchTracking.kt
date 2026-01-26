@@ -19,15 +19,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.domain.models.OpenTracking
+import com.youniqx.time.presentation.DialogSurface
 import com.youniqx.time.presentation.settings.SettingsViewModel
+import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.LocalSpacing
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Serializable
 data class SwitchTrackingRoute(
@@ -95,12 +99,7 @@ fun SwitchTrackingScreen(
 ) {
     val currentTitle = currentTracking?.workItemTitle ?: "another work item"
     val spacing = LocalSpacing.current
-    Surface(
-        modifier = Modifier.verticalScroll(rememberScrollState()),
-        color = AlertDialogDefaults.containerColor,
-        shape = AlertDialogDefaults.shape,
-        tonalElevation = AlertDialogDefaults.TonalElevation,
-    ) {
+    DialogSurface {
         Column(
             modifier = Modifier.padding(spacing.screenPadding),
             verticalArrangement = Arrangement.spacedBy(spacing.sm)
@@ -156,5 +155,25 @@ fun SwitchTrackingScreen(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+fun SwitchTrackingPreview() {
+    AppTheme {
+        SwitchTrackingScreen(
+            targetTitle = "The best work item",
+            currentTracking = OpenTracking(
+                workItemId = "",
+                workItemTitle = "Some boring work",
+                timeOfOpen = Instant.fromEpochSeconds(0L),
+                customTimeSpent = "2h 45m",
+            ),
+            onKeepTimeAndSwitch = {},
+            onDiscardAndSwitch = {},
+            onShowCurrent = {},
+            onDismiss = {},
+        )
     }
 }
