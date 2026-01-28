@@ -18,12 +18,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -46,6 +48,8 @@ import com.youniqx.time.presentation.Label
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.invoke
 import com.youniqx.time.presentation.rememberRotationAnimation
+
+val LocalSearchFocusRequester = compositionLocalOf<FocusRequester?> { null }
 
 @Composable
 fun Search(

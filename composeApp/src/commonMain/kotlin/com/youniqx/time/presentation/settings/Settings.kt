@@ -43,16 +43,17 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.additionalTimerSupport
-import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.Settings
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.presentation.Label
+import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.invoke
-import com.youniqx.time.systemBarsForVisualComponents
+import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
 import com.youniqx.time.presentation.theme.AppTheme
+import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 
@@ -62,7 +63,6 @@ object SettingsRoute: NavKey
 @Composable
 fun Settings(
     viewModel: SettingsViewModel = metroViewModel(),
-    disableGlobalSearchIfFocused: Modifier.() -> Modifier,
     onBack: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -71,7 +71,6 @@ fun Settings(
         updater = viewModel,
         onBack = onBack,
         namespaces = uiState.namespaces,
-        disableGlobalSearchIfFocused = disableGlobalSearchIfFocused
     )
 }
 
@@ -82,7 +81,6 @@ fun SettingsScreen(
     updater: UpdateSettingsUseCase,
     onBack: (() -> Unit)? = null,
     namespaces: NamespaceQuery.Data?,
-    disableGlobalSearchIfFocused: Modifier.() -> Modifier
 ) {
     Column(
         modifier = Modifier
@@ -353,7 +351,6 @@ fun SettingsPreview() {
                 override fun setOpenTracking(openTracking: OpenTracking?) {}
             },
             namespaces = null,
-            disableGlobalSearchIfFocused = { this }
         )
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
@@ -30,6 +31,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -58,6 +61,8 @@ import com.youniqx.time.presentation.onboarding.onboardingIndex
 import com.youniqx.time.presentation.settings.SettingsRoute
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.Theme
+import com.youniqx.time.presentation.workitems.DisableGlobalSearch
+import com.youniqx.time.presentation.workitems.LocalSearchFocusRequester
 import com.youniqx.time.presentation.workitems.ScrollToWorkItem
 import com.youniqx.time.presentation.workitems.WorkItemsRoute
 import kotlinx.serialization.modules.SerializersModule
@@ -144,6 +149,7 @@ fun App(
             CompositionLocalProvider(
                 LocalSharedTransitionScope provides this,
                 LocalResultStore provides resultStore,
+                LocalSearchFocusRequester provides focusRequester,
             ) {
                 Scaffold(
                     floatingActionButton = {
@@ -176,6 +182,9 @@ fun App(
                 }
             }
         }
+        // Todo
+        // Fake item to ignore focus requests if we have an open time tracking
+        Box(modifier = Modifier.focusProperties { canFocus = false }.focusRequester(focusRequester))
     }
 }
 
@@ -196,6 +205,7 @@ private val resultStoreSavedStateConfiguration = SavedStateConfiguration {
     serializersModule = SerializersModule {
         polymorphic(ResultStoreValue::class) {
             subclass(ScrollToWorkItem::class, ScrollToWorkItem.serializer())
+            subclass(DisableGlobalSearch::class, DisableGlobalSearch.serializer())
         }
     }
 }

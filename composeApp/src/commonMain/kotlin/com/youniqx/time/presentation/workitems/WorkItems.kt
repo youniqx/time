@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.unit.dp
@@ -86,6 +87,9 @@ data class ScrollToWorkItem(
     val workItemId: String
 ): ResultStoreValue
 
+@Serializable
+object DisableGlobalSearch : ResultStoreValue
+
 @Composable
 fun WorkItems(
     showHistory: () -> Unit,
@@ -118,9 +122,6 @@ fun WorkItemsScreen(
     var search: String by remember { mutableStateOf("") }
     var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
     var disableGlobalSearch by remember { mutableStateOf(false) }
-    val disableGlobalSearchIfFocused: Modifier.() -> Modifier = {
-        onFocusChanged { disableGlobalSearch = it.hasFocus }
-    }
 
     val viewModel: WorkItemsViewModel = metroViewModel()
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -284,13 +285,15 @@ fun WorkItemsScreen(
                             viewModel.search("")
                         },
                         show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
-                        canFocus = !disableGlobalSearch,
+                        canFocus = resultStore.getResultState<DisableGlobalSearch?>() == null,
                         modifier = Modifier
                             .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp),
-                        // .focusRequester(focusRequester), // Todo
-                        onPress = { disableGlobalSearch = false }
+                            .padding(horizontal = 12.dp)
+                            .then(LocalSearchFocusRequester.current?.let {
+                                Modifier.focusRequester(it)
+                            } ?: Modifier),
+                        onPress = { resultStore.removeResult<DisableGlobalSearch>() }
                     )
                     QuickFilters(
                         activeFilters = activeFilters,
@@ -378,7 +381,6 @@ fun WorkItemsScreen(
                                 commitTimeTrackingEnabled = true
                             }
                         },
-                        disableGlobalSearchIfFocused = disableGlobalSearchIfFocused,
                     )
                     AnimatedVisibility(visible = !commitTimeTrackingErrors.isNullOrEmpty()) {
                         Column(

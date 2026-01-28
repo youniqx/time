@@ -21,9 +21,7 @@ class SettingsNavScope {
             entry<SettingsRoute>(
                 metadata = AutoFilledSupportingPaneSceneStrategy.extraPane()
             ) {
-                Settings(
-                    disableGlobalSearchIfFocused = { this },
-                )
+                Settings()
             }
 
         }

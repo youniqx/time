@@ -74,6 +74,7 @@ import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.modifier.adaptivePadding
 import com.youniqx.time.presentation.modifier.changeFocusOnTab
+import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
 import com.youniqx.time.presentation.modifier.onCtrlOrMetaEnter
 import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.customTimeSpentHasErrorMessage
@@ -97,7 +98,6 @@ operator fun BareWorkItem.invoke(
     onOpenTrackingChange: (openTracking: OpenTracking?) -> Unit,
     pinned: Boolean,
     togglePinned: () -> Unit,
-    disableGlobalSearchIfFocused: Modifier.() -> Modifier,
     commitTimeTrackingEnabled: Boolean,
     commitTimeTracking: () -> Unit,
     modifier: Modifier = Modifier,
