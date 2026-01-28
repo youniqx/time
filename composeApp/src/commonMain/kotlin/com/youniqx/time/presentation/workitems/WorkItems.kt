@@ -433,9 +433,6 @@ fun WorkItemsScreen(
             }
         }
     }
-    // Todo
-    // Fake item to ignore focus requests if we have an open time tracking
-    // Box(modifier = Modifier.focusProperties { canFocus = false }.focusRequester(focusRequester))
 }
 
 @Composable
