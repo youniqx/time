@@ -48,6 +48,8 @@ import androidx.window.core.layout.WindowSizeClass
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.Settings
 import com.youniqx.time.domain.models.toTimelogEntry
+import com.youniqx.time.domain.usecases.CommitTimeTrackingUseCase
+import com.youniqx.time.domain.usecases.SearchWorkItemsUseCase
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
@@ -97,10 +99,14 @@ fun WorkItems(
     historyViewModel: HistoryViewModel = metroViewModel(),
     showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle() // Todo
     val historyUiState by historyViewModel.uiState.collectAsStateWithLifecycle() // Todo
 
     WorkItemsScreen(
+        uiState = uiState,
+        searcher = viewModel,
+        timeTrackingCommiter = viewModel,
         settings = settingsUiState.settings,
         settingsUpdater = settingsViewModel, // Todo
         timelogs = historyUiState.timelogs,
@@ -116,6 +122,9 @@ enum class Section {
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun WorkItemsScreen(
+    uiState: UiState,
+    searcher: SearchWorkItemsUseCase,
+    timeTrackingCommiter: CommitTimeTrackingUseCase,
     settings: Settings,
     settingsUpdater: UpdateSettingsUseCase,
     timelogs: List<TimelogEntry>,
@@ -124,19 +133,12 @@ fun WorkItemsScreen(
 ) {
     var search: String by remember { mutableStateOf("") }
     var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
-    var disableGlobalSearch by remember { mutableStateOf(false) }
 
-    val viewModel: WorkItemsViewModel = metroViewModel()
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var loading: Boolean = uiState?.isSyncing ?: true
     var isRefreshing by remember(uiState) { mutableStateOf(false) }
     val workItems = uiState?.data?.workItems
     val currentUserId = uiState?.data?.currentUserId
 
-    val coroutineScope = rememberCoroutineScope()
-
-
-    // AnimatedPane(Modifier.clip(align = Alignment.End, minWidth = 290.dp)) {
     // https://kotlinlang.slack.com/archives/CJLTWPH7S/p1731631796638429?thread_ts=1731631796.638429
     val consumedWindowInsets = remember { MutableWindowInsets() }
     val insets =
@@ -234,7 +236,7 @@ fun WorkItemsScreen(
         isRefreshing = isRefreshing,
         onRefresh = {
             isRefreshing = true
-            viewModel.search(search, setSyncing = false)
+            searcher.search(search, setSyncing = false)
         },
         modifier = Modifier.onConsumedWindowInsetsChanged {
             consumedWindowInsets.insets = it
@@ -255,12 +257,12 @@ fun WorkItemsScreen(
                         onSearchChange = {
                             search = it
                             loading = true
-                            viewModel.search(it)
+                            searcher.search(it)
                         },
                         loading = loading,
                         refresh = {
                             loading = true
-                            viewModel.search("")
+                            searcher.search("")
                         },
                         show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                         canFocus = resultStore.getResultState<DisableGlobalSearch?>() == null,
@@ -329,6 +331,8 @@ fun WorkItemsScreen(
                         timeOfOpen = Clock.System.now()
                     )
                 }
+
+                val coroutineScope = rememberCoroutineScope()
                 Column(modifier = modifier) {
                     var commitTimeTrackingEnabled by remember { mutableStateOf(true) }
                     var commitTimeTrackingErrors by remember {
@@ -357,7 +361,7 @@ fun WorkItemsScreen(
                             if (!commitTimeTrackingEnabled) return@commitTimeTracking
                             commitTimeTrackingEnabled = false
                             coroutineScope.launch {
-                                commitTimeTrackingErrors = viewModel.commitTimeTracking()
+                                commitTimeTrackingErrors = timeTrackingCommiter.commitTimeTracking()
                                 commitTimeTrackingEnabled = true
                             }
                         },
