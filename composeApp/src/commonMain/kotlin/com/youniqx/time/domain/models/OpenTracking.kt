@@ -58,3 +58,18 @@ fun OpenTracking.toTimelog(currentUserId: String): BareWorkItemWidgets.Node2 {
         )
     )
 }
+
+fun OpenTracking.toTimelogEntry(): TimelogEntry {
+    val timeSpent = toDurationOrNull() ?: Duration.ZERO
+    val spentAt = Clock.System.now() - timeSpent
+    return TimelogEntry(
+        id = OPEN_TRACKING_TIMELOG_ID,
+        spentAt = spentAt,
+        summary = summary,
+        timeSpent = timeSpent.inWholeSeconds.toInt(),
+        workItemTitle = workItemTitle,
+        workItemUrl = null,
+        workItemId = workItemId,
+        workItemIid = null,
+    )
+}

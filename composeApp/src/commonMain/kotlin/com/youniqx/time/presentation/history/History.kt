@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -56,43 +55,51 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
-import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
-import com.youniqx.time.gitlab.models.fragment.BareWorkItem
-import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
+import com.youniqx.time.domain.models.toTimelogEntry
+import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
 import com.youniqx.time.presentation.navigation.LocalSceneRole
 import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.presentation.relativetime.RelativeTime
 import com.youniqx.time.presentation.relativetime.formatDuration
-import com.youniqx.time.presentation.settings.SettingsScreen
 import com.youniqx.time.presentation.settings.SettingsViewModel
-import com.youniqx.time.systemBarsForVisualComponents
 import com.youniqx.time.presentation.theme.LocalSpacing
+import com.youniqx.time.refresh
+import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.Instant
 
 @Serializable
 object HistoryRoute: NavKey
 
 @Composable
 fun History(
-    onBack: (() -> Unit)? = null
+    viewModel: HistoryViewModel = metroViewModel(),
+    settingsViewModel: SettingsViewModel = metroViewModel(),
+    onBack: () -> Unit
 ) {
-    // Todo
-    TimeHistoryScreen(
-        timelogs = emptyList(),
-        isLoading = false,
-        selectedRange = TimeRange.Today,
-        onRangeChange = {  },
-        onBack = {  },
-        openTracking = null
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
+    val settings = settingsUiState.settings
+    val openTrackingAsTimelogEntry = remember(settings.openTracking, refresh(every = 1.seconds)) {
+        settings.openTracking?.toTimelogEntry()
+    }
+
+    var range by remember { mutableStateOf(TimeRange.Today) }
+    HistoryScreen(
+        timelogs = listOfNotNull(openTrackingAsTimelogEntry) + uiState.timelogs,
+        isLoading = uiState.loading,
+        selectedRange = range,
+        onRangeChange = { range = it },
+        onBack = onBack,
+        openTracking = settings.openTracking
     )
 }
 
@@ -110,30 +117,6 @@ enum class TimeRange(val label: String, val daysBack: Int) {
     }
 }
 
-data class TimelogEntry(
-    val id: String,
-    val spentAt: Instant,
-    val summary: String?,
-    val timeSpent: Int, // in seconds
-    val workItemTitle: String?,
-    val workItemUrl: String?,
-    val workItemIid: String?
-)
-
-fun BareWorkItemWidgets.Node2.toTimelogEntry(workItem: BareWorkItem?, cutoff: Instant): TimelogEntry? {
-    val spentAt = spentAt?.let { Instant.parseOrNull(it.toString()) }
-    if (spentAt == null || spentAt < cutoff) return null
-    return TimelogEntry(
-        id = id,
-        spentAt = spentAt,
-        summary = summary,
-        timeSpent = timeSpent,
-        workItemTitle = workItem?.title,
-        workItemUrl = workItem?.webUrl,
-        workItemIid = workItem?.iid
-    )
-}
-
 data class DayGroup(
     val dayLabel: String,
     val entries: List<TimelogEntry>,
@@ -142,7 +125,7 @@ data class DayGroup(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
 @Composable
-fun TimeHistoryScreen(
+fun HistoryScreen(
     timelogs: List<TimelogEntry>,
     isLoading: Boolean,
     selectedRange: TimeRange,

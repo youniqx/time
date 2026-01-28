@@ -40,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color.Companion.Transparent
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,7 +47,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.window.core.layout.WindowSizeClass
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.Settings
-import com.youniqx.time.domain.models.toTimelog
+import com.youniqx.time.domain.models.toTimelogEntry
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
@@ -56,7 +55,8 @@ import com.youniqx.time.presentation.LocalResultStore
 import com.youniqx.time.presentation.ResultStoreValue
 import com.youniqx.time.presentation.Section
 import com.youniqx.time.presentation.history.HistorySummaryCard
-import com.youniqx.time.presentation.history.toTimelogEntry
+import com.youniqx.time.presentation.history.HistoryViewModel
+import com.youniqx.time.presentation.history.TimelogEntry
 import com.youniqx.time.presentation.modifier.adaptivePadding
 import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
 import com.youniqx.time.presentation.navigation.LocalSceneRole
@@ -76,7 +76,6 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
 @Serializable
@@ -95,13 +94,16 @@ fun WorkItems(
     showHistory: () -> Unit,
     viewModel: WorkItemsViewModel = metroViewModel(),
     settingsViewModel: SettingsViewModel = metroViewModel(),
+    historyViewModel: HistoryViewModel = metroViewModel(),
     showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
 ) {
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle() // Todo
+    val historyUiState by historyViewModel.uiState.collectAsStateWithLifecycle() // Todo
 
     WorkItemsScreen(
         settings = settingsUiState.settings,
         settingsUpdater = settingsViewModel, // Todo
+        timelogs = historyUiState.timelogs,
         showHistory = showHistory,
         showSwitchTracking = showSwitchTracking,
     )
@@ -116,6 +118,7 @@ enum class Section {
 fun WorkItemsScreen(
     settings: Settings,
     settingsUpdater: UpdateSettingsUseCase,
+    timelogs: List<TimelogEntry>,
     showHistory: () -> Unit,
     showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
 ) {
@@ -187,31 +190,6 @@ fun WorkItemsScreen(
         }
     }
 
-    val openTrackingAsTimelog = remember(
-        settings.openTracking, currentUserId, refresh(every = 1.seconds)
-    ) { settings.openTracking?.toTimelog(currentUserId = currentUserId.orEmpty()) }
-    val openTrackingWorkItem = remember(workItems, settings.openTracking) {
-        settings.openTracking?.let { openTracking ->
-            workItems?.firstOrNull { it.id == openTracking.workItemId }
-        }
-    }
-    // Aggregate timelogs from all work items for history view
-    // Fetch all timelogs (up to 1 year) - filtering by period is done in TimeHistoryScreen
-    val allTimelogs = remember(openTrackingAsTimelog, workItems, currentUserId) {
-        val now = Clock.System.now()
-        val cutoff = now - 365.days // Fetch up to 1 year of history
-        val openTrackingAsEntry =
-            openTrackingAsTimelog?.toTimelogEntry(workItem = openTrackingWorkItem, cutoff = cutoff)
-        listOfNotNull(openTrackingAsEntry) + workItems.orEmpty()
-            .flatMap { workItem ->
-                workItem.timelogs
-                    .filter { timelog -> timelog.user.id == currentUserId }
-                    .mapNotNull { timelog ->
-                        timelog.toTimelogEntry(workItem = workItem, cutoff = cutoff)
-                    }
-            }
-            .sortedByDescending { it.spentAt }
-    }
     val lazyListState = rememberLazyListState()
 
     val openSections = remember { mutableStateListOf(Section.Pinned, Section.Open) }
@@ -321,11 +299,13 @@ fun WorkItemsScreen(
                             }),
                     heading = { Text(text = "Today") },
                     openTracking = settings.openTracking,
-                    timelogs = remember(allTimelogs) {
-                        allTimelogs.filter {
-                            val now = Clock.System.now()
-                            val timeZone = TimeZone.currentSystemDefault()
-                            val startOfDay = now.toLocalDateTime(timeZone).date.atStartOfDayIn(timeZone)
+                    timelogs = remember(settings.openTracking, refresh(every = 1.seconds)) {
+                        listOfNotNull(settings.openTracking?.toTimelogEntry())
+                    } + remember(timelogs) {
+                        val now = Clock.System.now()
+                        val timeZone = TimeZone.currentSystemDefault()
+                        val startOfDay = now.toLocalDateTime(timeZone).date.atStartOfDayIn(timeZone)
+                        timelogs.filter {
                             it.spentAt in startOfDay..now
                         }
                     }

@@ -21,7 +21,11 @@ class HistoryNavScope {
             entry<HistoryRoute>(
                 metadata = AutoFilledSupportingPaneSceneStrategy.supportingPane()
             ) {
-                History()
+                History(
+                    onBack = {
+                        backStack.remove(it)
+                    }
+                )
             }
 
         }
