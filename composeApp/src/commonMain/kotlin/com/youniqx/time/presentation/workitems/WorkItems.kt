@@ -149,38 +149,8 @@ fun WorkItemsScreen(
             WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
         )
     ) PaddingValues(vertical = 20.dp) else PaddingValues()
-    val filteredWorkItems = workItems.orEmpty().filter { workItem ->
-        // Text search filter
-        val matchesSearch = search.isEmpty() ||
-                workItem.title.contains(search, ignoreCase = true) ||
-                workItem.id.toString().contains(search, ignoreCase = true) ||
-                workItem.id == settings.openTracking?.workItemId ||
-                workItem.iid.contains(search, ignoreCase = true) ||
-                workItem.webUrl.orEmpty().contains(search, ignoreCase = true) ||
-                workItem.assignees?.nodes.orEmpty().filterNotNull().any {
-                    it.name.contains(search, ignoreCase = true) ||
-                            it.username.contains(search, ignoreCase = true)
-                } ||
-                workItem.labels?.nodes.orEmpty().filterNotNull().any {
-                    it.title.contains(search, ignoreCase = true)
-                }
 
-        // Quick filters
-        val matchesQuickFilters = activeFilters.isEmpty() || activeFilters.all { filter ->
-            when (filter) {
-                QuickFilter.Assigend -> workItem.assignees?.nodes.orEmpty()
-                    .filterNotNull().any { it.id == currentUserId }
-
-                QuickFilter.HasTimeLogged -> workItem.timelogs.isNotEmpty()
-                QuickFilter.Pinned -> workItem.id in settings.pinnedWorkItems
-                QuickFilter.RecentlyTracked -> workItem.timelogs.any {
-                    it.user.id == currentUserId
-                }
-            }
-        }
-
-        matchesSearch && matchesQuickFilters
-    }
+    val filteredWorkItems = rememberFilteredWorkItems(workItems, search, settings, activeFilters, currentUserId)
 
     val groupedWorkItems = remember(filteredWorkItems, settings.pinnedWorkItems) {
         filteredWorkItems.groupBy { workItem ->
@@ -466,4 +436,49 @@ fun WorkItemsScreen(
     // Todo
     // Fake item to ignore focus requests if we have an open time tracking
     // Box(modifier = Modifier.focusProperties { canFocus = false }.focusRequester(focusRequester))
+}
+
+@Composable
+private fun rememberFilteredWorkItems(
+    workItems: List<BareWorkItem>?,
+    search: String,
+    settings: Settings,
+    activeFilters: Set<QuickFilter>,
+    currentUserId: String?
+): List<BareWorkItem> {
+    val openTrackingWorkItemId = settings.openTracking?.workItemId
+    return remember(workItems, search, openTrackingWorkItemId, activeFilters, currentUserId) {
+        workItems.orEmpty().filter { workItem ->
+            // Text search filter
+            val matchesSearch = search.isEmpty() ||
+                    workItem.title.contains(search, ignoreCase = true) ||
+                    workItem.id.toString().contains(search, ignoreCase = true) ||
+                    workItem.id == openTrackingWorkItemId ||
+                    workItem.iid.contains(search, ignoreCase = true) ||
+                    workItem.webUrl.orEmpty().contains(search, ignoreCase = true) ||
+                    workItem.assignees?.nodes.orEmpty().filterNotNull().any {
+                        it.name.contains(search, ignoreCase = true) ||
+                                it.username.contains(search, ignoreCase = true)
+                    } ||
+                    workItem.labels?.nodes.orEmpty().filterNotNull().any {
+                        it.title.contains(search, ignoreCase = true)
+                    }
+
+            // Quick filters
+            val matchesQuickFilters = activeFilters.isEmpty() || activeFilters.all { filter ->
+                when (filter) {
+                    QuickFilter.Assigend -> workItem.assignees?.nodes.orEmpty()
+                        .filterNotNull().any { it.id == currentUserId }
+
+                    QuickFilter.HasTimeLogged -> workItem.timelogs.isNotEmpty()
+                    QuickFilter.Pinned -> workItem.id in settings.pinnedWorkItems
+                    QuickFilter.RecentlyTracked -> workItem.timelogs.any {
+                        it.user.id == currentUserId
+                    }
+                }
+            }
+
+            matchesSearch && matchesQuickFilters
+        }
+    }
 }
