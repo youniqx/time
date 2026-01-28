@@ -3,7 +3,6 @@
 package com.youniqx.time.presentation
 
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -21,11 +20,9 @@ import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.layout.AdaptStrategy
-import androidx.compose.material3.adaptive.layout.PaneAdaptedValue
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldDefaults
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
 import androidx.compose.material3.adaptive.navigation.BackNavigationBehavior
-import androidx.compose.material3.adaptive.navigation3.rememberSupportingPaneSceneStrategy
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -61,24 +58,11 @@ import com.youniqx.time.presentation.onboarding.onboardingIndex
 import com.youniqx.time.presentation.settings.SettingsRoute
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.Theme
+import com.youniqx.time.presentation.workitems.ScrollToWorkItem
 import com.youniqx.time.presentation.workitems.WorkItemsRoute
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlin.time.ExperimentalTime
-
-private val config = SavedStateConfiguration {
-    serializersModule = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(NotFoundRoute::class, NotFoundRoute.serializer())
-            subclass(WelcomeRoute::class, WelcomeRoute.serializer())
-            subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
-            subclass(WorkItemsRoute::class, WorkItemsRoute.serializer())
-            subclass(HistoryRoute::class, HistoryRoute.serializer())
-            subclass(SettingsRoute::class, SettingsRoute.serializer())
-        }
-    }
-}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -93,7 +77,8 @@ fun App(
     val settings = sourceAwareSettings.data
     val darkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
         ?: isSystemInDarkTheme()
-    val backStack = rememberNavBackStack(configuration = config, WelcomeRoute)
+    val resultStore = rememberResultStore(configuration = resultStoreSavedStateConfiguration)
+    val backStack = rememberNavBackStack(configuration = navBackStackSavedStateConfiguration, WelcomeRoute)
     val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
         rememberSaveableStateHolderNavEntryDecorator(),
         rememberNavEntryProviderDecorator(),
@@ -158,6 +143,7 @@ fun App(
         SharedTransitionLayout {
             CompositionLocalProvider(
                 LocalSharedTransitionScope provides this,
+                LocalResultStore provides resultStore,
             ) {
                 Scaffold(
                     floatingActionButton = {
@@ -189,6 +175,27 @@ fun App(
                     )
                 }
             }
+        }
+    }
+}
+
+private val navBackStackSavedStateConfiguration = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(NavKey::class) {
+            subclass(NotFoundRoute::class, NotFoundRoute.serializer())
+            subclass(WelcomeRoute::class, WelcomeRoute.serializer())
+            subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
+            subclass(WorkItemsRoute::class, WorkItemsRoute.serializer())
+            subclass(HistoryRoute::class, HistoryRoute.serializer())
+            subclass(SettingsRoute::class, SettingsRoute.serializer())
+        }
+    }
+}
+
+private val resultStoreSavedStateConfiguration = SavedStateConfiguration {
+    serializersModule = SerializersModule {
+        polymorphic(ResultStoreValue::class) {
+            subclass(ScrollToWorkItem::class, ScrollToWorkItem.serializer())
         }
     }
 }

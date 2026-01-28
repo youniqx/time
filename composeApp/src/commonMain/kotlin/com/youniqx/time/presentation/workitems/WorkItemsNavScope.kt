@@ -2,6 +2,7 @@ package com.youniqx.time.presentation.workitems
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.navigation3.scene.DialogSceneStrategy
+import com.youniqx.time.presentation.LocalResultStore
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
 import com.youniqx.time.presentation.navigation.NavScope
@@ -36,9 +37,14 @@ class WorkItemsNavScope {
             entry<SwitchTrackingRoute>(
                 metadata = DialogSceneStrategy.dialog()
             ) {
+                val resultStore = LocalResultStore.current
                 SwitchTracking(
                     targetId = it.targetId,
                     targetTitle = it.targetTitle,
+                    onShowCurrent = { workItemId ->
+                        resultStore.setResult(result = ScrollToWorkItem(workItemId = workItemId))
+                        backStack.remove(it)
+                    },
                     onDismiss = {
                         backStack.remove(it)
                     }

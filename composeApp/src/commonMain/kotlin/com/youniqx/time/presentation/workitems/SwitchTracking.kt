@@ -41,6 +41,7 @@ data class SwitchTrackingRoute(
 fun SwitchTracking(
     targetId: String,
     targetTitle: String,
+    onShowCurrent: (workItemId: String) -> Unit,
     onDismiss: () -> Unit,
     settingsViewModel: SettingsViewModel = metroViewModel()
 ) {
@@ -71,15 +72,8 @@ fun SwitchTracking(
             onDismiss()
         },
         onShowCurrent = {
-            // Todo
-//            val currentId = settings.openTracking?.workItemId
-//            val index = filteredWorkItems.indexOfFirst { workItem -> workItem.id == currentId }
-//            if (index >= 0) {
-//                coroutineScope.launch {
-//                    lazyListState.animateScrollToItem(index + 1, -100)
-//                }
-//            }
-//            switchTrackingTarget = null
+            val workItemId = settings.openTracking?.workItemId ?: return@SwitchTrackingScreen
+            onShowCurrent(workItemId)
         },
         onDismiss = onDismiss
     )

@@ -29,6 +29,7 @@ import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -50,6 +51,8 @@ import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
+import com.youniqx.time.presentation.LocalResultStore
+import com.youniqx.time.presentation.ResultStoreValue
 import com.youniqx.time.presentation.Section
 import com.youniqx.time.presentation.history.HistorySummaryCard
 import com.youniqx.time.presentation.history.toTimelogEntry
@@ -63,7 +66,10 @@ import com.youniqx.time.presentation.stickyHeader
 import com.youniqx.time.refresh
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
@@ -74,6 +80,11 @@ import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 object WorkItemsRoute : NavKey
+
+@Serializable
+data class ScrollToWorkItem(
+    val workItemId: String
+): ResultStoreValue
 
 @Composable
 fun WorkItems(
@@ -164,6 +175,17 @@ fun WorkItemsScreen(
 
         matchesSearch && matchesQuickFilters
     }
+
+    val groupedWorkItems = remember(filteredWorkItems, settings.pinnedWorkItems) {
+        filteredWorkItems.groupBy { workItem ->
+            when {
+                workItem.id in settings.pinnedWorkItems -> Section.Pinned
+                workItem.state == WorkItemState.CLOSED -> Section.Closed
+                else -> Section.Open
+            }
+        }
+    }
+
     val openTrackingAsTimelog = remember(
         settings.openTracking, currentUserId, refresh(every = 1.seconds)
     ) { settings.openTracking?.toTimelog(currentUserId = currentUserId.orEmpty()) }
@@ -192,7 +214,43 @@ fun WorkItemsScreen(
     val lazyListState = rememberLazyListState()
 
     val openSections = remember { mutableStateListOf(Section.Pinned, Section.Open) }
+
     val sceneRole = LocalSceneRole.current
+    val showDaySummary = sceneRole != AutoFilledSupportingPaneSceneStrategy.Role.Main
+    val resultStore = LocalResultStore.current
+    val scrollToWorkItem = resultStore.getResultState<ScrollToWorkItem?>()
+    LaunchedEffect(groupedWorkItems, scrollToWorkItem) {
+        if (scrollToWorkItem == null || filteredWorkItems.isEmpty()) return@LaunchedEffect
+        var scrollToIndex = 1 // offset for search and quick filter area
+        if (showDaySummary) scrollToIndex++
+        Section.entries.forEach {
+            scrollToIndex++ // offset for section header
+            val grouped = groupedWorkItems[it].orEmpty()
+            val indexInSection = grouped.indexOfFirst {
+                workItem -> workItem.id == scrollToWorkItem.workItemId
+            }
+            if (indexInSection != -1) {
+                scrollToIndex += indexInSection
+                try {
+                    if (it !in openSections) {
+                        openSections += it
+                        // start scrolling immediately and scroll to the exact index after we open the section
+                        lazyListState.animateScrollToItem(index = scrollToIndex, scrollOffset = 100)
+                        delay(timeMillis = 500)
+                    }
+                } finally {
+                    withContext(NonCancellable) {
+                        resultStore.removeResult<ScrollToWorkItem>()
+                        lazyListState.animateScrollToItem(index = scrollToIndex, scrollOffset = 100)
+                    }
+                }
+                return@LaunchedEffect
+            } else if (it in openSections) {
+                scrollToIndex += grouped.size
+            }
+        }
+    }
+
     PullToRefreshBox(
         isRefreshing = isRefreshing,
         onRefresh = {
@@ -247,7 +305,7 @@ fun WorkItemsScreen(
                 }
             }
 
-            if (sceneRole != AutoFilledSupportingPaneSceneStrategy.Role.Main) item(key = "daySummary") {
+            if (showDaySummary) item(key = "daySummary") {
                 HistorySummaryCard(
                     modifier = Modifier
                         .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
@@ -343,14 +401,6 @@ fun WorkItemsScreen(
                 }
             }
 
-            val groupedWorkItems = filteredWorkItems.groupBy { workItem ->
-                when {
-                    workItem.id in settings.pinnedWorkItems -> Section.Pinned
-                    workItem.state == WorkItemState.CLOSED -> Section.Closed
-                    else -> Section.Open
-                }
-            }
-
             fun section(section: Section) {
                 val sectionWorkItems = groupedWorkItems[section]
                 if (!sectionWorkItems.isNullOrEmpty()) {
@@ -385,9 +435,7 @@ fun WorkItemsScreen(
                 }
             }
 
-            section(Section.Pinned)
-            section(Section.Open)
-            section(Section.Closed)
+            Section.entries.forEach { section(it) }
 
             // Show shimmer loading when loading
             if (loading && filteredWorkItems.isEmpty()) {

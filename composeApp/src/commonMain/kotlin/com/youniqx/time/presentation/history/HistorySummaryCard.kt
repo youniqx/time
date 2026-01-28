@@ -1,5 +1,6 @@
 package com.youniqx.time.presentation.history
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -24,10 +25,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
+import com.youniqx.time.presentation.LocalResultStore
 import com.youniqx.time.presentation.LocalSharedTransitionScope
 import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.presentation.theme.LocalSpacing
+import com.youniqx.time.presentation.workitems.ScrollToWorkItem
 
 @Composable
 fun HistorySummaryCard(
@@ -75,8 +78,13 @@ fun HistorySummaryCard(
                         )
                         if (timelogs.firstOrNull()?.isOpenTracking ?: false) {
                             Spacer(Modifier.width(spacing.sm))
+                            val resultStore = LocalResultStore.current
                             openTracking?.RepresentingIndicator(
-                                modifier = Modifier.size(24.dp),
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .clickable(onClickLabel = "Scroll to open tracking") {
+                                        resultStore.setResult(result = ScrollToWorkItem(openTracking.workItemId))
+                                    },
                                 color = openTracking.representingColors.color
                             )
                         }
