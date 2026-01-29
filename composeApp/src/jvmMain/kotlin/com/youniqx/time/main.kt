@@ -1,5 +1,6 @@
 package com.youniqx.time
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -23,12 +24,15 @@ import androidx.compose.ui.input.key.utf16CodePoint
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.ApplicationScope
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
+import androidx.compose.ui.window.WindowState
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.youniqx.time.di.JvmAppGraph
+import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.toDurationOrNull
 import com.youniqx.time.presentation.App
 import dev.zacsweers.metro.createGraph
@@ -81,49 +85,8 @@ fun main() {
                     position = WindowPosition(0.dp, 0.dp),
                     size = DpSize(400.dp, 800.dp),
                 )
-            val density = LocalDensity.current
-
             val settingsRepository = graph.settingsRepository
-            val sourceAwareSettings by settingsRepository.settings.collectAsState()
-            val settings = sourceAwareSettings.data
-
-            // Create dynamic tray icon
-            val trayIcon = remember(
-                settings.showMenuBarTimer,
-                settings.openTracking,
-                refresh(every = 1.seconds)
-            ) {
-                val showTimer = settings.showMenuBarTimer
-                val openTracking = settings.openTracking
-
-                if (showTimer && openTracking != null) {
-                    MenuBarTimerIcon(
-                        title = openTracking.workItemTitle,
-                        elapsed = openTracking.toDurationOrNull() ?: Duration.ZERO
-                    )
-                } else {
-                    TrayIcon
-                }
-            }
-
-            if (SystemTray.isSupported()) {
-                Tray(
-                    icon = trayIcon,
-                    onClick = { x, y ->
-                        with(density) {
-                            // Todo: check if we need the * 2 only on macOS
-                            windowState.position =
-                                WindowPosition(x.toDp() * 2 - windowState.size.width / 2, 45.dp)
-                        }
-                        // Restore from minimized state if needed
-                        if (windowState.isMinimized) {
-                            windowState.isMinimized = false
-                        }
-                        windowState.placement = WindowPlacement.Floating
-                        isVisible = !isVisible
-                    },
-                )
-            }
+            Tray(settingsRepository, windowState, onClick = { isVisible = !isVisible })
             val focusRequester = remember { FocusRequester() }
             Window(
                 onCloseRequest = ::exitApplication,
@@ -192,6 +155,55 @@ fun main() {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ApplicationScope.Tray(
+    settingsRepository: SettingsRepository,
+    windowState: WindowState,
+    onClick: () -> Unit,
+) {
+    val density = LocalDensity.current
+    val sourceAwareSettings by settingsRepository.settings.collectAsState()
+    val settings = sourceAwareSettings.data
+
+    // Create dynamic tray icon
+    val trayIcon = remember(
+        settings.showMenuBarTimer,
+        settings.openTracking,
+        refresh(every = 1.seconds)
+    ) {
+        val showTimer = settings.showMenuBarTimer
+        val openTracking = settings.openTracking
+
+        if (showTimer && openTracking != null) {
+            MenuBarTimerIcon(
+                title = openTracking.workItemTitle,
+                elapsed = openTracking.toDurationOrNull() ?: Duration.ZERO
+            )
+        } else {
+            TrayIcon
+        }
+    }
+
+    if (SystemTray.isSupported()) {
+        Tray(
+            icon = trayIcon,
+            onClick = { x, y ->
+                with(density) {
+                    // Todo: check if we need the * 2 only on macOS
+                    windowState.position =
+                        WindowPosition(x.toDp() * 2 - windowState.size.width / 2, 45.dp)
+                }
+                // Restore from minimized state if needed
+                if (windowState.isMinimized) {
+                    windowState.isMinimized = false
+                }
+                windowState.placement = WindowPlacement.Floating
+                onClick()
+            },
+        )
     }
 }
 
