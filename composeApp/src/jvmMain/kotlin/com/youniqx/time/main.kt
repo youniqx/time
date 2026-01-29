@@ -33,6 +33,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.youniqx.time.di.JvmAppGraph
 import com.youniqx.time.domain.SettingsRepository
+import com.youniqx.time.domain.models.hasActiveTimer
 import com.youniqx.time.domain.models.toDurationOrNull
 import com.youniqx.time.presentation.App
 import dev.zacsweers.metro.createGraph
@@ -172,7 +173,7 @@ private fun ApplicationScope.Tray(
     val trayIcon = remember(
         settings.showMenuBarTimer,
         settings.openTracking,
-        refresh(every = 1.seconds)
+        if (settings.openTracking.hasActiveTimer) refresh(every = 1.seconds) else null
     ) {
         val showTimer = settings.showMenuBarTimer
         val openTracking = settings.openTracking

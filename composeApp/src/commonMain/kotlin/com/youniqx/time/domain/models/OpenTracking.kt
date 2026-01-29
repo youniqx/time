@@ -31,6 +31,8 @@ data class OpenTracking(
     )
 }
 
+val OpenTracking?.hasActiveTimer get() = this != null && customTimeSpent == null
+
 val OpenTracking.currentTimeSpentString: String
     get() = customTimeSpent ?: (Clock.System.now() - timeOfOpen).inWholeMinutes.minutes.toString()
 
