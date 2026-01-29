@@ -62,7 +62,18 @@ fun <T : Any> rememberAutoFilledSupportingPaneSceneStrategy(
         SupportingPaneScaffoldDefaults.adaptStrategies(),
     ghostEntries: List<NavEntry<T>> = emptyList()
 ): AutoFilledSupportingPaneSceneStrategy<T> {
+    remember(backNavigationBehavior) {
+        println("backNavigationBehavior")
+    }
+    remember(directive) {
+        println("directive")
+    }
+    remember(adaptStrategies) {
+        println("adaptStrategies")
+    }
+
     return remember(backNavigationBehavior, directive, adaptStrategies) {
+        println("new")
         AutoFilledSupportingPaneSceneStrategy(
             backNavigationBehavior = backNavigationBehavior,
             directive = directive,
@@ -94,12 +105,6 @@ class AutoFilledSupportingPaneSceneStrategy<T : Any>(
     val adaptStrategies: ThreePaneScaffoldAdaptStrategies,
     val ghostEntries: List<NavEntry<T>>,
 ) : SceneStrategy<T> {
-
-    sealed interface Role : SceneRole {
-        data object Main : Role
-        data object Supporting : Role
-        data object Extra : Role
-    }
 
     override fun SceneStrategyScope<T>.calculateScene(entries: List<NavEntry<T>>): Scene<T>? {
         val lastPaneMetadata = getPaneMetadata(entries.last()) ?: return null

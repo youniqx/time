@@ -57,6 +57,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.isOpenTracking
+import com.youniqx.time.domain.models.refreshKey
 import com.youniqx.time.domain.models.toTimelogEntry
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
@@ -67,13 +68,11 @@ import com.youniqx.time.presentation.relativetime.RelativeTime
 import com.youniqx.time.presentation.relativetime.formatDuration
 import com.youniqx.time.presentation.settings.SettingsViewModel
 import com.youniqx.time.presentation.theme.LocalSpacing
-import com.youniqx.time.refresh
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @Serializable
@@ -88,7 +87,7 @@ fun History(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
     val settings = settingsUiState.settings
-    val openTrackingAsTimelogEntry = remember(settings.openTracking, refresh(every = 1.seconds)) {
+    val openTrackingAsTimelogEntry = remember(settings.openTracking.refreshKey) {
         settings.openTracking?.toTimelogEntry()
     }
 

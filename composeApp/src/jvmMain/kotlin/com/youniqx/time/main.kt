@@ -33,7 +33,7 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.youniqx.time.di.JvmAppGraph
 import com.youniqx.time.domain.SettingsRepository
-import com.youniqx.time.domain.models.hasActiveTimer
+import com.youniqx.time.domain.models.refreshKey
 import com.youniqx.time.domain.models.toDurationOrNull
 import com.youniqx.time.presentation.App
 import dev.zacsweers.metro.createGraph
@@ -46,7 +46,6 @@ import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
 import java.awt.image.BufferedImage
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 val isMacOs = System.getProperty("os.name") == "Mac OS X"
@@ -172,8 +171,7 @@ private fun ApplicationScope.Tray(
     // Create dynamic tray icon
     val trayIcon = remember(
         settings.showMenuBarTimer,
-        settings.openTracking,
-        if (settings.openTracking.hasActiveTimer) refresh(every = 1.seconds) else null
+        settings.openTracking.refreshKey,
     ) {
         val showTimer = settings.showMenuBarTimer
         val openTracking = settings.openTracking

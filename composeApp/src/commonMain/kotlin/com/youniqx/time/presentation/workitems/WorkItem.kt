@@ -68,6 +68,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.youniqx.time.domain.models.OpenTracking
+import com.youniqx.time.domain.models.refreshKey
 import com.youniqx.time.domain.models.toTimelog
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
@@ -107,7 +108,7 @@ operator fun BareWorkItem.invoke(
     val open = openTracking?.workItemId == id
     var showTimelogs by remember { mutableStateOf(false) }
     val openTrackingAsTimelog = remember(
-        openTracking, currentUserId, open, refresh(every = 1.seconds)
+        if (open) openTracking.refreshKey else null, currentUserId, open
     ) { openTracking.takeIf { open }?.toTimelog(currentUserId = currentUserId.orEmpty()) }
     val allTimelogs = listOfNotNull(openTrackingAsTimelog) + timelogs
     val myTimelogs = allTimelogs.filter { it.user.id == currentUserId }
@@ -250,7 +251,7 @@ operator fun BareWorkItem.invoke(
                 }
                 AnimatedVisibility(visible = open) {
                     if (!open) return@AnimatedVisibility
-                    val timeSinceOpen = remember(openTracking, refresh(every = 1.seconds)) {
+                    val timeSinceOpen = remember(openTracking.refreshKey) {
                         Clock.System.now() - openTracking.timeOfOpen
                     }
                     val timeSinceOpenInWholeMinutes = timeSinceOpen.inWholeMinutes.minutes

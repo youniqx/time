@@ -1,13 +1,16 @@
 @file:OptIn(ExperimentalTime::class)
 package com.youniqx.time.domain.models
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.presentation.history.TimelogEntry
+import com.youniqx.time.refresh
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -32,6 +35,13 @@ data class OpenTracking(
 }
 
 val OpenTracking?.hasActiveTimer get() = this != null && customTimeSpent == null
+
+/**
+ * Refresh every time something on the open tracking changes or every second if an active timer is running.
+ */
+val OpenTracking?.refreshKey
+    @Composable
+    get() = if (hasActiveTimer) this to refresh(every = 1.seconds) else this
 
 val OpenTracking.currentTimeSpentString: String
     get() = customTimeSpent ?: (Clock.System.now() - timeOfOpen).inWholeMinutes.minutes.toString()

@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalLayoutApi::class)
+@file:OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3AdaptiveApi::class)
 
 package com.youniqx.time.presentation.workitems
 
@@ -47,6 +47,7 @@ import androidx.navigation3.runtime.NavKey
 import androidx.window.core.layout.WindowSizeClass
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.Settings
+import com.youniqx.time.domain.models.refreshKey
 import com.youniqx.time.domain.models.toTimelogEntry
 import com.youniqx.time.domain.usecases.CommitTimeTrackingUseCase
 import com.youniqx.time.domain.usecases.SearchWorkItemsUseCase
@@ -271,7 +272,7 @@ fun WorkItemsScreen(
                             }),
                     heading = { Text(text = "Today") },
                     openTracking = settings.openTracking,
-                    timelogs = remember(settings.openTracking, refresh(every = 1.seconds)) {
+                    timelogs = remember(settings.openTracking.refreshKey) {
                         listOfNotNull(settings.openTracking?.toTimelogEntry())
                     } + remember(timelogs) {
                         val now = Clock.System.now()
