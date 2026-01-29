@@ -5,6 +5,11 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.youniqx.time.domain.SettingsRepository
+import com.youniqx.time.domain.models.DataSource
+import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.presentation.theme.rosybrown.theme
 
 data class Theme(
@@ -20,6 +25,24 @@ val themes = listOf(
     theme,
     com.youniqx.time.presentation.theme.teal.theme,
 )
+
+@Composable
+fun AppTheme(
+    settingsRepository: SettingsRepository,
+    theme: Theme = com.youniqx.time.presentation.theme.teal.theme,
+    content: @Composable () -> Unit
+) {
+    val sourceAwareSettings by settingsRepository.settings.collectAsStateWithLifecycle()
+    val settings = sourceAwareSettings.data
+    val darkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
+        ?: isSystemInDarkTheme()
+    AppTheme(
+        darkTheme = darkTheme,
+        useHighContrastColors = settings.highContrastColors,
+        theme = theme,
+        content = content
+    )
+}
 
 @Composable
 fun AppTheme(

@@ -5,7 +5,6 @@ package com.youniqx.time.presentation
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,7 +34,6 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -48,8 +46,6 @@ import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.youniqx.time.domain.SettingsRepository
-import com.youniqx.time.domain.models.DataSource
-import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.presentation.errors.NotFoundRoute
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.navigation.NavScope
@@ -78,10 +74,6 @@ fun App(
     setWindowBackground: ((Color) -> Unit)? = null,
     theme: Theme = com.youniqx.time.presentation.theme.teal.theme,
 ) {
-    val sourceAwareSettings by settingsRepository.settings.collectAsStateWithLifecycle()
-    val settings = sourceAwareSettings.data
-    val darkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
-        ?: isSystemInDarkTheme()
     val resultStore = rememberResultStore(configuration = resultStoreSavedStateConfiguration)
     val backStack = rememberNavBackStack(configuration = navBackStackSavedStateConfiguration, WelcomeRoute)
     val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
@@ -116,7 +108,7 @@ fun App(
             entryProvider = entryProvider,
         )
 
-    AppTheme(darkTheme = darkTheme, useHighContrastColors = settings.highContrastColors, theme = theme) {
+    AppTheme(settingsRepository = settingsRepository, theme = theme) {
         if (setWindowBackground != null) {
             MaterialTheme.colorScheme.surface.let { color ->
                 LaunchedEffect(setWindowBackground, color) {
