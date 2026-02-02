@@ -27,7 +27,7 @@ Generate SBOM:
 
 Upload SBOM:
   stage: task
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/infrastructure/youniqx-ubuntu:1.8.99
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/infrastructure/youniqx-ubuntu:1.8.101
   tags:
     - linux-unprivileged
   needs:
