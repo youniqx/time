@@ -19,17 +19,17 @@ class WorkItemsNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        { backStack ->
+        { navigator ->
 
             entry<WorkItemsRoute>(
                 metadata = AutoFilledSupportingPaneSceneStrategy.mainPane()
             ) {
                 WorkItems(
                     showHistory = {
-                        if (HistoryRoute !in backStack) backStack += HistoryRoute
+                        navigator.add(HistoryRoute)
                     },
                     showSwitchTracking = { targetId: String, targetTitle: String ->
-                        backStack += SwitchTrackingRoute(targetId = targetId, targetTitle = targetTitle)
+                        navigator.add(SwitchTrackingRoute(targetId = targetId, targetTitle = targetTitle))
                     }
                 )
             }
@@ -43,10 +43,10 @@ class WorkItemsNavScope {
                     targetTitle = it.targetTitle,
                     onShowCurrent = { workItemId ->
                         resultStore.setResult(result = ScrollToWorkItem(workItemId = workItemId))
-                        backStack.remove(it)
+                        navigator.onFinished(route = it)
                     },
                     onDismiss = {
-                        backStack.remove(it)
+                        navigator.onFinished(route = it)
                     }
                 )
             }

@@ -14,7 +14,7 @@ class OnboardingNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        { backStack ->
+        { navigator ->
 
             var stepCount = 0
             val onboardingSteps = iterator {
@@ -26,11 +26,10 @@ class OnboardingNavScope {
             ) {
                 Welcome(
                     stepFinished = {
-                        backStack += GitLabSetupRoute
+                        navigator.onFinished(route = it)
                     },
                     hideOnboarding = {
-                        backStack.removeLastOrNull()
-                        backStack += WorkItemsRoute
+                        navigator.onFinished(route = GitLabSetupRoute)
                     }
                 )
             }
@@ -41,8 +40,7 @@ class OnboardingNavScope {
                 GitLabSetup(
                     stepCount = stepCount,
                     stepFinished = {
-                        backStack.clear()
-                        backStack += WorkItemsRoute
+                        navigator.onFinished(route = it)
                     },
                 )
             }

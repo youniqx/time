@@ -16,7 +16,7 @@ class SettingsNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        { backStack ->
+        { navigator ->
 
             entry<SettingsRoute>(
                 metadata = AutoFilledSupportingPaneSceneStrategy.extraPane()

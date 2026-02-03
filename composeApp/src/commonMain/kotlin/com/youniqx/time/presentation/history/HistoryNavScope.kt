@@ -16,14 +16,14 @@ class HistoryNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        { backStack ->
+        { navigator ->
 
             entry<HistoryRoute>(
                 metadata = AutoFilledSupportingPaneSceneStrategy.supportingPane()
             ) {
                 History(
                     onBack = {
-                        backStack.remove(it)
+                        navigator.onFinished(route = it)
                     }
                 )
             }

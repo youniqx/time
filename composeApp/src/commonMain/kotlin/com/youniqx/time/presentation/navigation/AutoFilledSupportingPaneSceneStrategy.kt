@@ -60,14 +60,12 @@ fun <T : Any> rememberAutoFilledSupportingPaneSceneStrategy(
     directive: PaneScaffoldDirective = calculatePaneScaffoldDirective(currentWindowAdaptiveInfo()),
     adaptStrategies: ThreePaneScaffoldAdaptStrategies =
         SupportingPaneScaffoldDefaults.adaptStrategies(),
-    ghostEntries: List<NavEntry<T>> = emptyList()
 ): AutoFilledSupportingPaneSceneStrategy<T> {
     return remember(backNavigationBehavior, directive, adaptStrategies) {
         AutoFilledSupportingPaneSceneStrategy(
             backNavigationBehavior = backNavigationBehavior,
             directive = directive,
             adaptStrategies = adaptStrategies,
-            ghostEntries = ghostEntries
         )
     }
 }
@@ -92,7 +90,6 @@ class AutoFilledSupportingPaneSceneStrategy<T : Any>(
     val backNavigationBehavior: BackNavigationBehavior,
     val directive: PaneScaffoldDirective,
     val adaptStrategies: ThreePaneScaffoldAdaptStrategies,
-    val ghostEntries: List<NavEntry<T>>,
 ) : SceneStrategy<T> {
 
     sealed interface Role : SceneRole {
@@ -129,31 +126,6 @@ class AutoFilledSupportingPaneSceneStrategy<T : Any>(
         }
 
         if (scaffoldEntries.isEmpty()) return null
-
-        fun injectGhostEntry(role: ThreePaneScaffoldRole) {
-            if (entriesAsNavItems.any { item -> item.pane == role }) return
-            val ghostEntry = ghostEntries.findLast { entry -> getPaneMetadata(entry)?.role == role } ?: return
-            scaffoldEntryIndices.add(0, -1)
-            scaffoldEntries.add(0, ghostEntry)
-            entriesAsNavItems.add(
-                0,
-                ThreePaneScaffoldDestinationItem(
-                    pane = role,
-                    contentKey = ghostEntry.contentKey,
-                ),
-            )
-        }
-
-        when {
-            directive.maxHorizontalPartitions >= 3 -> {
-                injectGhostEntry(Supporting)
-                injectGhostEntry(Extra)
-            }
-
-            directive.maxHorizontalPartitions >= 2 -> {
-                injectGhostEntry(Supporting)
-            }
-        }
 
         val scene =
             ThreePaneScaffoldScene(

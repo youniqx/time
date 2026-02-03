@@ -39,7 +39,6 @@ import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
-import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.scene.SinglePaneSceneStrategy
@@ -49,8 +48,11 @@ import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.presentation.errors.NotFoundRoute
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.navigation.NavScope
+import com.youniqx.time.presentation.navigation.Navigator
+import com.youniqx.time.presentation.navigation.activeBackStackFor
 import com.youniqx.time.presentation.navigation.rememberAutoFilledSupportingPaneSceneStrategy
 import com.youniqx.time.presentation.navigation.rememberNavEntryProviderDecorator
+import com.youniqx.time.presentation.navigation.rememberNavigationState
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
 import com.youniqx.time.presentation.onboarding.onboardingIndex
@@ -60,6 +62,7 @@ import com.youniqx.time.presentation.theme.Theme
 import com.youniqx.time.presentation.workitems.DisableGlobalSearch
 import com.youniqx.time.presentation.workitems.LocalSearchFocusRequester
 import com.youniqx.time.presentation.workitems.ScrollToWorkItem
+import com.youniqx.time.presentation.workitems.SwitchTrackingRoute
 import com.youniqx.time.presentation.workitems.WorkItemsRoute
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -74,48 +77,8 @@ fun App(
     setWindowBackground: ((Color) -> Unit)? = null,
     theme: Theme = com.youniqx.time.presentation.theme.teal.theme,
 ) {
-    val resultStore = rememberResultStore(configuration = resultStoreSavedStateConfiguration)
-    val backStack = rememberNavBackStack(configuration = navBackStackSavedStateConfiguration, WelcomeRoute)
-    val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
-        rememberSaveableStateHolderNavEntryDecorator(),
-        rememberNavEntryProviderDecorator(),
-    )
-    val entryProvider = remember {
-        entryProvider(fallback = { key ->
-            NavEntry(key) {
-                LaunchedEffect(key) {
-                    println("Unknown key: $key")
-                    backStack.removeLastOrNull()
-                    backStack.add(NotFoundRoute)
-                }
-            }
-        }) {
-            navScopes.forEach { scope ->
-                scope(backStack)
-            }
-        }
-    }
-    val entries =
-        rememberDecoratedNavEntries(
-            backStack = backStack,
-            entryDecorators = entryDecorators,
-            entryProvider = entryProvider,
-        )
-    val ghostEntries =
-        rememberDecoratedNavEntries(
-            backStack = listOf(HistoryRoute, SettingsRoute),
-            entryDecorators = entryDecorators,
-            entryProvider = entryProvider,
-        )
-
     AppTheme(settingsRepository = settingsRepository, theme = theme) {
-        if (setWindowBackground != null) {
-            MaterialTheme.colorScheme.surface.let { color ->
-                LaunchedEffect(setWindowBackground, color) {
-                    setWindowBackground(color)
-                }
-            }
-        }
+        val resultStore = rememberResultStore(configuration = resultStoreSavedStateConfiguration)
         // Override the defaults so that there isn't a horizontal or vertical space between the panes.
         // See b/444438086
         val windowAdaptiveInfo = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true)
@@ -123,6 +86,41 @@ fun App(
         val directive = remember(windowAdaptiveInfo) {
             calculatePaneScaffoldDirective(windowAdaptiveInfo)
                 .copy(horizontalPartitionSpacerSize = 0.dp, verticalPartitionSpacerSize = 0.dp)
+        }
+        val navigationState = rememberNavigationState(configuration = navBackStackSavedStateConfiguration, WelcomeRoute)
+        val navigator = remember { Navigator(navigationState) }
+        val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberNavEntryProviderDecorator(),
+        )
+        val entryProvider = remember {
+            entryProvider(fallback = { key ->
+                NavEntry(key) {
+                    LaunchedEffect(key) {
+                        println("Unknown key: $key")
+                        navigator.removeLast()
+                        navigator.add(NotFoundRoute)
+                    }
+                }
+            }) {
+                navScopes.forEach { scope ->
+                    scope(navigator)
+                }
+            }
+        }
+        val entries =
+            rememberDecoratedNavEntries(
+                backStack = navigationState.activeBackStackFor(directive = directive),
+                entryDecorators = entryDecorators,
+                entryProvider = entryProvider,
+            )
+
+        if (setWindowBackground != null) {
+            MaterialTheme.colorScheme.surface.let { color ->
+                LaunchedEffect(setWindowBackground, color) {
+                    setWindowBackground(color)
+                }
+            }
         }
 
         // Override the defaults so that the supporting pane can be dismissed by pressing back.
@@ -133,7 +131,6 @@ fun App(
             adaptStrategies = SupportingPaneScaffoldDefaults.adaptStrategies(
                 supportingPaneAdaptStrategy = AdaptStrategy.Hide
             ),
-            ghostEntries = ghostEntries
         )
         val singlePaneStrategy = remember { SinglePaneSceneStrategy<NavKey>() }
         val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
@@ -152,7 +149,7 @@ fun App(
                             val isHovered by interactionSource.collectIsHoveredAsState()
                             SmallFloatingActionButton(
                                 onClick = {
-                                    backStack += SettingsRoute
+                                    navigator.add(SettingsRoute)
                                 },
                                 interactionSource = interactionSource,
                             ) {
@@ -169,7 +166,7 @@ fun App(
                                 // .padding(innerPadding)
                                 .fillMaxSize(),
                         sceneStrategy = dialogStrategy then supportingPaneStrategy then singlePaneStrategy,
-                        onBack = { backStack.removeLastOrNull() },
+                        onBack = { navigator.removeLast() },
                     )
                 }
             }
@@ -187,6 +184,7 @@ private val navBackStackSavedStateConfiguration = SavedStateConfiguration {
             subclass(WelcomeRoute::class, WelcomeRoute.serializer())
             subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
             subclass(WorkItemsRoute::class, WorkItemsRoute.serializer())
+            subclass(SwitchTrackingRoute::class, SwitchTrackingRoute.serializer())
             subclass(HistoryRoute::class, HistoryRoute.serializer())
             subclass(SettingsRoute::class, SettingsRoute.serializer())
         }
