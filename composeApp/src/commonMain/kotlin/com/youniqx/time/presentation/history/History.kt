@@ -181,9 +181,7 @@ fun HistoryScreen(
     }
 
     Scaffold(
-        topBar = if (LocalSceneRole.current == AutoFilledSupportingPaneSceneStrategy.Role.Supporting) {
-            {}
-        } else {
+        topBar =
             {
                 TopAppBar(
                     title = { Text("Time History") },
@@ -194,8 +192,7 @@ fun HistoryScreen(
                     },
                     windowInsets = WindowInsets.systemBarsForVisualComponents
                 )
-            }
-        },
+            },
         contentWindowInsets = WindowInsets.systemBarsForVisualComponents,
         modifier = modifier
     ) { paddingValues ->

@@ -2,6 +2,7 @@ package com.youniqx.time.presentation.settings
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
+import com.youniqx.time.presentation.navigation.LocalNavigator
 import com.youniqx.time.presentation.navigation.NavScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -21,7 +22,8 @@ class SettingsNavScope {
             entry<SettingsRoute>(
                 metadata = AutoFilledSupportingPaneSceneStrategy.extraPane()
             ) {
-                Settings()
+                val navigator = LocalNavigator.current
+                Settings(onBack = navigator::removeLast)
             }
 
         }

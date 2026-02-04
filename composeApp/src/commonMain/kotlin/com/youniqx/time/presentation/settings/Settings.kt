@@ -29,6 +29,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -63,7 +64,7 @@ object SettingsRoute: NavKey
 @Composable
 fun Settings(
     viewModel: SettingsViewModel = metroViewModel(),
-    onBack: (() -> Unit)? = null
+    onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
@@ -79,7 +80,7 @@ fun Settings(
 fun SettingsScreen(
     settings: Settings,
     updater: UpdateSettingsUseCase,
-    onBack: (() -> Unit)? = null,
+    onBack: () -> Unit,
     namespaces: NamespaceQuery.Data?,
 ) {
     Column(
@@ -87,26 +88,15 @@ fun SettingsScreen(
             .verticalScroll(rememberScrollState())
             .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
     ) {
-        // Header with back button
-        if (onBack != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        TopAppBar(
+            title = { Text("Settings") },
+            navigationIcon = {
                 IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Back"
-                    )
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
-                Text(
-                    text = "Settings",
-                    style = MaterialTheme.typography.titleLarge
-                )
-            }
-        }
+            },
+            windowInsets = WindowInsets.systemBarsForVisualComponents
+        )
         val lightInteractionSource = remember { MutableInteractionSource() }
         val lightIsHovered by lightInteractionSource.collectIsHoveredAsState()
         val darkInteractionSource = remember { MutableInteractionSource() }
@@ -351,6 +341,7 @@ fun SettingsPreview() {
                 override fun setOpenTracking(openTracking: OpenTracking?) {}
             },
             namespaces = null,
+            onBack = {},
         )
     }
 }
