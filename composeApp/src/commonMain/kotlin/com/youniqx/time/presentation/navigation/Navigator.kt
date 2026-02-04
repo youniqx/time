@@ -16,10 +16,13 @@
 
 package com.youniqx.time.presentation.navigation
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.compositionLocalOf
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
+import com.youniqx.time.presentation.ResultStore
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
@@ -83,4 +86,36 @@ class Navigator(val state: NavigationState) {
     }
 }
 
-val LocalNavigator = compositionLocalOf<Navigator> { error("LocalNavigator not provided") }
+private val PrivateLocalNavigator = compositionLocalOf<Navigator?> { null }
+
+object LocalNavigator {
+
+    interface Accessor {
+        val current: Navigator
+            @Composable
+            get() = error("Do not access the navigator outside of NavScopes.")
+    }
+
+    /**
+     * Provides a [Navigator] to the composition
+     */
+    infix fun provides(
+        navigator: Navigator
+    ): ProvidedValue<Navigator?> {
+        return PrivateLocalNavigator.provides(navigator)
+    }
+}
+
+/**
+ * The current [Navigator]
+ * Prevent nested composables to access the navigator directly
+ */
+val EntryProviderScope<NavKey>.LocalNavigator: LocalNavigator.Accessor get() = object : LocalNavigator.Accessor {
+    /**
+     * The current [Navigator]
+     */
+    override val current: Navigator
+        @Composable
+        get() = PrivateLocalNavigator.current ?: error("No Navigator has been provided")
+}
+
