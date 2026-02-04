@@ -16,6 +16,7 @@
 
 package com.youniqx.time.presentation.navigation
 
+import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
@@ -61,14 +62,20 @@ class Navigator(val state: NavigationState) {
         }
     }
 
-    fun removeLast(route: NavKey? = state.backStacks.first().lastOrNull()) {
+    fun removeLast(
+        fromBackStack: NavBackStack<NavKey> = state.backStacks.first(),
+        route: NavKey? = fromBackStack.lastOrNull()
+    ) {
         route ?: return
-        val removed = state.backStacks.first().asReversed().remove(route)
+        if (fromBackStack.size == 1) return
+        val removed = fromBackStack.asReversed().remove(route)
         if (!removed) return
-        state.backStacks.drop(1).forEach {
-            var r: NavKey? = null
-            while (it.isNotEmpty() && r != route) {
-                r = it.removeLastOrNull()
+        state.backStacks.forEach { backStack ->
+            if (backStack == fromBackStack) return@forEach
+            val index = backStack.asReversed().indexOf(route)
+            if (index == -1 || index == backStack.lastIndex) return@forEach
+            (backStack.lastIndex downTo (backStack.lastIndex - index)).forEach {
+                backStack.removeAt(index = it)
             }
         }
     }

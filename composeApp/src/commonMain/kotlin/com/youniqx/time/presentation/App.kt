@@ -89,6 +89,7 @@ fun App(
         }
         val navigationState = rememberNavigationState(configuration = navBackStackSavedStateConfiguration, WelcomeRoute)
         val navigator = remember { Navigator(navigationState) }
+        val backStack = navigationState.activeBackStackFor(directive = directive)
         val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberNavEntryProviderDecorator(),
@@ -98,7 +99,7 @@ fun App(
                 NavEntry(key) {
                     LaunchedEffect(key) {
                         println("Unknown key: $key")
-                        navigator.removeLast()
+                        navigator.removeLast(fromBackStack = backStack)
                         navigator.add(NotFoundRoute)
                     }
                 }
@@ -110,7 +111,7 @@ fun App(
         }
         val entries =
             rememberDecoratedNavEntries(
-                backStack = navigationState.activeBackStackFor(directive = directive),
+                backStack = backStack,
                 entryDecorators = entryDecorators,
                 entryProvider = entryProvider,
             )
@@ -166,7 +167,9 @@ fun App(
                                 // .padding(innerPadding)
                                 .fillMaxSize(),
                         sceneStrategy = dialogStrategy then supportingPaneStrategy then singlePaneStrategy,
-                        onBack = { navigator.removeLast() },
+                        onBack = {
+                            navigator.removeLast(fromBackStack = backStack)
+                        },
                     )
                 }
             }
