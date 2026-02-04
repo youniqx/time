@@ -60,8 +60,6 @@ import com.youniqx.time.domain.models.isOpenTracking
 import com.youniqx.time.domain.models.refreshKey
 import com.youniqx.time.domain.models.toTimelogEntry
 import com.youniqx.time.presentation.SimpleTooltip
-import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
-import com.youniqx.time.presentation.navigation.LocalSceneRole
 import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.presentation.relativetime.RelativeTime

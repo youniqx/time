@@ -1,10 +1,10 @@
 package com.youniqx.time.presentation.workitems
 
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.navigation3.SupportingPaneSceneStrategy
 import androidx.navigation3.scene.DialogSceneStrategy
 import com.youniqx.time.presentation.LocalResultStore
 import com.youniqx.time.presentation.history.HistoryRoute
-import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
 import com.youniqx.time.presentation.navigation.LocalNavigator
 import com.youniqx.time.presentation.navigation.NavScope
 import dev.zacsweers.metro.AppScope
@@ -23,7 +23,7 @@ class WorkItemsNavScope {
         {
 
             entry<WorkItemsRoute>(
-                metadata = AutoFilledSupportingPaneSceneStrategy.mainPane()
+                metadata = SupportingPaneSceneStrategy.mainPane()
             ) {
                 val navigator = LocalNavigator.current
                 WorkItems(
