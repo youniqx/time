@@ -31,15 +31,17 @@ private const val MAX_AVAILABLE_PANES = 3
  */
 @Composable
 fun rememberNavigationState(
+    directive: PaneScaffoldDirective,
     configuration: SavedStateConfiguration,
     vararg elements: NavKey,
 ): NavigationState {
 
     val backStacks = List(size = MAX_AVAILABLE_PANES) { rememberNavBackStack(configuration, *elements) }
 
-    return remember {
+    return remember(directive) {
         NavigationState(
-            backStacks = backStacks
+            backStacks = backStacks,
+            directive = directive,
         )
     }
 }
@@ -50,8 +52,11 @@ fun rememberNavigationState(
  * @param backStacks - the back stacks for each available pane count
  */
 class NavigationState(
-    val backStacks: List<NavBackStack<NavKey>>
-)
+    val backStacks: List<NavBackStack<NavKey>>,
+    directive: PaneScaffoldDirective
+) {
+    val activeBackStack = activeBackStackFor(directive = directive)
+}
 
 /**
  * Convert NavigationState into NavEntries.

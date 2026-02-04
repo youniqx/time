@@ -3,6 +3,10 @@
 package com.youniqx.time.presentation.workitems
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -55,19 +59,17 @@ import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.presentation.LocalResultStore
+import com.youniqx.time.presentation.LocalSharedTransitionScope
 import com.youniqx.time.presentation.ResultStoreValue
 import com.youniqx.time.presentation.Section
 import com.youniqx.time.presentation.history.HistorySummaryCard
 import com.youniqx.time.presentation.history.HistoryViewModel
 import com.youniqx.time.presentation.history.TimelogEntry
 import com.youniqx.time.presentation.modifier.adaptivePadding
-import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
-import com.youniqx.time.presentation.navigation.LocalSceneRole
 import com.youniqx.time.presentation.plus
 import com.youniqx.time.presentation.rememberSyncedSource
 import com.youniqx.time.presentation.settings.SettingsViewModel
 import com.youniqx.time.presentation.stickyHeader
-import com.youniqx.time.refresh
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.NonCancellable
@@ -79,7 +81,6 @@ import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 object WorkItemsRoute : NavKey
@@ -94,11 +95,12 @@ object DisableGlobalSearch : ResultStoreValue
 
 @Composable
 fun WorkItems(
+    showDaySummary: Boolean,
     showHistory: () -> Unit,
+    showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
     viewModel: WorkItemsViewModel = metroViewModel(),
     settingsViewModel: SettingsViewModel = metroViewModel(),
     historyViewModel: HistoryViewModel = metroViewModel(),
-    showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle() // Todo
@@ -111,6 +113,7 @@ fun WorkItems(
         settings = settingsUiState.settings,
         settingsUpdater = settingsViewModel, // Todo
         timelogs = historyUiState.timelogs,
+        showDaySummary = showDaySummary,
         showHistory = showHistory,
         showSwitchTracking = showSwitchTracking,
     )
@@ -129,6 +132,7 @@ fun WorkItemsScreen(
     settings: Settings,
     settingsUpdater: UpdateSettingsUseCase,
     timelogs: List<TimelogEntry>,
+    showDaySummary: Boolean,
     showHistory: () -> Unit,
     showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
 ) {
@@ -167,14 +171,12 @@ fun WorkItemsScreen(
 
     val openSections = remember { mutableStateListOf(Section.Pinned, Section.Open) }
 
-    val sceneRole = LocalSceneRole.current
-    val showDaySummary = sceneRole != AutoFilledSupportingPaneSceneStrategy.Role.Main
     val resultStore = LocalResultStore.current
     val scrollToWorkItem = resultStore.getResultState<ScrollToWorkItem?>()
     LaunchedEffect(groupedWorkItems, scrollToWorkItem) {
         if (scrollToWorkItem == null || filteredWorkItems.isEmpty()) return@LaunchedEffect
         var scrollToIndex = 1 // offset for search and quick filter area
-        if (showDaySummary) scrollToIndex++
+        scrollToIndex++ // offset for day summary
         Section.entries.forEach {
             scrollToIndex++ // offset for section header
             val grouped = groupedWorkItems[it].orEmpty()
@@ -259,30 +261,39 @@ fun WorkItemsScreen(
                 }
             }
 
-            if (showDaySummary) item(key = "daySummary") {
-                HistorySummaryCard(
-                    modifier = Modifier
-                        .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                        .padding(horizontal = 12.dp)
-                        .padding(bottom = 4.dp)
-                        .clickable(
-                            onClickLabel = "Show history",
-                            onClick = {
-                                showHistory()
-                            }),
-                    heading = { Text(text = "Today") },
-                    openTracking = settings.openTracking,
-                    timelogs = remember(settings.openTracking.refreshKey) {
-                        listOfNotNull(settings.openTracking?.toTimelogEntry())
-                    } + remember(timelogs) {
-                        val now = Clock.System.now()
-                        val timeZone = TimeZone.currentSystemDefault()
-                        val startOfDay = now.toLocalDateTime(timeZone).date.atStartOfDayIn(timeZone)
-                        timelogs.filter {
-                            it.spentAt in startOfDay..now
+            item(key = "daySummary") {
+                AnimatedVisibility(
+                    visible = showDaySummary || LocalSharedTransitionScope.current?.isTransitionActive == true,
+                    enter = fadeIn() + scaleIn(),
+                    exit = fadeOut() + scaleOut(),
+                    modifier = Modifier.animateItem()
+                ) {
+                    HistorySummaryCard(
+                        modifier = Modifier
+                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                            .padding(horizontal = 12.dp)
+                            .padding(bottom = 4.dp)
+                            .clickable(
+                                enabled = showDaySummary,
+                                onClickLabel = "Show history",
+                                onClick = {
+                                    showHistory()
+                                }),
+                        visible = showDaySummary,
+                        heading = { Text(text = "Today") },
+                        openTracking = settings.openTracking,
+                        timelogs = remember(settings.openTracking.refreshKey) {
+                            listOfNotNull(settings.openTracking?.toTimelogEntry())
+                        } + remember(timelogs) {
+                            val now = Clock.System.now()
+                            val timeZone = TimeZone.currentSystemDefault()
+                            val startOfDay = now.toLocalDateTime(timeZone).date.atStartOfDayIn(timeZone)
+                            timelogs.filter {
+                                it.spentAt in startOfDay..now
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
 
             @Composable

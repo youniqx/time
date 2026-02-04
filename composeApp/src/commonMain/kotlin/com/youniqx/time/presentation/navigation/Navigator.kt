@@ -16,7 +16,9 @@
 
 package com.youniqx.time.presentation.navigation
 
+import androidx.compose.runtime.compositionLocalOf
 import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
@@ -63,7 +65,7 @@ class Navigator(val state: NavigationState) {
     }
 
     fun removeLast(
-        fromBackStack: NavBackStack<NavKey> = state.backStacks.first(),
+        fromBackStack: NavBackStack<NavKey> = state.activeBackStack,
         route: NavKey? = fromBackStack.lastOrNull()
     ) {
         route ?: return
@@ -80,3 +82,5 @@ class Navigator(val state: NavigationState) {
         }
     }
 }
+
+val LocalNavigator = compositionLocalOf<Navigator> { error("LocalNavigator not provided") }

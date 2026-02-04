@@ -47,6 +47,7 @@ import androidx.savedstate.serialization.SavedStateConfiguration
 import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.presentation.errors.NotFoundRoute
 import com.youniqx.time.presentation.history.HistoryRoute
+import com.youniqx.time.presentation.navigation.LocalNavigator
 import com.youniqx.time.presentation.navigation.NavScope
 import com.youniqx.time.presentation.navigation.Navigator
 import com.youniqx.time.presentation.navigation.activeBackStackFor
@@ -87,9 +88,12 @@ fun App(
             calculatePaneScaffoldDirective(windowAdaptiveInfo)
                 .copy(horizontalPartitionSpacerSize = 0.dp, verticalPartitionSpacerSize = 0.dp)
         }
-        val navigationState = rememberNavigationState(configuration = navBackStackSavedStateConfiguration, WelcomeRoute)
-        val navigator = remember { Navigator(navigationState) }
-        val backStack = navigationState.activeBackStackFor(directive = directive)
+        val navigationState = rememberNavigationState(
+            directive = directive,
+            configuration = navBackStackSavedStateConfiguration,
+            WelcomeRoute
+        )
+        val navigator = remember(navigationState) { Navigator(navigationState) }
         val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
             rememberSaveableStateHolderNavEntryDecorator(),
             rememberNavEntryProviderDecorator(),
@@ -99,19 +103,17 @@ fun App(
                 NavEntry(key) {
                     LaunchedEffect(key) {
                         println("Unknown key: $key")
-                        navigator.removeLast(fromBackStack = backStack)
+                        navigator.removeLast()
                         navigator.add(NotFoundRoute)
                     }
                 }
             }) {
-                navScopes.forEach { scope ->
-                    scope(navigator)
-                }
+                navScopes.forEach { scope -> scope() }
             }
         }
         val entries =
             rememberDecoratedNavEntries(
-                backStack = backStack,
+                backStack = navigationState.activeBackStack,
                 entryDecorators = entryDecorators,
                 entryProvider = entryProvider,
             )
@@ -140,6 +142,7 @@ fun App(
                 LocalSharedTransitionScope provides this,
                 LocalResultStore provides resultStore,
                 LocalSearchFocusRequester provides focusRequester,
+                LocalNavigator provides navigator
             ) {
                 Scaffold(
                     floatingActionButton = {
@@ -168,7 +171,7 @@ fun App(
                                 .fillMaxSize(),
                         sceneStrategy = dialogStrategy then supportingPaneStrategy then singlePaneStrategy,
                         onBack = {
-                            navigator.removeLast(fromBackStack = backStack)
+                            navigator.removeLast()
                         },
                     )
                 }

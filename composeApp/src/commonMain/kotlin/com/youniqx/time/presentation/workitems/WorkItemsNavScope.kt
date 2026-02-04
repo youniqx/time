@@ -5,6 +5,7 @@ import androidx.navigation3.scene.DialogSceneStrategy
 import com.youniqx.time.presentation.LocalResultStore
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.navigation.AutoFilledSupportingPaneSceneStrategy
+import com.youniqx.time.presentation.navigation.LocalNavigator
 import com.youniqx.time.presentation.navigation.NavScope
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
@@ -19,12 +20,14 @@ class WorkItemsNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        { navigator ->
+        {
 
             entry<WorkItemsRoute>(
                 metadata = AutoFilledSupportingPaneSceneStrategy.mainPane()
             ) {
+                val navigator = LocalNavigator.current
                 WorkItems(
+                    showDaySummary = HistoryRoute !in navigator.state.activeBackStack,
                     showHistory = {
                         navigator.add(HistoryRoute)
                     },
@@ -37,6 +40,7 @@ class WorkItemsNavScope {
             entry<SwitchTrackingRoute>(
                 metadata = DialogSceneStrategy.dialog()
             ) {
+                val navigator = LocalNavigator.current
                 val resultStore = LocalResultStore.current
                 SwitchTracking(
                     targetId = it.targetId,

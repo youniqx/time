@@ -260,7 +260,8 @@ fun HistoryScreen(
                     .padding(bottom = spacing.lg),
                 groupedByDay = groupedByDay,
                 openTracking = openTracking,
-                timelogs = filteredTimelogs
+                timelogs = filteredTimelogs,
+                visible = true
             )
 
             // Content

@@ -36,6 +36,7 @@ import com.youniqx.time.presentation.workitems.ScrollToWorkItem
 fun HistorySummaryCard(
     timelogs: List<TimelogEntry>,
     openTracking: OpenTracking?,
+    visible: Boolean,
     modifier: Modifier = Modifier,
     heading: @Composable () -> Unit = { Text(text = "Total Time") },
     groupedByDay: List<DayGroup>? = null,
@@ -48,9 +49,10 @@ fun HistorySummaryCard(
         Card(
             modifier = modifier
                 .clip(CardDefaults.shape)
-                .sharedElement(
+                .sharedElementWithCallerManagedVisibility(
                     sharedContentState = rememberSharedContentState("historySummaryCard"),
-                    animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                    visible = visible,
+                    // renderInOverlayDuringTransition = false,
                 ),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)

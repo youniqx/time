@@ -1,5 +1,6 @@
 package com.youniqx.time.presentation.onboarding
 
+import com.youniqx.time.presentation.navigation.LocalNavigator
 import com.youniqx.time.presentation.navigation.NavScope
 import com.youniqx.time.presentation.workitems.WorkItemsRoute
 import dev.zacsweers.metro.AppScope
@@ -14,7 +15,7 @@ class OnboardingNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        { navigator ->
+        {
 
             var stepCount = 0
             val onboardingSteps = iterator {
@@ -24,6 +25,7 @@ class OnboardingNavScope {
             entry<WelcomeRoute>(
                 metadata = onboardingSteps.next() + onboardingTransitions
             ) {
+                val navigator = LocalNavigator.current
                 Welcome(
                     stepFinished = {
                         navigator.onFinished(route = it)
@@ -37,6 +39,7 @@ class OnboardingNavScope {
             entry<GitLabSetupRoute>(
                 metadata = onboardingSteps.next() + onboardingTransitions
             ) {
+                val navigator = LocalNavigator.current
                 GitLabSetup(
                     stepCount = stepCount,
                     stepFinished = {
