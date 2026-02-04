@@ -11,6 +11,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,6 +29,7 @@ class RemoteTimelogsRepository(
     dispatchers: IDispatchers
 ): TimelogsRepository {
 
+    private var job: Job? = null
     private val scope = CoroutineScope(dispatchers.Default)
 
     private val _timelogs: MutableStateFlow<SourceAware<TimelogsQuery.Data?>?> =
@@ -36,7 +38,12 @@ class RemoteTimelogsRepository(
     override val timelogs = _timelogs.asStateFlow()
 
     init {
-        scope.launch {
+        refresh()
+    }
+
+    override fun refresh() {
+        job?.cancel()
+        job = scope.launch {
             apolloClientFlow.filterNotNull().collect { apolloClient ->
                 val now = Clock.System.now()
                 val query = TimelogsQuery.Builder()

@@ -54,6 +54,7 @@ import com.youniqx.time.domain.models.Settings
 import com.youniqx.time.domain.models.refreshKey
 import com.youniqx.time.domain.models.toTimelogEntry
 import com.youniqx.time.domain.usecases.CommitTimeTrackingUseCase
+import com.youniqx.time.domain.usecases.LoadTimelogsUseCase
 import com.youniqx.time.domain.usecases.SearchWorkItemsUseCase
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
@@ -108,11 +109,13 @@ fun WorkItems(
 
     WorkItemsScreen(
         uiState = uiState,
+        loading = historyUiState.loading || (uiState?.isSyncing ?: true),
         searcher = viewModel,
         timeTrackingCommiter = viewModel,
         settings = settingsUiState.settings,
         settingsUpdater = settingsViewModel, // Todo
         timelogs = historyUiState.timelogs,
+        timelogsLoader = historyViewModel,
         showDaySummary = showDaySummary,
         showHistory = showHistory,
         showSwitchTracking = showSwitchTracking,
@@ -127,11 +130,13 @@ enum class Section {
 @Composable
 fun WorkItemsScreen(
     uiState: UiState,
+    loading: Boolean,
     searcher: SearchWorkItemsUseCase,
     timeTrackingCommiter: CommitTimeTrackingUseCase,
     settings: Settings,
     settingsUpdater: UpdateSettingsUseCase,
     timelogs: List<TimelogEntry>,
+    timelogsLoader: LoadTimelogsUseCase,
     showDaySummary: Boolean,
     showHistory: () -> Unit,
     showSwitchTracking: (targetId: String, targetTitle: String) -> Unit,
@@ -139,7 +144,6 @@ fun WorkItemsScreen(
     var search: String by remember { mutableStateOf("") }
     var activeFilters by remember { mutableStateOf(emptySet<QuickFilter>()) }
 
-    var loading: Boolean = uiState?.isSyncing ?: true
     var isRefreshing by remember(uiState) { mutableStateOf(false) }
     val workItems = uiState?.data?.workItems
     val currentUserId = uiState?.data?.currentUserId
@@ -229,13 +233,12 @@ fun WorkItemsScreen(
                         search = search,
                         onSearchChange = {
                             search = it
-                            loading = true
                             searcher.search(it)
                         },
                         loading = loading,
                         refresh = {
-                            loading = true
                             searcher.search("")
+                            timelogsLoader.refresh()
                         },
                         show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                         canFocus = resultStore.getResultState<DisableGlobalSearch?>() == null,
@@ -345,6 +348,7 @@ fun WorkItemsScreen(
                             coroutineScope.launch {
                                 commitTimeTrackingErrors = timeTrackingCommiter.commitTimeTracking()
                                 commitTimeTrackingEnabled = true
+                                timelogsLoader.refresh() // Todo: properly update the apollo cache with the data we already get
                             }
                         },
                     )

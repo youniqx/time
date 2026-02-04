@@ -5,6 +5,7 @@ import com.youniqx.time.di.IDispatchers
 import com.youniqx.time.domain.TimelogsRepository
 import com.youniqx.time.domain.models.DataSource
 import com.youniqx.time.domain.models.SourceAware
+import com.youniqx.time.domain.usecases.LoadTimelogsUseCase
 import com.youniqx.time.gitlab.models.TimelogsQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesIntoMap
@@ -26,7 +27,7 @@ data class UiState(
 class HistoryViewModel(
     timelogsRepository: TimelogsRepository,
     dispatchers: IDispatchers,
-) : ViewModel() {
+) : ViewModel(), LoadTimelogsUseCase by timelogsRepository {
     val uiState = timelogsRepository.timelogs
         .map { it.toUiState() }
         .stateIn(
