@@ -145,7 +145,10 @@ fun App(
             ) {
                 Scaffold(
                     floatingActionButton = {
-                        if (entries.last().onboardingIndex == null) CompositionLocalProvider(
+                        if (
+                            entries.last().onboardingIndex == null
+                            && SettingsRoute !in navigationState.activeBackStack
+                        ) CompositionLocalProvider(
                             LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
                         ) {
                             val interactionSource = remember { MutableInteractionSource() }
