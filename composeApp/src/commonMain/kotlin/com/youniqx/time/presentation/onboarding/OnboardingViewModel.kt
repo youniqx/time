@@ -45,6 +45,7 @@ class OnboardingViewModel(
             var lastDataSource: DataSource? = null
             settingsRepository.settings.collect { newSettings ->
                 _uiState.update { it.copy(
+                    loading = newSettings.source == DataSource.Default,
                     settings = newSettings.data,
                     showOnboarding = if (newSettings.source != lastDataSource) {
                         newSettings.data.instanceUrl.isNullOrEmpty() || newSettings.data.token.isNullOrEmpty()

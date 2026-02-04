@@ -45,7 +45,7 @@ fun Welcome(viewModel: OnboardingViewModel = metroViewModel(), stepFinished: () 
         if (!uiState.showOnboarding) hideOnboarding()
     }
     WelcomeScreen(
-        loading = uiState.loading,
+        loading = !uiState.showOnboarding || uiState.loading,
         onNext = stepFinished,
     )
 }
