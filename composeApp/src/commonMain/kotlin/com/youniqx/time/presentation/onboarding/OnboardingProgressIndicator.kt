@@ -16,8 +16,8 @@ import kotlin.math.sign
 
 @Composable
 fun OnboardingProgressIndicator(stepCount: Int) {
-    val navEnty = LocalNavEntry.current
-    val myOnboardingIndex = remember(navEnty) { navEnty?.onboardingIndex ?: 0 }
+    val navEntry = LocalNavEntry.current
+    val myOnboardingIndex = remember(navEntry) { navEntry?.onboardingIndex ?: 0 }
     with(LocalSharedTransitionScope.current) {
         if (this == null) return@with
         val transitionOffset by with(LocalNavAnimatedContentScope.current) {
