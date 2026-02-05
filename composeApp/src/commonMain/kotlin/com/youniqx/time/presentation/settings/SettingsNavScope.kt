@@ -23,7 +23,7 @@ class SettingsNavScope {
                 metadata = SupportingPaneSceneStrategy.extraPane()
             ) {
                 val navigator = LocalNavigator.current
-                Settings(onBack = navigator::removeLast)
+                Settings(onBack = { navigator.removeLast(route = it) })
             }
 
         }
