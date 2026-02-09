@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.gitlab.models.NamespaceQuery
+import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
 import kotlin.collections.flatMap
 import kotlin.collections.orEmpty
 
@@ -46,6 +47,7 @@ fun IterationCadenceSelection(
             // expanding/collapsing the menu on click. A read-only text field has
             // the anchor type `PrimaryNotEditable`.
             modifier = Modifier.fillMaxWidth()
+                .disableGlobalSearchIfFocused()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
             value = iterationCadences.firstOrNull { it.first.id == iterationCadence?.id }?.first?.title.orEmpty(),
             onValueChange = {},
