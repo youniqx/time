@@ -17,7 +17,7 @@ variables:
   VAULT_AUTH_ROLE: youniqx_mobile_chapter_time_unprotected
   VERSION_CODE: ${CI_PIPELINE_ID}
   # renovate: datasource=gitlab-releases depName=gitlab-org/cli extractVersion=^v(?<version>.*)$ registryUrl=https://gitlab.com
-  GLAB_VERSION: 1.80.4
+  GLAB_VERSION: 1.82.0
 
 
 pages:
