@@ -31,6 +31,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -47,6 +48,7 @@ import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.domain.models.Settings
+import com.youniqx.time.domain.usecases.SearchNamespacesUseCase
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.presentation.Label
@@ -70,6 +72,7 @@ fun Settings(
     SettingsScreen(
         settings = uiState.settings,
         updater = viewModel,
+        namespaceSearcher = viewModel,
         onBack = onBack,
         namespaces = uiState.namespaces,
     )
@@ -80,6 +83,7 @@ fun Settings(
 fun SettingsScreen(
     settings: Settings,
     updater: UpdateSettingsUseCase,
+    namespaceSearcher: SearchNamespacesUseCase,
     onBack: () -> Unit,
     namespaces: NamespaceQuery.Data?,
 ) {
@@ -262,6 +266,9 @@ fun SettingsScreen(
             }
         )
         val namespaceSelectionState = rememberNamespaceSelectionState()
+        LaunchedEffect(namespaceSelectionState.search) {
+            namespaceSearcher.search(namespaceSelectionState.search)
+        }
         val filteredUserNamespace = namespaces?.currentUser?.namespace?.takeIf {
             it.fullPath.contains(namespaceSelectionState.search, ignoreCase = true) ||
                     it.name.contains(namespaceSelectionState.search, ignoreCase = true)
@@ -340,6 +347,7 @@ fun SettingsPreview() {
                 override fun togglePinWorkItem(id: String) {}
                 override fun setOpenTracking(openTracking: OpenTracking?) {}
             },
+            namespaceSearcher = {},
             namespaces = null,
             onBack = {},
         )

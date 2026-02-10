@@ -15,6 +15,8 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,18 +35,33 @@ class RemoteNamespacesRepository(
     dispatchers: IDispatchers
 ): NamespacesRepository {
 
+    private var job: Job? = null
     private val scope = CoroutineScope(dispatchers.Default)
 
-    private val _namespaces: MutableStateFlow<SourceAware<NamespaceQuery.Data?>?> =
-        MutableStateFlow(null)
+    private val _namespacesBySearch = MutableStateFlow(emptyMap<String, ApolloResponse<NamespaceQuery.Data>?>())
 
-    override val namespaces = _namespaces.asStateFlow()
+    override val namespacesBySearch = _namespacesBySearch.asStateFlow()
 
     init {
-        scope.launch {
+        search("")
+    }
+
+    override fun search(search: String) {
+        job?.cancel()
+        job = scope.launch {
+            _namespacesBySearch.update {
+                if (search !in it.keys) it + (search to null) else it
+            }
+            delay(300)
             apolloClientFlow.filterNotNull().collect { apolloClient ->
-                val response = apolloClient.query(NamespaceQuery()).execute()
-                _namespaces.update { SourceAware(source = DataSource.Remote, data = response.data, isSyncing = false) }
+                val query = NamespaceQuery.Builder()
+                    .initial(search.isEmpty())
+                    .search(search.takeUnless { it.isEmpty() })
+                    .build()
+                val response: ApolloResponse<NamespaceQuery.Data> = apolloClient.query(query).execute()
+                _namespacesBySearch.update {
+                    it + (search to response)
+                }
             }
         }
     }

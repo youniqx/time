@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.youniqx.time.domain.NamespacesRepository
 import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.Settings
+import com.youniqx.time.domain.usecases.SearchNamespacesUseCase
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import dev.zacsweers.metro.AppScope
@@ -27,14 +28,18 @@ data class UiState(
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class SettingsViewModel(
     settingsRepository: SettingsRepository,
-    namespacesRepository: NamespacesRepository
-) : ViewModel(), UpdateSettingsUseCase by settingsRepository {
+    private val namespacesRepository: NamespacesRepository
+) : ViewModel(), UpdateSettingsUseCase by settingsRepository, SearchNamespacesUseCase {
     private val initialSettings = settingsRepository.settings.value.data
-    val uiState = settingsRepository.settings.combine(namespacesRepository.namespaces, ::Pair)
-        .map { (settings, namespaces) ->
+    private var lastSuccessfulSearchTerm = ""
+    private var searchTerm = ""
+    val uiState = settingsRepository.settings.combine(namespacesRepository.namespacesBySearch, ::Pair)
+        .map { (settings, namespacesBySearch) ->
             UiState(
                 settings = settings.data,
-                namespaces = namespaces?.data
+                namespaces = namespacesBySearch[searchTerm]?.data.also {
+                    if (it != null) lastSuccessfulSearchTerm = searchTerm
+                } ?: namespacesBySearch[lastSuccessfulSearchTerm]?.data
             )
     }.stateIn(
             scope = viewModelScope,
@@ -44,4 +49,9 @@ class SettingsViewModel(
                 namespaces = null
             )
     )
+
+    override fun search(search: String) {
+        searchTerm = search
+        namespacesRepository.search(search)
+    }
 }

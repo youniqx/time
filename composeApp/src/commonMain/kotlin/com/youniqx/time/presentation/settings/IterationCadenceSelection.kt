@@ -64,7 +64,7 @@ fun IterationCadenceSelection(
             if (namespaces == null) CircularProgressIndicator()
             iterationCadences.forEach {
                 DropdownMenuItem(
-                    text = { Text(it.first.title) },
+                    text = { Text(it.first.title.orEmpty()) },
                     onClick = {
                         onIterationCadenceChange(
                              IterationCadence(

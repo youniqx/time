@@ -10,6 +10,13 @@ import kotlin.random.Random
 
 val previewUserId by lazy { "gid://gitlab/User/123" }
 
+val emptyPageInfo = GroupWithIterationCadences.PageInfo(
+    __typename = "",
+    hasPreviousPage = false,
+    hasNextPage = false,
+    endCursor = null
+)
+
 val previewNamespaces: NamespaceQuery.Data by lazy {
 
     val groups = listOf(
@@ -24,6 +31,12 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
                 nodes = listOf(
                     GroupWithIterationCadences.Node(__typename = "", title = "Awesome Team Sprint", id = "123"),
                     GroupWithIterationCadences.Node(__typename = "", title = "Performing Team Sprint", id = "435"),
+                ),
+                pageInfo = GroupWithIterationCadences.PageInfo(
+                    __typename = "",
+                    hasPreviousPage = true,
+                    hasNextPage = true,
+                    endCursor = null
                 )
             )
         ),
@@ -35,7 +48,8 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
             fullPath = "archived-group",
             iterationCadences = GroupWithIterationCadences.IterationCadences(
                 __typename = "",
-                nodes = listOf()
+                nodes = listOf(),
+                pageInfo = emptyPageInfo,
             )
         ),
         GroupWithIterationCadences(
@@ -46,7 +60,8 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
             fullPath = "lovely-group/fancy-group",
             iterationCadences = GroupWithIterationCadences.IterationCadences(
                 __typename = "",
-                nodes = listOf()
+                nodes = listOf(),
+                pageInfo = emptyPageInfo,
             )
         ),
         GroupWithIterationCadences(
@@ -57,7 +72,8 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
             fullPath = "obscure-group",
             iterationCadences = GroupWithIterationCadences.IterationCadences(
                 __typename = "",
-                nodes = listOf()
+                nodes = listOf(),
+                pageInfo = emptyPageInfo,
             )
         ),
         GroupWithIterationCadences(
@@ -68,7 +84,8 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
             fullPath = "hidden-group",
             iterationCadences = GroupWithIterationCadences.IterationCadences(
                 __typename = "",
-                nodes = listOf()
+                nodes = listOf(),
+                pageInfo = emptyPageInfo,
             )
         )
     )

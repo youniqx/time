@@ -1,8 +1,11 @@
-query NamespaceQuery {
-  frecentGroups {
+query NamespaceQuery(
+  $initial: Boolean! = false,
+  $search: String = null,
+) {
+  frecentGroups @include(if: $initial) {
     ...groupWithIterationCadences
   }
-  groups(allAvailable: true) {
+  groups(allAvailable: true, search: $search) {
     nodes {
       ...groupWithIterationCadences
     }
@@ -11,7 +14,7 @@ query NamespaceQuery {
       hasNextPage
     }
   }
-  currentUser {
+  currentUser @include(if: $initial) {
     namespace {
       id
       name
@@ -26,9 +29,14 @@ fragment groupWithIterationCadences on Group {
   archived
   fullPath
   iterationCadences {
-    nodes {
-      title
-      id
+    nodes @include(if: $initial) {
+      title @include(if: $initial)
+      id @include(if: $initial)
+    }
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      endCursor
     }
   }
 }
