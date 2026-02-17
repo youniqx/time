@@ -1,7 +1,7 @@
 ---
 Generate SBOM:
   stage: build
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/mobile-sbom-generator:1.1.0
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/mobile-sbom-generator:1.1.5
   variables:
     GRADLE_MODULE_PATH: composeApp
     PLATFORM: android
