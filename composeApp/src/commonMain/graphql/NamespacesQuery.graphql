@@ -1,24 +1,34 @@
 query NamespaceQuery(
   $initial: Boolean! = false,
   $search: String = null,
+  $before: String,
+  $after: String,
+  $first: Int,
 ) {
   frecentGroups @include(if: $initial) {
     ...groupWithIterationCadences
   }
-  groups(allAvailable: true, search: $search) {
+  groups(
+    allAvailable: true,
+    search: $search,
+    first: $first,
+    before: $before,
+    after: $after,
+  ) {
     nodes {
       ...groupWithIterationCadences
     }
     pageInfo {
       hasPreviousPage
       hasNextPage
+      startCursor
+      endCursor
     }
   }
   currentUser @include(if: $initial) {
+    id
     namespace {
-      id
-      name
-      fullPath
+      ...simpleNamespace
     }
   }
 }
@@ -29,7 +39,7 @@ fragment groupWithIterationCadences on Group {
   archived
   fullPath
   iterationCadences {
-    nodes @include(if: $initial) {
+    nodes {
       title @include(if: $initial)
       id @include(if: $initial)
     }
@@ -39,4 +49,10 @@ fragment groupWithIterationCadences on Group {
       endCursor
     }
   }
+}
+
+fragment simpleNamespace on Namespace {
+  id
+  name
+  fullPath
 }

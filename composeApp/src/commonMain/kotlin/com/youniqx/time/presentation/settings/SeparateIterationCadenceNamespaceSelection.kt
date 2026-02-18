@@ -19,15 +19,17 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.LazyPagingItems
 import com.youniqx.time.domain.models.IterationCadence
-import com.youniqx.time.gitlab.models.NamespaceQuery
+import com.youniqx.time.domain.models.Namespace
+import com.youniqx.time.domain.models.NamespaceEntry
 
 @Composable
 fun SeparateIterationCadenceNamespaceSelection(
     iterationCadence: IterationCadence?,
     searchScopeNamespaceFullPath: String?,
     searchScopeNamespaceName: String?,
-    namespaces: NamespaceQuery.Data?,
+    namespaces: LazyPagingItems<NamespaceEntry>,
     onIterationCadenceChange: (IterationCadence?) -> Unit,
 ) {
     var showSelection by remember(iterationCadence) {
@@ -36,33 +38,34 @@ fun SeparateIterationCadenceNamespaceSelection(
     if (showSelection) {
         val namespaceSelectionState = rememberNamespaceSelectionState()
         val namespaceFullPath = iterationCadence?.namespaceFullPath
-        val onNamespaceChange = { fullPath: String ->
-            if (namespaceFullPath != fullPath) {
-                onIterationCadenceChange(IterationCadence(namespaceFullPath = fullPath))
+        val onNamespaceChange = { namespace: Namespace ->
+            if (namespaceFullPath != namespace.fullPath) {
+                onIterationCadenceChange(IterationCadence(namespaceFullPath = namespace.fullPath))
             }
         }
-        val namespaceName = namespaceFullPath?.let {
-            namespaces?.getNameByFullPath(fullPath = it)
-        }
+//        val namespaceName = namespaceFullPath?.let {
+//            namespaces?.getNameByFullPath(fullPath = it)
+//        }
         NamespaceSelection(
-            selected = namespaceName?.let {
-                { NamespaceItem(fullPath = namespaceFullPath, name = it) }
-            },
+            selected = null,
+//            selected = namespaceName?.let {
+//                { NamespaceItem(fullPath = namespaceFullPath, name = it) }
+//            },
             namespaces = namespaces,
             onNamespaceChange = onNamespaceChange,
             state = namespaceSelectionState,
             label = { Text("Iteration Cadence Namespace") },
             supportingText = { Text("Exact namespace of the iteration cadence.") },
-            additionalOptions = searchScopeNamespaceFullPath?.let {
-                {
-                    SearchScopeNamespace(
-                        namespaceFullPath = searchScopeNamespaceFullPath,
-                        namespaceName = searchScopeNamespaceName.orEmpty(),
-                        state = namespaceSelectionState,
-                        onNamespaceChange = onNamespaceChange
-                    )
-                }
-            },
+//            additionalOptions = searchScopeNamespaceFullPath?.let {
+//                {
+//                    SearchScopeNamespace(
+//                        namespaceFullPath = searchScopeNamespaceFullPath,
+//                        namespaceName = searchScopeNamespaceName.orEmpty(),
+//                        state = namespaceSelectionState,
+//                        onNamespaceChange = onNamespaceChange
+//                    )
+//                }
+//            },
         )
         return
     }

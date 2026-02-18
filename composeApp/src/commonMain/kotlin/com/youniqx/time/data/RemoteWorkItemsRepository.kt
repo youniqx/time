@@ -24,8 +24,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -57,12 +57,13 @@ class RemoteWorkItemsRepository(
         job = scope.launch {
             delay(300)
             if (setSyncing) _workItemsFromCurrentUser.update { it?.copy(isSyncing = true) }
-            val settings = settingsRepository.settings.map { it.dataIfNotFrom(DataSource.Default) }
-                .filterNotNull().first()
-            val namespaceFullPath = settings.namespaceFullPath ?: return@launch
-            val iterationCadenceNamespaceFullPath = settings.iterationCadence?.namespaceFullPath
-                ?: return@launch
-            apolloClientFlow.filterNotNull().collect { apolloClient ->
+            val settingsFlow = settingsRepository.settings.map { it.dataIfNotFrom(DataSource.Default) }
+                .filterNotNull()
+            apolloClientFlow.filterNotNull().combine(settingsFlow, ::Pair)
+                .collect { (apolloClient, settings) ->
+                val namespaceFullPath = settings.namespaceFullPath ?: return@collect
+                val iterationCadenceNamespaceFullPath = settings.iterationCadence?.namespaceFullPath
+                    ?: return@collect
                 if (search.isNotEmpty()) delay(300)
                 val pinnedPlusOpen = settings.pinnedWorkItems +
                         (settings.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
@@ -77,6 +78,8 @@ class RemoteWorkItemsRepository(
                     .doSearch(search.isNotBlank())
                     .build()
                 apolloClient.query(query).fetchPolicy(FetchPolicy.NetworkFirst).watch().collect { result ->
+                    if (result.errors != null) println(result.errors)
+                    if (result.exception != null) println(result.exception)
                     _workItemsFromCurrentUser.update {
                         SourceAware(
                             data = WorkItemsFromCurrentUser(

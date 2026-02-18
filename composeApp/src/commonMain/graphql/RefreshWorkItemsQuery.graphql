@@ -3,6 +3,7 @@ query RefreshWorkItemsQuery(
   $ids: [WorkItemID!] = [],
 ) {
   namespace(fullPath: $namespaceFullPath) {
+    ...simpleNamespace
     workItems(ids: $ids, includeDescendants: true) {
       nodes {
         ...bareWorkItem

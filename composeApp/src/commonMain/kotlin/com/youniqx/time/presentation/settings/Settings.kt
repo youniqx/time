@@ -44,11 +44,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.domain.models.IterationCadence
+import com.youniqx.time.domain.models.Namespace
+import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.domain.models.OpenTracking
+import com.youniqx.time.domain.models.SelectedNamespaces
 import com.youniqx.time.domain.models.Settings
-import com.youniqx.time.domain.usecases.SearchNamespacesUseCase
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.presentation.Label
@@ -58,6 +62,7 @@ import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -69,12 +74,18 @@ fun Settings(
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val namespaces = uiState.namespaces.let {
+        remember(it) { flowOf(it) }.collectAsLazyPagingItems()
+    }
     SettingsScreen(
         settings = uiState.settings,
         updater = viewModel,
-        namespaceSearcher = viewModel,
+        namespaceSearcher = viewModel::search,
         onBack = onBack,
-        namespaces = uiState.namespaces,
+        namespaces = namespaces,
+        selectedNamespaces = uiState.selectedNamespaces,
+        onSearchNamespaceChange = viewModel::saveSearchNamespace,
+        onIterationCadenceNamespaceChange = viewModel::saveIterationCadenceNamespace,
     )
 }
 
@@ -83,9 +94,12 @@ fun Settings(
 fun SettingsScreen(
     settings: Settings,
     updater: UpdateSettingsUseCase,
-    namespaceSearcher: SearchNamespacesUseCase,
+    namespaceSearcher: (String) -> Unit,
     onBack: () -> Unit,
-    namespaces: NamespaceQuery.Data?,
+    namespaces: LazyPagingItems<NamespaceEntry>?,
+    selectedNamespaces: SelectedNamespaces,
+    onSearchNamespaceChange: (namespace: Namespace) -> Unit,
+    onIterationCadenceNamespaceChange: (namespace: Namespace) -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -267,43 +281,36 @@ fun SettingsScreen(
         )
         val namespaceSelectionState = rememberNamespaceSelectionState()
         LaunchedEffect(namespaceSelectionState.search) {
-            namespaceSearcher.search(namespaceSelectionState.search)
-        }
-        val filteredUserNamespace = namespaces?.currentUser?.namespace?.takeIf {
-            it.fullPath.contains(namespaceSelectionState.search, ignoreCase = true) ||
-                    it.name.contains(namespaceSelectionState.search, ignoreCase = true)
-        }
-        val namespaceName = settings.namespaceFullPath?.let {
-            namespaces?.getNameByFullPath(fullPath = settings.namespaceFullPath)
+            namespaceSearcher(namespaceSelectionState.search)
         }
         NamespaceSelection(
-            selected = namespaceName?.let {
-                { NamespaceItem(fullPath = settings.namespaceFullPath, name = it) }
+            selected = selectedNamespaces.search?.let {
+                { NamespaceItem(fullPath = it.fullPath, name = it.name) }
             },
             namespaces = namespaces,
-            onNamespaceChange = updater::setNamespaceFullPath,
+            onNamespaceChange = onSearchNamespaceChange,
             state = namespaceSelectionState,
             label = { Text("Namespace") },
             supportingText = { Text("Search scope (decedent namespaces included).") },
-            additionalOptions = filteredUserNamespace?.let {
-                {
-                    UserNamespace(
-                        namespace = it,
-                        state = namespaceSelectionState,
-                        onNamespaceChange = updater::setNamespaceFullPath
-                    )
-                }
-            },
+//            additionalOptions = filteredUserNamespace?.let {
+//                {
+//                    UserNamespace(
+//                        namespace = it,
+//                        state = namespaceSelectionState,
+//                        onNamespaceChange = updater::setNamespaceFullPath
+//                    )
+//                }
+//            },
         )
-        if (namespaceSelectionState.search.isEmpty() && !(namespaces?.groups?.pageInfo?.containsAllResults ?: false)) {
-            SeparateIterationCadenceNamespaceSelection(
-                iterationCadence = settings.iterationCadence,
-                searchScopeNamespaceFullPath = settings.namespaceFullPath,
-                searchScopeNamespaceName = namespaceName,
-                namespaces = namespaces,
-                onIterationCadenceChange = updater::setIterationCadence,
-            )
-        }
+//        if (namespaceSelectionState.search.isEmpty() && !(namespaces?.groups?.pageInfo?.containsAllResults ?: false)) {
+//            SeparateIterationCadenceNamespaceSelection(
+//                iterationCadence = settings.iterationCadence,
+//                searchScopeNamespaceFullPath = settings.namespaceFullPath,
+//                searchScopeNamespaceName = namespaceName,
+//                namespaces = namespaces,
+//                onIterationCadenceChange = updater::setIterationCadence,
+//            )
+//        }
         IterationCadenceSelection(
             iterationCadence = settings.iterationCadence,
             namespaces = namespaces,
@@ -348,8 +355,11 @@ fun SettingsPreview() {
                 override fun setOpenTracking(openTracking: OpenTracking?) {}
             },
             namespaceSearcher = {},
-            namespaces = null,
             onBack = {},
+            namespaces = null,
+            selectedNamespaces = SelectedNamespaces(search = null, iterationCadence = null),
+            onSearchNamespaceChange = {},
+            onIterationCadenceNamespaceChange = {},
         )
     }
 }

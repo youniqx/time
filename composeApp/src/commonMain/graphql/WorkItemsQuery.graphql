@@ -13,6 +13,7 @@ query WorkItemsQuery(
   iterationCadenceNamespace: namespace(
     fullPath: $iterationCadenceNamespaceFullPath
   ) {
+    ...simpleNamespace
     workItems(iterationWildcardId: CURRENT, iterationCadenceId: $iterationCadenceId, includeDescendants: true) {
       nodes {
         ...bareWorkItem
@@ -27,6 +28,7 @@ query WorkItemsQuery(
     }
   }
   searchNamespace: namespace(fullPath: $namespaceFullPath) {
+    ...simpleNamespace
     pinned: workItems(ids: $pinnedIds, sort: UPDATED_DESC, includeDescendants: true) @include(if: $doPinnedSearch) {
       nodes {
         ...bareWorkItem

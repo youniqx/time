@@ -26,6 +26,8 @@ import com.youniqx.time.presentation.settings.SettingsViewModel
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.LocalSpacing
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -45,13 +47,15 @@ fun SwitchTracking(
     onDismiss: () -> Unit,
     settingsViewModel: SettingsViewModel = metroViewModel()
 ) {
-    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-    val settings = settingsUiState.settings
+    val openTracking by settingsViewModel.uiState
+        .map { it.settings.openTracking }
+        .distinctUntilChanged()
+        .collectAsStateWithLifecycle(null)
     SwitchTrackingScreen(
         targetTitle = targetTitle,
-        currentTracking = settings.openTracking,
+        currentTracking = openTracking,
         onKeepTimeAndSwitch = {
-            settings.openTracking?.let { currentTracking ->
+            openTracking?.let { currentTracking ->
                 settingsViewModel.setOpenTracking(
                     currentTracking.copy(
                         workItemId = targetId,
@@ -72,7 +76,7 @@ fun SwitchTracking(
             onDismiss()
         },
         onShowCurrent = {
-            val workItemId = settings.openTracking?.workItemId ?: return@SwitchTrackingScreen
+            val workItemId = openTracking?.workItemId ?: return@SwitchTrackingScreen
             onShowCurrent(workItemId)
         },
         onDismiss = onDismiss

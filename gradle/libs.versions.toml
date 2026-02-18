@@ -26,6 +26,7 @@ metro = "0.10.2"
 settings = "1.3.0"
 nav3Core = "1.0.0-alpha06"
 material3AdaptiveNav3 = "1.3.0-alpha02" # not update to 1.3.0-alpha03 as it depends on a newer version of nav3
+paging = "3.4.0"
 
 [libraries]
 apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.ref = "apollo" }
@@ -63,6 +64,8 @@ settings-makeObservable = { module = "com.russhwolf:multiplatform-settings-make-
 settings-noarg = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "settings" }
 androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigation3-ui", version.ref = "nav3Core" }
 androidx-material3-adaptive-navigation3 = { module = "org.jetbrains.compose.material3.adaptive:adaptive-navigation3", version.ref = "material3AdaptiveNav3" }
+androidx-paging-common = { module = "androidx.paging:paging-common", version.ref = "paging" }
+androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }

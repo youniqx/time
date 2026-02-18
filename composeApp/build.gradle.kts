@@ -74,6 +74,8 @@ kotlin {
             implementation(libs.ktor.http)
             implementation(libs.androidx.navigation3.ui)
             implementation(libs.androidx.material3.adaptive.navigation3)
+            implementation(libs.androidx.paging.common)
+            implementation(libs.androidx.paging.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -144,6 +146,7 @@ compose.desktop {
 apollo {
     service("gitlab") {
         packageName.set("com.youniqx.time.gitlab.models")
+        generateFragmentImplementations.set(true)
         generateInputBuilders.set(true)
         addTypename.set("always")
     }

@@ -1,68 +1,124 @@
 package com.youniqx.time.data
 
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.russhwolf.settings.ExperimentalSettingsApi
-import com.youniqx.time.di.IDispatchers
 import com.youniqx.time.domain.NamespacesRepository
-import com.youniqx.time.domain.SettingsRepository
-import com.youniqx.time.domain.models.DataSource
-import com.youniqx.time.domain.models.Settings
-import com.youniqx.time.domain.models.SourceAware
+import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.gitlab.models.NamespaceQuery
-import com.youniqx.time.previewNamespaces
 import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Assisted
+import dev.zacsweers.metro.AssistedFactory
+import dev.zacsweers.metro.AssistedInject
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.SingleIn
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.lastOrNull
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+
+@AssistedInject
+class NamespacesPagingSource(
+    private val apolloClientFlow: Flow<ApolloClient?>,
+    @Assisted val query: String?,
+) : PagingSource<String, NamespaceEntry>() {
+
+    override suspend fun load(
+        params: LoadParams<String>
+    ): LoadResult<String, NamespaceEntry> {
+        try {
+            val apolloClient = apolloClientFlow.filterNotNull().first()
+            val query = with(NamespaceQuery.Builder()) {
+                initial(false)
+                search(query.takeUnless { it.isNullOrEmpty() })
+                first(params.loadSize)
+                when (params) {
+                    is LoadParams.Append<*> -> after(params.key)
+                    is LoadParams.Prepend<*> -> before(params.key)
+                    is LoadParams.Refresh<*> -> {
+                        initial(query.isNullOrEmpty())
+                        params.key?.let { after(it) }
+                    }
+                }
+                build()
+            }
+            val response: ApolloResponse<NamespaceQuery.Data> = apolloClient.query(query).execute()
+            return with(response.data ?: return LoadResult.Error(Throwable())) {
+                val namespaceEntries = buildList<NamespaceEntry> {
+                    addAll(
+                        frecentGroups?.map {
+                            it.groupWithIterationCadences.let { group ->
+                                NamespaceEntry.FrecentGroup(
+                                    name = group.name,
+                                    fullPath = group.fullPath,
+                                    iterationCadencesCount = group.iterationCadences?.nodes?.size
+                                )
+                            }
+                        }.orEmpty()
+                    )
+                    currentUser?.namespace?.simpleNamespace?.let {
+                        add(
+                            NamespaceEntry.User(
+                                name = it.name,
+                                fullPath = it.fullPath,
+                                iterationCadencesCount = null
+                            )
+                        )
+                    }
+                    addAll(
+                        groups?.nodes?.mapNotNull {
+                            it?.groupWithIterationCadences?.let { group ->
+                                NamespaceEntry.Group(
+                                    name = group.name,
+                                    fullPath = group.fullPath,
+                                    iterationCadencesCount = group.iterationCadences?.nodes?.size
+                                )
+                            }
+                        }.orEmpty()
+                    )
+                }
+                LoadResult.Page(
+                    data = namespaceEntries,
+                    prevKey = groups?.pageInfo?.run { startCursor.takeIf { hasPreviousPage } },
+                    nextKey = groups?.pageInfo?.run { endCursor.takeIf { hasNextPage } },
+                )
+            }
+        } catch (e: Exception) {
+            // Handle errors in this block and return LoadResult.Error for
+            // expected errors (such as a network failure).
+            return LoadResult.Error(Throwable())
+        }
+    }
+
+    override fun getRefreshKey(state: PagingState<String, NamespaceEntry>): String? {
+        // Try to find the page key of the closest page to anchorPosition from
+        // either the prevKey or the nextKey; you need to handle nullability
+        // here.
+        //  * prevKey == null -> anchorPage is the first page.
+        //  * nextKey == null -> anchorPage is the last page.
+        //  * both prevKey and nextKey are null -> anchorPage is the
+        //    initial page, so return null.
+        return state.anchorPosition?.let { anchorPosition ->
+            val anchorPage = state.closestPageToPosition(anchorPosition)
+            anchorPage?.prevKey ?: anchorPage?.nextKey // Todo: probably not correct
+        }
+    }
+
+    @AssistedFactory
+    fun interface Factory {
+        fun create(
+            @Assisted query: String?,
+        ): NamespacesPagingSource
+    }
+}
 
 @OptIn(ExperimentalSettingsApi::class)
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
 class RemoteNamespacesRepository(
-    private val apolloClientFlow: Flow<ApolloClient?>,
-    dispatchers: IDispatchers
+    private val namespacesPagingSourceFactory: NamespacesPagingSource.Factory,
 ): NamespacesRepository {
-
-    private var job: Job? = null
-    private val scope = CoroutineScope(dispatchers.Default)
-
-    private val _namespacesBySearch = MutableStateFlow(emptyMap<String, ApolloResponse<NamespaceQuery.Data>?>())
-
-    override val namespacesBySearch = _namespacesBySearch.asStateFlow()
-
-    init {
-        search("")
-    }
-
-    override fun search(search: String) {
-        job?.cancel()
-        job = scope.launch {
-            _namespacesBySearch.update {
-                if (search !in it.keys) it + (search to null) else it
-            }
-            delay(300)
-            apolloClientFlow.filterNotNull().collect { apolloClient ->
-                val query = NamespaceQuery.Builder()
-                    .initial(search.isEmpty())
-                    .search(search.takeUnless { it.isEmpty() })
-                    .build()
-                val response: ApolloResponse<NamespaceQuery.Data> = apolloClient.query(query).execute()
-                _namespacesBySearch.update {
-                    it + (search to response)
-                }
-            }
-        }
-    }
+    override fun search(search: String) =
+        namespacesPagingSourceFactory.create(query = search)
 }

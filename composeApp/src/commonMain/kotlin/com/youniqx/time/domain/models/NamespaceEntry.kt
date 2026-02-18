@@ -1,0 +1,34 @@
+package com.youniqx.time.domain.models
+
+sealed interface NamespaceEntry {
+
+    fun isOfSameType(other: NamespaceEntry): Boolean
+
+    data class FrecentGroup(
+        override val name: String?,
+        override val fullPath: String,
+        override val iterationCadencesCount: Int?
+    ) : Namespace, NamespaceEntry {
+        override fun isOfSameType(other: NamespaceEntry) = other is FrecentGroup
+    }
+
+    data class Group(
+        override val name: String?,
+        override val fullPath: String,
+        override val iterationCadencesCount: Int?
+    ) : Namespace, NamespaceEntry {
+        override fun isOfSameType(other: NamespaceEntry) = other is Group
+    }
+
+    data class User(
+        override val name: String?,
+        override val fullPath: String,
+        override val iterationCadencesCount: Int?
+    ) : Namespace, NamespaceEntry {
+        override fun isOfSameType(other: NamespaceEntry) = other is User
+    }
+
+    object Separator : NamespaceEntry {
+        override fun isOfSameType(other: NamespaceEntry) = other is Separator
+    }
+}

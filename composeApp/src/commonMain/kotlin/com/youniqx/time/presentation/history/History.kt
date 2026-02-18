@@ -68,6 +68,8 @@ import com.youniqx.time.presentation.settings.SettingsViewModel
 import com.youniqx.time.presentation.theme.LocalSpacing
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
@@ -83,10 +85,12 @@ fun History(
     onBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val settingsUiState by settingsViewModel.uiState.collectAsStateWithLifecycle()
-    val settings = settingsUiState.settings
-    val openTrackingAsTimelogEntry = remember(settings.openTracking.refreshKey) {
-        settings.openTracking?.toTimelogEntry()
+    val openTracking by settingsViewModel.uiState
+        .map { it.settings.openTracking }
+        .distinctUntilChanged()
+        .collectAsStateWithLifecycle(null)
+    val openTrackingAsTimelogEntry = remember(openTracking.refreshKey) {
+        openTracking?.toTimelogEntry()
     }
 
     var range by remember { mutableStateOf(TimeRange.Today) }
@@ -96,7 +100,7 @@ fun History(
         selectedRange = range,
         onRangeChange = { range = it },
         onBack = onBack,
-        openTracking = settings.openTracking
+        openTracking = openTracking,
     )
 }
 

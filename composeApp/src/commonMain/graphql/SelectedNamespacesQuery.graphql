@@ -1,0 +1,14 @@
+query SelectedNamespacesQuery(
+  $namespaceFullPath: ID = null,
+  $fetchNamespace: Boolean! = false,
+  $iterationCadenceNamespaceFullPath: ID = null,
+  $fetchIterationCadenceNamespace: Boolean! = false,
+) {
+  namespace(fullPath: $namespaceFullPath) @include(if: $fetchNamespace) {
+    ...simpleNamespace
+  }
+  iterationCadenceNamespace:
+  namespace(fullPath: $iterationCadenceNamespaceFullPath) @include(if: $fetchIterationCadenceNamespace) {
+    ...simpleNamespace
+  }
+}

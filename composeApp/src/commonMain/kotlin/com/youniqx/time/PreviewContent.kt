@@ -4,6 +4,7 @@ import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.gitlab.models.fragment.GroupWithIterationCadences
+import com.youniqx.time.gitlab.models.fragment.SimpleNamespace
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.presentation.Label
 import kotlin.random.Random
@@ -92,11 +93,15 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
     NamespaceQuery.Data(
         currentUser = NamespaceQuery.CurrentUser(
             __typename = "",
+            id = "123",
             namespace = NamespaceQuery.Namespace(
                 __typename = "",
-                id = "gid://gitlab/Namespaces::UserNamespace/832",
-                name = "Diar User",
-                fullPath = "diar"
+                simpleNamespace = SimpleNamespace(
+                    __typename = "",
+                    id = "gid://gitlab/Namespaces::UserNamespace/832",
+                    name = "Diar User",
+                    fullPath = "diar"
+                ),
             )
         ),
         frecentGroups = groups.shuffled().take(5).map {
@@ -117,6 +122,8 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
                 __typename = "",
                 hasPreviousPage = true,
                 hasNextPage = true,
+                startCursor = null,
+                endCursor = null,
             )
         )
     )

@@ -1,5 +1,6 @@
 package com.youniqx.time.presentation.settings
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -7,7 +8,10 @@ import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -27,11 +31,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupProperties
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import com.youniqx.time.domain.models.Namespace
+import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.presentation.SimpleTooltip
-import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.presentation.modifier.changeFocusOnTab
 import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
 import kotlinx.coroutines.flow.drop
@@ -47,25 +55,12 @@ fun rememberNamespaceSelectionState(): NamespaceSelectionState {
     return remember { NamespaceSelectionState(textFieldState) }
 }
 
-fun NamespaceQuery.Data.getNameByFullPath(fullPath: String?): String? {
-    frecentGroups?.forEach {
-        it.groupWithIterationCadences.let { namespace -> if (namespace.fullPath == fullPath) return namespace.name }
-    }
-    currentUser?.namespace?.let { namespace ->
-        if (namespace.fullPath == fullPath) return namespace.name
-    }
-    groups?.nodes?.forEach {
-        it?.groupWithIterationCadences?.let { namespace -> if (namespace.fullPath == fullPath) return namespace.name }
-    }
-    return null
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NamespaceSelection(
     selected: @Composable (() -> Unit)? = null,
-    namespaces: NamespaceQuery.Data?,
-    onNamespaceChange: (fullPath: String) -> Unit,
+    namespaces: LazyPagingItems<NamespaceEntry>?,
+    onNamespaceChange: (namespace: Namespace) -> Unit,
     state: NamespaceSelectionState = rememberNamespaceSelectionState(),
     label: @Composable (TextFieldLabelScope.() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = { Text("Type to filter...") },
@@ -113,73 +108,84 @@ fun NamespaceSelection(
                 state.expanded = false
             },
         ) {
-            val filteredFrecentGroups = namespaces?.frecentGroups?.mapNotNull {
-                it.groupWithIterationCadences.let { group ->
-                    group.takeIf {
-                        group.fullPath.contains(state.search, ignoreCase = true) ||
-                                group.name?.contains(state.search, ignoreCase = true) == true
-                    }
-                }
-            }
-            val filteredGroups = namespaces?.groups?.nodes?.mapNotNull {
-                it?.groupWithIterationCadences.let { group ->
-                    group.takeIf {
-                        group?.fullPath?.contains(state.search, ignoreCase = true) == true ||
-                                group?.name?.contains(state.search, ignoreCase = true) == true
-                    }
-                }
-            }
-            filteredFrecentGroups?.forEach {
-                DropdownMenuItem(
-                    text = {
-                        NamespaceItem(fullPath = it.fullPath, name = it.name)
-                    },
-                    onClick = onClick@ {
-                        onNamespaceChange(it.fullPath)
-                        state.expanded = false
-                    },
-                    trailingIcon = {
-                        SimpleTooltip(text = "frequently visited") {
-                            Icon(
-                                imageVector = Icons.Default.KeyboardDoubleArrowUp,
-                                contentDescription = "Frequently visited"
+            when (namespaces?.loadState?.refresh) {
+                null,
+                is LoadState.Error -> Error(onClick = { namespaces?.retry() })
+                LoadState.Loading -> CircularProgressIndicator(
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+                is LoadState.NotLoading -> {
+                    namespaces.itemSnapshotList.forEach {
+                        when (it) {
+                            is NamespaceEntry.FrecentGroup,
+                            is NamespaceEntry.Group,
+                            is NamespaceEntry.User -> DropdownMenuItem(
+                                text = {
+                                    NamespaceItem(fullPath = it.fullPath, name = it.name)
+                                },
+                                onClick = {
+                                    onNamespaceChange(it)
+                                    state.expanded = false
+                                },
+                                trailingIcon = {
+                                    when (it) {
+                                        is NamespaceEntry.FrecentGroup -> SimpleTooltip(text = "frequently visited") {
+                                            Icon(
+                                                imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                                                contentDescription = "Frequently visited"
+                                            )
+                                        }
+                                        is NamespaceEntry.Group -> {}
+                                        is NamespaceEntry.User -> Icon(
+                                            imageVector = Icons.Default.AccountCircle,
+                                            contentDescription = "Account namespace"
+                                        )
+                                    }
+                                },
+                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                             )
-                        }
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                )
-            }
-            if (
-                !filteredFrecentGroups.isNullOrEmpty() &&
-                (additionalOptions != null || !filteredGroups.isNullOrEmpty())
-            ) HorizontalDivider()
-            additionalOptions?.let {
-                additionalOptions()
-                if (!filteredGroups.isNullOrEmpty()) HorizontalDivider()
-            }
-            filteredGroups?.forEach {
-                DropdownMenuItem(
-                    text = {
-                        NamespaceItem(fullPath = it.fullPath, name = it.name)
-                    },
-                    onClick = {
-                        onNamespaceChange(it.fullPath)
-                        state.expanded = false
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                )
-            }
-            if (namespaces?.groups?.pageInfo?.hasNextPage == true) {
-                DropdownMenuItem(
-                    text = { Text("Load more items") },
-                    onClick = {
 
-                    },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                )
+                            NamespaceEntry.Separator -> HorizontalDivider()
+                            null -> {}
+                        }
+                    }
+                    when (val appendLoadingState = namespaces.loadState.append) {
+                        is LoadState.Error -> Error(onClick = { namespaces.retry() })
+                        LoadState.Loading -> CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                        is LoadState.NotLoading -> if (!appendLoadingState.endOfPaginationReached) DropdownMenuItem(
+                            text = { Text("Load more items") },
+                            onClick = {
+                                try {
+                                    namespaces[namespaces.itemCount]
+                                } catch (_: Exception) {
+                                }
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun Error(onClick: () -> Unit) {
+    DropdownMenuItem(
+        modifier = Modifier.background(color = MaterialTheme.colorScheme.errorContainer),
+        text = { Text("An error occurred", color = MaterialTheme.colorScheme.onErrorContainer) },
+        onClick = onClick,
+        trailingIcon = {
+            Icon(
+                imageVector = Icons.Default.Refresh,
+                contentDescription = "Refresh",
+            )
+        },
+        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+    )
 }
 
 @Composable
