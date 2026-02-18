@@ -7,7 +7,7 @@ sealed interface NamespaceEntry {
     data class FrecentGroup(
         override val name: String?,
         override val fullPath: String,
-        override val iterationCadencesCount: Int?
+        override val iterationCadences: List<IterationCadenceMarker>?
     ) : Namespace, NamespaceEntry {
         override fun isOfSameType(other: NamespaceEntry) = other is FrecentGroup
     }
@@ -15,7 +15,7 @@ sealed interface NamespaceEntry {
     data class Group(
         override val name: String?,
         override val fullPath: String,
-        override val iterationCadencesCount: Int?
+        override val iterationCadences: List<IterationCadenceMarker>?
     ) : Namespace, NamespaceEntry {
         override fun isOfSameType(other: NamespaceEntry) = other is Group
     }
@@ -23,7 +23,7 @@ sealed interface NamespaceEntry {
     data class User(
         override val name: String?,
         override val fullPath: String,
-        override val iterationCadencesCount: Int?
+        override val iterationCadences: List<IterationCadenceMarker>?
     ) : Namespace, NamespaceEntry {
         override fun isOfSameType(other: NamespaceEntry) = other is User
     }
@@ -31,7 +31,7 @@ sealed interface NamespaceEntry {
     data class SelectedSearch(
         override val name: String?,
         override val fullPath: String,
-        override val iterationCadencesCount: Int?
+        override val iterationCadences: List<IterationCadenceMarker>?
     ) : Namespace, NamespaceEntry {
         override fun isOfSameType(other: NamespaceEntry) = other is SelectedSearch
     }

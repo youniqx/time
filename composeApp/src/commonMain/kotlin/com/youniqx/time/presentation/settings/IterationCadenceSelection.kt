@@ -19,6 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import com.youniqx.time.domain.models.IterationCadence
+import com.youniqx.time.domain.models.IterationCadenceMarker
+import com.youniqx.time.domain.models.Namespace
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.gitlab.models.fragment.GroupWithIterationCadences
 import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
@@ -31,11 +33,9 @@ fun IterationCadenceSelection(
     onIterationCadenceChange: (iterationCadence: IterationCadence?) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-//    val iterationCadences = namespaces?.itemSnapshotList?.flatMap {
-//        it?.groupWithIterationCadences?.iterationCadences?.nodes?.filterNotNull()
-//            ?.map { iterationCadence -> iterationCadence to it.groupWithIterationCadences.fullPath }.orEmpty()
-//    }
-    val iterationCadences = emptyList<Pair<GroupWithIterationCadences.Node, String>>()
+    val iterationCadences = namespaces?.itemSnapshotList?.filterIsInstance<Namespace>()?.flatMap {
+        it.iterationCadences?.filterIsInstance<IterationCadenceMarker.Filled>().orEmpty()
+    }.orEmpty().toSet().toList()
     ExposedDropdownMenuBox(
         modifier = Modifier
             .padding(vertical = 8.dp)
@@ -50,7 +50,7 @@ fun IterationCadenceSelection(
             modifier = Modifier.fillMaxWidth()
                 .disableGlobalSearchIfFocused()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-            value = iterationCadences?.firstOrNull { it.first.id == iterationCadence?.id }?.first?.title.orEmpty(),
+            value = iterationCadences.firstOrNull { it.id == iterationCadence?.id }?.title.orEmpty(),
             onValueChange = {},
             readOnly = true,
             maxLines = 1,
@@ -63,14 +63,14 @@ fun IterationCadenceSelection(
             onDismissRequest = { expanded = false }
         ) {
             if (namespaces == null) CircularProgressIndicator()
-            iterationCadences?.forEach {
+            iterationCadences.forEach {
                 DropdownMenuItem(
-                    text = { Text(it.first.title.orEmpty()) },
+                    text = { Text(it.title) },
                     onClick = {
                         onIterationCadenceChange(
                              IterationCadence(
-                                namespaceFullPath = it.second,
-                                id = it.first.id.toString()
+                                namespaceFullPath = it.namespaceFullPath,
+                                id = it.id
                             )
                         )
                         expanded = false

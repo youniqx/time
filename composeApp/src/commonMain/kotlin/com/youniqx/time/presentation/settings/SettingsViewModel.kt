@@ -80,7 +80,7 @@ class SettingsViewModel(
                         NamespaceEntry.SelectedSearch(
                             name = selectedSearchNamespace.name,
                             fullPath = selectedSearchNamespace.fullPath,
-                            iterationCadencesCount = selectedSearchNamespace.iterationCadencesCount,
+                            iterationCadences = selectedSearchNamespace.iterationCadences,
                         )
                     ) else emptyList()
                 } else listOf(it)

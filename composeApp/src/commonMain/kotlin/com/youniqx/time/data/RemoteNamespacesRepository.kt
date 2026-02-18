@@ -6,6 +6,8 @@ import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.youniqx.time.domain.NamespacesRepository
+import com.youniqx.time.domain.models.IterationCadence
+import com.youniqx.time.domain.models.IterationCadenceMarker
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import dev.zacsweers.metro.AppScope
@@ -52,7 +54,17 @@ class NamespacesPagingSource(
                                 NamespaceEntry.FrecentGroup(
                                     name = group.name,
                                     fullPath = group.fullPath,
-                                    iterationCadencesCount = group.iterationCadences?.nodes?.size
+                                    iterationCadences = group.iterationCadences?.nodes?.map { iterationCadence ->
+                                        if (iterationCadence?.id != null) {
+                                            IterationCadenceMarker.Filled(
+                                                id = iterationCadence.id.toString(),
+                                                title = iterationCadence.title.orEmpty(),
+                                                namespaceFullPath = group.fullPath,
+                                            )
+                                        } else {
+                                            IterationCadenceMarker.PlaceHolder
+                                        }
+                                    }
                                 )
                             }
                         }.orEmpty()
@@ -62,7 +74,7 @@ class NamespacesPagingSource(
                             NamespaceEntry.User(
                                 name = it.name,
                                 fullPath = it.fullPath,
-                                iterationCadencesCount = null
+                                iterationCadences = null
                             )
                         )
                     }
@@ -72,7 +84,17 @@ class NamespacesPagingSource(
                                 NamespaceEntry.Group(
                                     name = group.name,
                                     fullPath = group.fullPath,
-                                    iterationCadencesCount = group.iterationCadences?.nodes?.size
+                                    iterationCadences = group.iterationCadences?.nodes?.map { iterationCadence ->
+                                        if (iterationCadence?.id != null) {
+                                            IterationCadenceMarker.Filled(
+                                                id = iterationCadence.id.toString(),
+                                                title = iterationCadence.title.orEmpty(),
+                                                namespaceFullPath = group.fullPath,
+                                            )
+                                        } else {
+                                            IterationCadenceMarker.PlaceHolder
+                                        }
+                                    }
                                 )
                             }
                         }.orEmpty()
