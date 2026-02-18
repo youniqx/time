@@ -28,6 +28,14 @@ sealed interface NamespaceEntry {
         override fun isOfSameType(other: NamespaceEntry) = other is User
     }
 
+    data class SelectedSearch(
+        override val name: String?,
+        override val fullPath: String,
+        override val iterationCadencesCount: Int?
+    ) : Namespace, NamespaceEntry {
+        override fun isOfSameType(other: NamespaceEntry) = other is SelectedSearch
+    }
+
     object Separator : NamespaceEntry {
         override fun isOfSameType(other: NamespaceEntry) = other is Separator
     }

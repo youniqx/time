@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
@@ -65,7 +66,6 @@ fun NamespaceSelection(
     label: @Composable (TextFieldLabelScope.() -> Unit)? = null,
     placeholder: @Composable (() -> Unit)? = { Text("Type to filter...") },
     supportingText: @Composable (() -> Unit)? = null,
-    additionalOptions: @Composable (() -> Unit)? = null,
 ) {
     ExposedDropdownMenuBox(
         modifier = Modifier
@@ -117,6 +117,7 @@ fun NamespaceSelection(
                 is LoadState.NotLoading -> {
                     namespaces.itemSnapshotList.forEach {
                         when (it) {
+                            is NamespaceEntry.SelectedSearch,
                             is NamespaceEntry.FrecentGroup,
                             is NamespaceEntry.Group,
                             is NamespaceEntry.User -> DropdownMenuItem(
@@ -129,6 +130,15 @@ fun NamespaceSelection(
                                 },
                                 trailingIcon = {
                                     when (it) {
+                                        is NamespaceEntry.SelectedSearch -> {
+                                            val text = "Set to search scope namespace"
+                                            SimpleTooltip(text = text) {
+                                                Icon(
+                                                    imageVector = Icons.Default.ContentCopy,
+                                                    contentDescription = text
+                                                )
+                                            }
+                                        }
                                         is NamespaceEntry.FrecentGroup -> SimpleTooltip(text = "frequently visited") {
                                             Icon(
                                                 imageVector = Icons.Default.KeyboardDoubleArrowUp,
