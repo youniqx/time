@@ -114,7 +114,7 @@ class SettingsViewModel(
         .distinctUntilChanged()
         .flatMapLatest { searchTerm ->
             Pager(
-                config = PagingConfig(pageSize = 3),
+                config = PagingConfig(pageSize = 10),
                 pagingSourceFactory = { namespacesRepository.search(search = searchTerm) }
             ).flow.cachedIn(viewModelScope)
         }
