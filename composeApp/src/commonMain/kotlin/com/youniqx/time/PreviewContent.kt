@@ -15,7 +15,8 @@ val emptyPageInfo = GroupWithIterationCadences.PageInfo(
     __typename = "",
     hasPreviousPage = false,
     hasNextPage = false,
-    endCursor = null
+    startCursor = null,
+    endCursor = null,
 )
 
 val previewNamespaces: NamespaceQuery.Data by lazy {
@@ -37,7 +38,8 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
                     __typename = "",
                     hasPreviousPage = true,
                     hasNextPage = true,
-                    endCursor = null
+                    startCursor = null,
+                    endCursor = null,
                 )
             )
         ),

@@ -1,0 +1,12 @@
+query IterationCadencesQuery(
+  $namespaceFullPath: ID = null,
+  $initial: Boolean! = true,
+  $iterationCadencesSearch: String = null,
+  $iterationCadencesBefore: String,
+  $iterationCadencesAfter: String,
+  $iterationCadencesFirst: Int,
+) {
+  group(fullPath: $namespaceFullPath) {
+    ...groupWithIterationCadences
+  }
+}

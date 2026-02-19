@@ -1,6 +1,5 @@
 package com.youniqx.time.presentation.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -11,7 +10,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowUp
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -41,6 +39,7 @@ import androidx.paging.compose.LazyPagingItems
 import com.youniqx.time.domain.models.Namespace
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.presentation.SimpleTooltip
+import com.youniqx.time.presentation.errors.ErrorDropdownMenuItem
 import com.youniqx.time.presentation.modifier.changeFocusOnTab
 import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
 import kotlinx.coroutines.flow.drop
@@ -110,7 +109,7 @@ fun NamespaceSelection(
         ) {
             when (namespaces?.loadState?.refresh) {
                 null,
-                is LoadState.Error -> Error(onClick = { namespaces?.retry() })
+                is LoadState.Error -> ErrorDropdownMenuItem(onClick = { namespaces?.retry() })
                 LoadState.Loading -> CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
@@ -160,7 +159,7 @@ fun NamespaceSelection(
                         }
                     }
                     when (val appendLoadingState = namespaces.loadState.append) {
-                        is LoadState.Error -> Error(onClick = { namespaces.retry() })
+                        is LoadState.Error -> ErrorDropdownMenuItem(onClick = { namespaces.retry() })
                         LoadState.Loading -> CircularProgressIndicator(
                             modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
@@ -179,23 +178,6 @@ fun NamespaceSelection(
             }
         }
     }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun Error(onClick: () -> Unit) {
-    DropdownMenuItem(
-        modifier = Modifier.background(color = MaterialTheme.colorScheme.errorContainer),
-        text = { Text("An error occurred", color = MaterialTheme.colorScheme.onErrorContainer) },
-        onClick = onClick,
-        trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.Refresh,
-                contentDescription = "Refresh",
-            )
-        },
-        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-    )
 }
 
 @Composable

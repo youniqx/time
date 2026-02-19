@@ -4,6 +4,10 @@ query NamespaceQuery(
   $before: String,
   $after: String,
   $first: Int,
+  $iterationCadencesSearch: String = null,
+  $iterationCadencesBefore: String = null,
+  $iterationCadencesAfter: String = null,
+  $iterationCadencesFirst: Int = null,
 ) {
   frecentGroups @include(if: $initial) {
     ...groupWithIterationCadences
@@ -38,7 +42,12 @@ fragment groupWithIterationCadences on Group {
   name
   archived
   fullPath
-  iterationCadences {
+  iterationCadences(
+    title: $iterationCadencesSearch,
+    first: $iterationCadencesFirst,
+    before: $iterationCadencesBefore,
+    after: $iterationCadencesAfter,
+  ) {
     nodes {
       title @include(if: $initial)
       id @include(if: $initial)
@@ -46,6 +55,7 @@ fragment groupWithIterationCadences on Group {
     pageInfo {
       hasPreviousPage
       hasNextPage
+      startCursor
       endCursor
     }
   }

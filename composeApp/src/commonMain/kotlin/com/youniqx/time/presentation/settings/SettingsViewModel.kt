@@ -10,13 +10,18 @@ import androidx.paging.LoadStates
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
+import androidx.paging.PagingSource
 import androidx.paging.cachedIn
+import androidx.paging.filter
 import androidx.paging.flatMap
+import androidx.paging.insertHeaderItem
 import androidx.paging.insertSeparators
+import com.youniqx.time.domain.IterationCadencesRepository
 import com.youniqx.time.domain.NamespacesRepository
 import com.youniqx.time.domain.SelectedNamespacesRepository
 import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.IterationCadence
+import com.youniqx.time.domain.models.IterationCadenceMarker
 import com.youniqx.time.domain.models.Namespace
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.domain.models.SelectedNamespaces
@@ -46,6 +51,7 @@ data class UiState(
     val settings: Settings,
     val namespaces: PagingData<NamespaceEntry>,
     val iterationCadenceNamespaces: PagingData<NamespaceEntry>,
+    val iterationCadences: PagingData<IterationCadenceMarker.Filled>,
     val selectedNamespaces: SelectedNamespaces,
 )
 
@@ -55,6 +61,7 @@ class SettingsViewModel(
     settingsRepository: SettingsRepository,
     private val namespacesRepository: NamespacesRepository,
     private val selectedNamespacesRepository: SelectedNamespacesRepository,
+    private val iterationCadencesRepository: IterationCadencesRepository,
 ) : ViewModel(),
     UpdateSettingsUseCase by settingsRepository,
     SaveSearchNamespaceUseCase,
@@ -64,12 +71,15 @@ class SettingsViewModel(
     private val initialSelectedNamespaces = selectedNamespacesRepository.selectedNamespaces.value
     private var namespaceSearchTerm = MutableStateFlow("")
     private var iterationCadenceNamespaceSearchTerm = MutableStateFlow("")
+    private var iterationCadenceSearchTerm = MutableStateFlow("")
     val uiState = combine(
-        namespaceSearchTerm.asPagingData(),
-        iterationCadenceNamespaceSearchTerm.asPagingData(),
+        namespaceSearchTerm.asPagingData(namespacesRepository::search),
+        iterationCadenceNamespaceSearchTerm.asPagingData(namespacesRepository::search),
+        iterationCadenceSearchTerm.asPagingData(iterationCadencesRepository::search),
         settingsRepository.settings.map { it.data },
         selectedNamespacesRepository.selectedNamespaces
-    ) { namespaceSearchPagingData, iterationCadenceNamespaceSearchPagingData, settings, selectedNamespaces ->
+    ) { namespaceSearchPagingData, iterationCadenceNamespaceSearchPagingData, iterationCadenceSearchPagingData,
+        settings, selectedNamespaces ->
         UiState(
             settings = settings,
             namespaces = namespaceSearchPagingData.insertSeparators(),
@@ -85,6 +95,7 @@ class SettingsViewModel(
                     ) else emptyList()
                 } else listOf(it)
             }.insertSeparators(),
+            iterationCadences = iterationCadenceSearchPagingData,
             selectedNamespaces = selectedNamespaces,
         )
     }.stateIn(
@@ -92,32 +103,24 @@ class SettingsViewModel(
             started = SharingStarted.WhileSubscribed(5.seconds),
             initialValue = UiState(
                 settings = initialSettings,
-                namespaces = PagingData.empty(
-                    sourceLoadStates = LoadStates(
-                        LoadState.Loading,
-                        NotLoading(endOfPaginationReached = false),
-                        NotLoading(endOfPaginationReached = false),
-                    )
-                ),
-                iterationCadenceNamespaces = PagingData.empty(
-                    sourceLoadStates = LoadStates(
-                        LoadState.Loading,
-                        NotLoading(endOfPaginationReached = false),
-                        NotLoading(endOfPaginationReached = false),
-                    )
-                ),
+                namespaces = emptyPagingData(),
+                iterationCadenceNamespaces = emptyPagingData(),
+                iterationCadences = emptyPagingData(),
                 selectedNamespaces = initialSelectedNamespaces
             )
     )
 
-    private fun Flow<String>.asPagingData(): Flow<PagingData<NamespaceEntry>> = debounce(timeoutMillis = 300)
-        .distinctUntilChanged()
-        .flatMapLatest { searchTerm ->
-            Pager(
-                config = PagingConfig(pageSize = 10),
-                pagingSourceFactory = { namespacesRepository.search(search = searchTerm) }
-            ).flow.cachedIn(viewModelScope)
-        }
+    private fun <Key : Any, Value : Any> Flow<Key>.asPagingData(
+        pagingSourceFactory: (searchTerm: Key) -> PagingSource<Key, Value>
+    ): Flow<PagingData<Value>> =
+        debounce(timeoutMillis = 300)
+            .distinctUntilChanged()
+            .flatMapLatest { searchTerm ->
+                Pager(
+                    config = PagingConfig(pageSize = 10),
+                    pagingSourceFactory = { pagingSourceFactory(searchTerm) }
+                ).flow.cachedIn(viewModelScope)
+            }
 
     fun searchNamespace(search: String) {
         namespaceSearchTerm.value = search
@@ -125,6 +128,10 @@ class SettingsViewModel(
 
     fun searchIterationCadenceNamespace(search: String) {
         iterationCadenceNamespaceSearchTerm.value = search
+    }
+
+    fun searchIterationCadence(search: String) {
+        iterationCadenceSearchTerm.value = search
     }
 
     override fun saveSearchNamespace(namespace: Namespace) {
@@ -140,6 +147,14 @@ class SettingsViewModel(
         }
     }
 }
+
+inline fun <reified T : Any> emptyPagingData() = PagingData.empty<T>(
+    sourceLoadStates = LoadStates(
+        LoadState.Loading,
+        NotLoading(endOfPaginationReached = false),
+        NotLoading(endOfPaginationReached = false),
+    )
+)
 
 private fun PagingData<NamespaceEntry>.insertSeparators(): PagingData<NamespaceEntry> =
     insertSeparators { entry, entry1 ->
