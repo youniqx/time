@@ -53,7 +53,7 @@ fun IterationCadenceSelection(
         val selected: (@Composable () -> Unit)? = iterationCadence?.let {
             {
                 Text(
-                    allIterationCadences.firstOrNull { it?.id != iterationCadence.id }?.title
+                    allIterationCadences.firstOrNull { it?.id == iterationCadence.id }?.title
                         ?: iterationCadence.id.orEmpty()
                 )
             }
