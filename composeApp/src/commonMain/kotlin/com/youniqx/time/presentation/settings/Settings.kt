@@ -31,7 +31,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,10 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
-import androidx.paging.LoadState
 import androidx.paging.PagingData
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.domain.models.IterationCadenceMarker
@@ -64,9 +60,7 @@ import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.serialization.Serializable
-import kotlin.let
 
 @Serializable
 object SettingsRoute: NavKey
@@ -287,56 +281,21 @@ fun SettingsScreen(
                 }
             }
         )
-        val namespaceSelectionState = rememberNamespaceSelectionState()
-        LaunchedEffect(namespaceSelectionState.search) {
-            namespaceSearcher(namespaceSelectionState.search)
-        }
-        val namespaceLazyPagingItems = namespaces.collectAsLazyPagingItems()
-        val iterationCadencesNamespaceLazyPagingItems = iterationCadencesNamespaces.collectAsLazyPagingItems()
-        NamespaceSelection(
-            selected = selectedNamespaces.search?.let {
-                { NamespaceItem(fullPath = it.fullPath, name = it.name) }
-            },
-            namespaces = namespaceLazyPagingItems,
-            onNamespaceChange = onSearchNamespaceChange,
-            state = namespaceSelectionState,
-            label = { Text("Namespace") },
-            supportingText = { Text("Search scope (decedent namespaces included).") },
-        )
-        val hasAllResults = namespaceLazyPagingItems.hasAllResults()
-        if (namespaceSelectionState.search.isEmpty() && !hasAllResults) {
-            SeparateIterationCadenceNamespaceSelection(
-                selectedNamespaces = selectedNamespaces,
-                namespaces = iterationCadencesNamespaceLazyPagingItems,
-                namespaceSearcher = iterationCadenceNamespaceSearcher,
-                onNamespaceChange = onIterationCadenceNamespaceChange,
-            )
-        }
-        IterationCadenceSelection(
-            iterationCadence = settings.iterationCadence,
-            iterationCadences = iterationCadences.collectAsLazyPagingItems(),
-            additionalItems = namespaceLazyPagingItems.mapToIterationCadences() +
-                    iterationCadencesNamespaceLazyPagingItems.mapToIterationCadences(),
-            iterationCadenceSearcher = iterationCadenceSearcher,
-            onIterationCadenceChange = updater::setIterationCadence,
+        NamespacesAndIterationCadenceInputs(
+            selectedNamespaces,
+            namespaces,
+            namespaceSearcher,
+            onSearchNamespaceChange,
+            iterationCadencesNamespaces,
+            iterationCadenceNamespaceSearcher,
+            onIterationCadenceNamespaceChange,
+            settings.iterationCadence,
+            iterationCadences,
+            iterationCadenceSearcher,
+            updater
         )
     }
 }
-
-@Composable
-private fun LazyPagingItems<*>.hasAllResults() = loadState.run {
-    prepend is LoadState.NotLoading &&
-            prepend.endOfPaginationReached &&
-            append is LoadState.NotLoading &&
-            append.endOfPaginationReached
-}
-
-@Composable
-private fun LazyPagingItems<NamespaceEntry>.mapToIterationCadences() =
-    takeIf { it.hasAllResults() }?.itemSnapshotList?.flatMap {
-        (it as? Namespace)?.iterationCadences?.filterIsInstance<IterationCadenceMarker.Filled>()
-            .orEmpty()
-    }.orEmpty()
 
 @Preview(showBackground = true)
 @Composable
@@ -383,9 +342,4 @@ fun SettingsPreview() {
             iterationCadenceSearcher = {},
         )
     }
-}
-
-@Composable
-fun <T : Any> PagingData<T>.collectAsLazyPagingItems(): LazyPagingItems<T> = let {
-    remember(it) { flowOf(it) }.collectAsLazyPagingItems()
 }
