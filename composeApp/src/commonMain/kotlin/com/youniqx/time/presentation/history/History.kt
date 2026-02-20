@@ -70,9 +70,15 @@ import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.DatePeriod
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.plus
+import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.ExperimentalTime
 
 @Serializable
@@ -143,13 +149,19 @@ fun HistoryScreen(
 
     // Filter timelogs based on selected range and offset
     val filteredTimelogs = remember(timelogs, selectedRange, periodOffset) {
+        val timeZone = TimeZone.currentSystemDefault()
         val now = Clock.System.now()
+        val endOfDay = now
+            .toLocalDateTime(timeZone).date
+            .plus(DatePeriod(days = 1))
+            .atStartOfDayIn(timeZone)
+            .minus(1.nanoseconds)
         val periodDays = selectedRange.daysBack
         val startOffset = periodOffset * periodDays
         val endOffset = (periodOffset + 1) * periodDays
 
-        val periodStart = now - endOffset.days
-        val periodEnd = now - startOffset.days
+        val periodStart = endOfDay - endOffset.days
+        val periodEnd = endOfDay - startOffset.days
 
         timelogs.filter { entry ->
             entry.spentAt in periodStart..<periodEnd
