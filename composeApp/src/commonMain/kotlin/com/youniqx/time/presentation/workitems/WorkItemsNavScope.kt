@@ -21,9 +21,8 @@ class WorkItemsNavScope {
     @IntoSet
     fun provideNavScope(): NavScope =
         {
-
             entry<WorkItemsRoute>(
-                metadata = SupportingPaneSceneStrategy.mainPane()
+                metadata = SupportingPaneSceneStrategy.mainPane(),
             ) {
                 val navigator = LocalNavigator.current
                 WorkItems(
@@ -33,12 +32,12 @@ class WorkItemsNavScope {
                     },
                     showSwitchTracking = { targetId: String, targetTitle: String ->
                         navigator.add(SwitchTrackingRoute(targetId = targetId, targetTitle = targetTitle))
-                    }
+                    },
                 )
             }
 
             entry<SwitchTrackingRoute>(
-                metadata = DialogSceneStrategy.dialog()
+                metadata = DialogSceneStrategy.dialog(),
             ) {
                 val navigator = LocalNavigator.current
                 val resultStore = LocalResultStore.current
@@ -51,9 +50,8 @@ class WorkItemsNavScope {
                     },
                     onDismiss = {
                         navigator.onFinished(route = it)
-                    }
+                    },
                 )
             }
-
         }
 }

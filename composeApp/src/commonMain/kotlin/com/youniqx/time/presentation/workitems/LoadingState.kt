@@ -33,44 +33,49 @@ import com.youniqx.time.presentation.theme.LocalSpacing
 fun ShimmerWorkItemCard(modifier: Modifier = Modifier) {
     val spacing = LocalSpacing.current
 
-    val shimmerColors = listOf(
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
-    )
+    val shimmerColors =
+        listOf(
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        )
 
     val transition = rememberInfiniteTransition(label = "shimmer")
     val translateAnim by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "shimmerTranslate"
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(1200, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+        label = "shimmerTranslate",
     )
 
-    val brush = Brush.linearGradient(
-        colors = shimmerColors,
-        start = Offset(translateAnim - 200, translateAnim - 200),
-        end = Offset(translateAnim, translateAnim)
-    )
+    val brush =
+        Brush.linearGradient(
+            colors = shimmerColors,
+            start = Offset(translateAnim - 200, translateAnim - 200),
+            end = Offset(translateAnim, translateAnim),
+        )
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = CardDefaults.cardColors().containerColor.copy(alpha = 0.7f)
-        ),
-        shape = RoundedCornerShape(spacing.cardRadius)
+        colors =
+            CardDefaults.cardColors(
+                containerColor = CardDefaults.cardColors().containerColor.copy(alpha = 0.7f),
+            ),
+        shape = RoundedCornerShape(spacing.cardRadius),
     ) {
         Column(modifier = Modifier.padding(spacing.cardPadding)) {
             // Title placeholder
             Box(
-                modifier = Modifier
-                    .fillMaxWidth(0.7f)
-                    .height(20.dp)
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(brush)
+                modifier =
+                    Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(20.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(brush),
             )
 
             Spacer(modifier = Modifier.height(spacing.md))
@@ -79,11 +84,12 @@ fun ShimmerWorkItemCard(modifier: Modifier = Modifier) {
             Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                 repeat(2) {
                     Box(
-                        modifier = Modifier
-                            .width(60.dp)
-                            .height(24.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(brush)
+                        modifier =
+                            Modifier
+                                .width(60.dp)
+                                .height(24.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(brush),
                     )
                 }
             }
@@ -93,21 +99,23 @@ fun ShimmerWorkItemCard(modifier: Modifier = Modifier) {
             // Bottom row placeholder
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Box(
-                    modifier = Modifier
-                        .width(80.dp)
-                        .height(16.dp)
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(brush)
+                    modifier =
+                        Modifier
+                            .width(80.dp)
+                            .height(16.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(brush),
                 )
                 Box(
-                    modifier = Modifier
-                        .width(32.dp)
-                        .height(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(brush)
+                    modifier =
+                        Modifier
+                            .width(32.dp)
+                            .height(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(brush),
                 )
             }
         }
@@ -117,13 +125,13 @@ fun ShimmerWorkItemCard(modifier: Modifier = Modifier) {
 @Composable
 fun LoadingWorkItemList(
     count: Int = 5,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
 
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(spacing.sm)
+        verticalArrangement = Arrangement.spacedBy(spacing.sm),
     ) {
         repeat(count) {
             ShimmerWorkItemCard()

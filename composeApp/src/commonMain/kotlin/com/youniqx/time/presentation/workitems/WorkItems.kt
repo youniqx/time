@@ -88,8 +88,8 @@ object WorkItemsRoute : NavKey
 
 @Serializable
 data class ScrollToWorkItem(
-    val workItemId: String
-): ResultStoreValue
+    val workItemId: String,
+) : ResultStoreValue
 
 @Serializable
 object DisableGlobalSearch : ResultStoreValue
@@ -123,7 +123,9 @@ fun WorkItems(
 }
 
 enum class Section {
-    Pinned, Open, Closed
+    Pinned,
+    Open,
+    Closed,
 }
 
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -154,22 +156,28 @@ fun WorkItemsScreen(
         WindowInsets.systemBarsForVisualComponents
             .exclude(consumedWindowInsets)
             .asPaddingValues()
-    val extraPadding = if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
-            WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND
-        )
-    ) PaddingValues(vertical = 20.dp) else PaddingValues()
+    val extraPadding =
+        if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
+                WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
+            )
+        ) {
+            PaddingValues(vertical = 20.dp)
+        } else {
+            PaddingValues()
+        }
 
     val filteredWorkItems = rememberFilteredWorkItems(workItems, search, settings, activeFilters, currentUserId)
 
-    val groupedWorkItems = remember(filteredWorkItems, settings.pinnedWorkItems) {
-        filteredWorkItems.groupBy { workItem ->
-            when {
-                workItem.id in settings.pinnedWorkItems -> Section.Pinned
-                workItem.state == WorkItemState.CLOSED -> Section.Closed
-                else -> Section.Open
+    val groupedWorkItems =
+        remember(filteredWorkItems, settings.pinnedWorkItems) {
+            filteredWorkItems.groupBy { workItem ->
+                when {
+                    workItem.id in settings.pinnedWorkItems -> Section.Pinned
+                    workItem.state == WorkItemState.CLOSED -> Section.Closed
+                    else -> Section.Open
+                }
             }
         }
-    }
 
     val lazyListState = rememberLazyListState()
 
@@ -184,9 +192,10 @@ fun WorkItemsScreen(
         Section.entries.forEach {
             scrollToIndex++ // offset for section header
             val grouped = groupedWorkItems[it].orEmpty()
-            val indexInSection = grouped.indexOfFirst {
-                workItem -> workItem.id == scrollToWorkItem.workItemId
-            }
+            val indexInSection =
+                grouped.indexOfFirst { workItem ->
+                    workItem.id == scrollToWorkItem.workItemId
+                }
             if (indexInSection != -1) {
                 scrollToIndex += indexInSection
                 try {
@@ -215,9 +224,10 @@ fun WorkItemsScreen(
             isRefreshing = true
             searcher.search(search, setSyncing = false)
         },
-        modifier = Modifier.onConsumedWindowInsetsChanged {
-            consumedWindowInsets.insets = it
-        }
+        modifier =
+            Modifier.onConsumedWindowInsetsChanged {
+                consumedWindowInsets.insets = it
+            },
     ) {
         LazyColumn(
             state = lazyListState,
@@ -225,9 +235,9 @@ fun WorkItemsScreen(
         ) {
             stickyHeader(listState = lazyListState) { _, _ ->
                 Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-
+                    modifier =
+                        Modifier
+                            .background(MaterialTheme.colorScheme.background),
                 ) {
                     Search(
                         search = search,
@@ -242,23 +252,27 @@ fun WorkItemsScreen(
                         },
                         show = true, // (alwaysShowSearch || search.isNotEmpty()) && !lazyListState.canScrollBackward,
                         canFocus = resultStore.getResultState<DisableGlobalSearch?>() == null,
-                        modifier = Modifier
-                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                            .fillMaxWidth()
-                            .padding(horizontal = 12.dp)
-                            .then(LocalSearchFocusRequester.current?.let {
-                                Modifier.focusRequester(it)
-                            } ?: Modifier),
-                        onPress = { resultStore.removeResult<DisableGlobalSearch>() }
+                        modifier =
+                            Modifier
+                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp)
+                                .then(
+                                    LocalSearchFocusRequester.current?.let {
+                                        Modifier.focusRequester(it)
+                                    } ?: Modifier,
+                                ),
+                        onPress = { resultStore.removeResult<DisableGlobalSearch>() },
                     )
                     QuickFilters(
                         activeFilters = activeFilters,
                         onFilterToggle = { filter ->
-                            activeFilters = if (filter in activeFilters) {
-                                activeFilters - filter
-                            } else {
-                                activeFilters + filter
-                            }
+                            activeFilters =
+                                if (filter in activeFilters) {
+                                    activeFilters - filter
+                                } else {
+                                    activeFilters + filter
+                                }
                         },
                     )
                 }
@@ -269,32 +283,36 @@ fun WorkItemsScreen(
                     visible = showDaySummary || LocalSharedTransitionScope.current?.isTransitionActive == true,
                     enter = fadeIn() + scaleIn(),
                     exit = fadeOut() + scaleOut(),
-                    modifier = Modifier.animateItem()
+                    modifier = Modifier.animateItem(),
                 ) {
                     HistorySummaryCard(
-                        modifier = Modifier
-                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                            .padding(horizontal = 12.dp)
-                            .padding(bottom = 4.dp)
-                            .clickable(
-                                enabled = showDaySummary,
-                                onClickLabel = "Show history",
-                                onClick = {
-                                    showHistory()
-                                }),
+                        modifier =
+                            Modifier
+                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                .padding(horizontal = 12.dp)
+                                .padding(bottom = 4.dp)
+                                .clickable(
+                                    enabled = showDaySummary,
+                                    onClickLabel = "Show history",
+                                    onClick = {
+                                        showHistory()
+                                    },
+                                ),
                         visible = showDaySummary,
                         heading = { Text(text = "Today") },
                         openTracking = settings.openTracking,
-                        timelogs = remember(settings.openTracking.refreshKey) {
-                            listOfNotNull(settings.openTracking?.toTimelogEntry())
-                        } + remember(timelogs) {
-                            val now = Clock.System.now()
-                            val timeZone = TimeZone.currentSystemDefault()
-                            val startOfDay = now.toLocalDateTime(timeZone).date.atStartOfDayIn(timeZone)
-                            timelogs.filter {
-                                it.spentAt in startOfDay..now
-                            }
-                        }
+                        timelogs =
+                            remember(settings.openTracking.refreshKey) {
+                                listOfNotNull(settings.openTracking?.toTimelogEntry())
+                            } +
+                                remember(timelogs) {
+                                    val now = Clock.System.now()
+                                    val timeZone = TimeZone.currentSystemDefault()
+                                    val startOfDay = now.toLocalDateTime(timeZone).date.atStartOfDayIn(timeZone)
+                                    timelogs.filter {
+                                        it.spentAt in startOfDay..now
+                                    }
+                                },
                     )
                 }
             }
@@ -306,15 +324,16 @@ fun WorkItemsScreen(
                 val togglePinned = { settingsUpdater.togglePinWorkItem(id.toString()) }
                 var openTracking by rememberSyncedSource(
                     from = settings.openTracking,
-                    save = settingsUpdater::setOpenTracking
+                    save = settingsUpdater::setOpenTracking,
                 )
 
                 fun startTracking() {
-                    openTracking = OpenTracking(
-                        workItemId = id.toString(),
-                        workItemTitle = title,
-                        timeOfOpen = Clock.System.now()
-                    )
+                    openTracking =
+                        OpenTracking(
+                            workItemId = id.toString(),
+                            workItemTitle = title,
+                            timeOfOpen = Clock.System.now(),
+                        )
                 }
 
                 val coroutineScope = rememberCoroutineScope()
@@ -330,7 +349,7 @@ fun WorkItemsScreen(
                             } else {
                                 showSwitchTracking(
                                     id.toString(),
-                                    title
+                                    title,
                                 )
                             }
                         },
@@ -354,16 +373,16 @@ fun WorkItemsScreen(
                     )
                     AnimatedVisibility(visible = !commitTimeTrackingErrors.isNullOrEmpty()) {
                         Column(
-                            modifier = Modifier
-                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                                .fillMaxWidth()
-                                .padding(horizontal = 12.dp)
-                                .padding(vertical = 8.dp)
-                                .background(
-                                    color = MaterialTheme.colorScheme.errorContainer,
-                                    shape = MaterialTheme.shapes.medium
-                                )
-                                .padding(8.dp)
+                            modifier =
+                                Modifier
+                                    .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 12.dp)
+                                    .padding(vertical = 8.dp)
+                                    .background(
+                                        color = MaterialTheme.colorScheme.errorContainer,
+                                        shape = MaterialTheme.shapes.medium,
+                                    ).padding(8.dp),
                         ) {
                             commitTimeTrackingErrors?.forEach {
                                 Text(text = it, color = MaterialTheme.colorScheme.error)
@@ -380,29 +399,31 @@ fun WorkItemsScreen(
                     stickyHeader(listState = lazyListState) { _, isSticky ->
                         val corner = if (isSticky) 50 else 0
                         Surface(
-                            modifier = Modifier
-                                .then(if (isSticky) Modifier else Modifier.fillMaxWidth())
-                                .clip(RoundedCornerShape(topEndPercent = corner, bottomEndPercent = corner))
-                                .clickable {
-                                    if (open) openSections -= section else openSections += section
-                                },
+                            modifier =
+                                Modifier
+                                    .then(if (isSticky) Modifier else Modifier.fillMaxWidth())
+                                    .clip(RoundedCornerShape(topEndPercent = corner, bottomEndPercent = corner))
+                                    .clickable {
+                                        if (open) openSections -= section else openSections += section
+                                    },
                             color = if (isSticky) MaterialTheme.colorScheme.surfaceContainer else Transparent,
-                            shadowElevation = if (isSticky) 5.dp else 0.dp
+                            shadowElevation = if (isSticky) 5.dp else 0.dp,
                         ) {
                             Section(
                                 title = { Text(section.name) },
                                 open = open,
-                                count = sectionWorkItems.size
+                                count = sectionWorkItems.size,
                             )
                         }
                     }
 
-
-                    if (open) items(
-                        sectionWorkItems,
-                        key = { workItem -> workItem.id }
-                    ) { sectionWorkItem ->
-                        sectionWorkItem(modifier = Modifier.animateItem())
+                    if (open) {
+                        items(
+                            sectionWorkItems,
+                            key = { workItem -> workItem.id },
+                        ) { sectionWorkItem ->
+                            sectionWorkItem(modifier = Modifier.animateItem())
+                        }
                     }
                 }
             }
@@ -414,9 +435,10 @@ fun WorkItemsScreen(
                 item {
                     LoadingWorkItemList(
                         count = 5,
-                        modifier = Modifier
-                            .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
-                            .padding(horizontal = 12.dp)
+                        modifier =
+                            Modifier
+                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                                .padding(horizontal = 12.dp),
                     )
                 }
             }
@@ -426,25 +448,29 @@ fun WorkItemsScreen(
                 item {
                     if (search.isNotEmpty()) {
                         NoSearchResultsEmptyState(
-                            modifier = Modifier
-                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                            modifier =
+                                Modifier
+                                    .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp),
                         )
                     } else {
                         NoWorkItemsEmptyState(
-                            modifier = Modifier
-                                .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp)
+                            modifier =
+                                Modifier
+                                    .adaptivePadding(minWidth = 500.dp, horizontalPadding = 40.dp),
                         )
                     }
                 }
             }
 
             // Small loading indicator when refreshing with existing data
-            if (loading && filteredWorkItems.isNotEmpty()) item {
-                Box(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            if (loading && filteredWorkItems.isNotEmpty()) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                    }
                 }
             }
         }
@@ -457,13 +483,14 @@ private fun rememberFilteredWorkItems(
     search: String,
     settings: Settings,
     activeFilters: Set<QuickFilter>,
-    currentUserId: String?
+    currentUserId: String?,
 ): List<BareWorkItem> {
     val openTrackingWorkItemId = settings.openTracking?.workItemId
     return remember(workItems, search, openTrackingWorkItemId, activeFilters, currentUserId) {
         workItems.orEmpty().filter { workItem ->
             // Text search filter
-            val matchesSearch = search.isEmpty() ||
+            val matchesSearch =
+                search.isEmpty() ||
                     workItem.title.contains(search, ignoreCase = true) ||
                     workItem.id.toString().contains(search, ignoreCase = true) ||
                     workItem.id == openTrackingWorkItemId ||
@@ -471,25 +498,40 @@ private fun rememberFilteredWorkItems(
                     workItem.webUrl.orEmpty().contains(search, ignoreCase = true) ||
                     workItem.assignees?.nodes.orEmpty().filterNotNull().any {
                         it.name.contains(search, ignoreCase = true) ||
-                                it.username.contains(search, ignoreCase = true)
+                            it.username.contains(search, ignoreCase = true)
                     } ||
                     workItem.labels?.nodes.orEmpty().filterNotNull().any {
                         it.title.contains(search, ignoreCase = true)
                     }
 
             // Quick filters
-            val matchesQuickFilters = activeFilters.isEmpty() || activeFilters.all { filter ->
-                when (filter) {
-                    QuickFilter.Assigend -> workItem.assignees?.nodes.orEmpty()
-                        .filterNotNull().any { it.id == currentUserId }
+            val matchesQuickFilters =
+                activeFilters.isEmpty() ||
+                    activeFilters.all { filter ->
+                        when (filter) {
+                            QuickFilter.Assigend -> {
+                                workItem.assignees
+                                    ?.nodes
+                                    .orEmpty()
+                                    .filterNotNull()
+                                    .any { it.id == currentUserId }
+                            }
 
-                    QuickFilter.HasTimeLogged -> workItem.timelogs.isNotEmpty()
-                    QuickFilter.Pinned -> workItem.id in settings.pinnedWorkItems
-                    QuickFilter.RecentlyTracked -> workItem.timelogs.any {
-                        it.user.id == currentUserId
+                            QuickFilter.HasTimeLogged -> {
+                                workItem.timelogs.isNotEmpty()
+                            }
+
+                            QuickFilter.Pinned -> {
+                                workItem.id in settings.pinnedWorkItems
+                            }
+
+                            QuickFilter.RecentlyTracked -> {
+                                workItem.timelogs.any {
+                                    it.user.id == currentUserId
+                                }
+                            }
+                        }
                     }
-                }
-            }
 
             matchesSearch && matchesQuickFilters
         }

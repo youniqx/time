@@ -21,9 +21,10 @@ fun TokenInput(
     OutlinedTextField(
         value = token.orEmpty(),
         onValueChange = onTokenChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .changeFocusOnTab(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .changeFocusOnTab(),
         visualTransformation = PasswordVisualTransformation(),
         label = { Text("GitLab Token") },
         supportingText = { Text("Needs API read & write access.") },

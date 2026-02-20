@@ -8,6 +8,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.flowOf
 
 @Composable
-fun <T : Any> PagingData<T>.collectAsLazyPagingItems(): LazyPagingItems<T> = let {
-    remember(it) { flowOf(it) }.collectAsLazyPagingItems()
-}
+fun <T : Any> PagingData<T>.collectAsLazyPagingItems(): LazyPagingItems<T> =
+    let {
+        remember(it) { flowOf(it) }.collectAsLazyPagingItems()
+    }

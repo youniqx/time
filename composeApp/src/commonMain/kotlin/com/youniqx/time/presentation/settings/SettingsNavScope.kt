@@ -18,13 +18,11 @@ class SettingsNavScope {
     @IntoSet
     fun provideNavScope(): NavScope =
         {
-
             entry<SettingsRoute>(
-                metadata = SupportingPaneSceneStrategy.extraPane()
+                metadata = SupportingPaneSceneStrategy.extraPane(),
             ) {
                 val navigator = LocalNavigator.current
                 Settings(onBack = { navigator.removeLast(route = it) })
             }
-
         }
 }

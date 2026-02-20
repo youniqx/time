@@ -39,22 +39,25 @@ class MainActivity(
         setContent {
             CompositionLocalProvider(LocalMetroViewModelFactory provides metroVmf) {
                 val sourceAwareSettings by settingsRepository.settings.collectAsStateWithLifecycle()
-                val isDarkTheme = sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
-                    ?: isSystemInDarkTheme()
+                val isDarkTheme =
+                    sourceAwareSettings.dataIfNotFrom(excludedSource = DataSource.Default)?.darkTheme
+                        ?: isSystemInDarkTheme()
 
                 // Update status bar icons based on theme
                 DisposableEffect(isDarkTheme) {
                     enableEdgeToEdge(
-                        statusBarStyle = if (isDarkTheme) {
-                            SystemBarStyle.dark(Color.Transparent.toArgb())
-                        } else {
-                            SystemBarStyle.light(Color.Transparent.toArgb(), Color.Black.toArgb())
-                        },
-                        navigationBarStyle = if (isDarkTheme) {
-                            SystemBarStyle.dark(Color.Transparent.toArgb())
-                        } else {
-                            SystemBarStyle.light(Color.Transparent.toArgb(), Color.Black.toArgb())
-                        }
+                        statusBarStyle =
+                            if (isDarkTheme) {
+                                SystemBarStyle.dark(Color.Transparent.toArgb())
+                            } else {
+                                SystemBarStyle.light(Color.Transparent.toArgb(), Color.Black.toArgb())
+                            },
+                        navigationBarStyle =
+                            if (isDarkTheme) {
+                                SystemBarStyle.dark(Color.Transparent.toArgb())
+                            } else {
+                                SystemBarStyle.light(Color.Transparent.toArgb(), Color.Black.toArgb())
+                            },
                     )
                     onDispose {}
                 }

@@ -11,13 +11,16 @@ import androidx.compose.runtime.Composable
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SimpleTooltip(text: String, content: @Composable () -> Unit) {
+fun SimpleTooltip(
+    text: String,
+    content: @Composable () -> Unit,
+) {
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
         tooltip = {
             PlainTooltip { Text(text) }
         },
         state = rememberTooltipState(),
-        content = content
+        content = content,
     )
 }

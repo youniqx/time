@@ -6,12 +6,13 @@ import com.youniqx.time.domain.models.SourceAware
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import kotlinx.coroutines.flow.StateFlow
 
-interface SettingsRepository: UpdateSettingsUseCase {
+interface SettingsRepository : UpdateSettingsUseCase {
     val settings: StateFlow<SourceAware<Settings>>
 }
 
 val SourceAware<Settings>.selectedNamespacesFullPaths
-    get() = SelectedNamespacesFullPaths(
-        search = data.namespaceFullPath,
-        iterationCadence = data.iterationCadence?.namespaceFullPath
-    )
+    get() =
+        SelectedNamespacesFullPaths(
+            search = data.namespaceFullPath,
+            iterationCadence = data.iterationCadence?.namespaceFullPath,
+        )

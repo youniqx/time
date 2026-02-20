@@ -26,9 +26,8 @@ import kotlin.time.Duration.Companion.seconds
 class CommitTimeTrackingRepository(
     private val apolloClientFlow: Flow<ApolloClient?>,
     private val settingsRepository: SettingsRepository,
-    dispatchers: IDispatchers
+    dispatchers: IDispatchers,
 ) : CommitTimeTrackingUseCase {
-
     private var job: Job? = null
     private val scope = CoroutineScope(dispatchers.Default)
 
@@ -37,75 +36,84 @@ class CommitTimeTrackingRepository(
         val namespaceFullPath = settings.namespaceFullPath ?: return null
         if (job?.isActive == true) return null
         var errors: List<String>? = null
-        job = scope.launch {
-            val apolloClient = apolloClientFlow.firstOrNull()
-            if (apolloClient == null) {
-                errors = listOf("Please check your settings.")
-                return@launch
-            }
-            errors = null
-            settings.openTracking?.let { openTracking ->
-                suspend fun manualRefresh() {
-                    // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
-                    val success = "Saved successfully!"
-                    val ignoredWarning =
-                        "Only refreshing failed (will be ignored)!"
-                    val manualRefreshResult =
-                        apolloClient.query(
-                            RefreshWorkItemsQuery.Builder()
-                                .namespaceFullPath(namespaceFullPath)
-                                .ids(listOf(openTracking.workItemId)).build()
-                        ).execute()
-                    if (manualRefreshResult.exception != null) {
-                        errors =
-                            listOf(
-                                success,
-                                ignoredWarning,
-                                manualRefreshResult.exception?.message.orEmpty()
-                            )
-                        delay(4.seconds)
-                        errors = null
-                    } else if (manualRefreshResult.hasErrors()) {
-                        errors =
-                            listOf(success, ignoredWarning) +
-                                    manualRefreshResult.errors
-                                        ?.map { it.message }.orEmpty()
-                        delay(4.seconds)
-                        errors = null
-                    }
-                    settingsRepository.setOpenTracking(null)
+        job =
+            scope.launch {
+                val apolloClient = apolloClientFlow.firstOrNull()
+                if (apolloClient == null) {
+                    errors = listOf("Please check your settings.")
+                    return@launch
                 }
-
-                val result = apolloClient.mutation(
-                    TimelogCreateMutation(
-                        workItemId = listOf(openTracking.workItemId),
-                        input =
-                            TimelogCreateInput.Builder()
-                                .issuableId(openTracking.workItemId)
-                                .summary(openTracking.summary.orEmpty())
-                                .timeSpent(openTracking.currentTimeSpentString)
-                                .build()
-                    )
-                ).execute()
-
-                fun failedBecauseOfEpic() =
-                    result.errors?.let { errors ->
-                        errors.isNotEmpty() && errors.all {
-                            it.message == "Cannot return null for non-nullable field Timelog.project"
+                errors = null
+                settings.openTracking?.let { openTracking ->
+                    suspend fun manualRefresh() {
+                        // https://gitlab.com/gitlab-org/gitlab/-/issues/584627
+                        val success = "Saved successfully!"
+                        val ignoredWarning =
+                            "Only refreshing failed (will be ignored)!"
+                        val manualRefreshResult =
+                            apolloClient
+                                .query(
+                                    RefreshWorkItemsQuery
+                                        .Builder()
+                                        .namespaceFullPath(namespaceFullPath)
+                                        .ids(listOf(openTracking.workItemId))
+                                        .build(),
+                                ).execute()
+                        if (manualRefreshResult.exception != null) {
+                            errors =
+                                listOf(
+                                    success,
+                                    ignoredWarning,
+                                    manualRefreshResult.exception?.message.orEmpty(),
+                                )
+                            delay(4.seconds)
+                            errors = null
+                        } else if (manualRefreshResult.hasErrors()) {
+                            errors =
+                                listOf(success, ignoredWarning) +
+                                manualRefreshResult.errors
+                                    ?.map { it.message }
+                                    .orEmpty()
+                            delay(4.seconds)
+                            errors = null
                         }
-                    } == true
-                if (result.exception != null) {
-                    errors =
-                        listOf(result.exception?.message.orEmpty())
-                } else if (failedBecauseOfEpic()) {
-                    manualRefresh()
-                } else if (result.hasErrors()) {
-                    errors = result.errors?.map { it.message }
-                } else {
-                    settingsRepository.setOpenTracking(null)
+                        settingsRepository.setOpenTracking(null)
+                    }
+
+                    val result =
+                        apolloClient
+                            .mutation(
+                                TimelogCreateMutation(
+                                    workItemId = listOf(openTracking.workItemId),
+                                    input =
+                                        TimelogCreateInput
+                                            .Builder()
+                                            .issuableId(openTracking.workItemId)
+                                            .summary(openTracking.summary.orEmpty())
+                                            .timeSpent(openTracking.currentTimeSpentString)
+                                            .build(),
+                                ),
+                            ).execute()
+
+                    fun failedBecauseOfEpic() =
+                        result.errors?.let { errors ->
+                            errors.isNotEmpty() &&
+                                errors.all {
+                                    it.message == "Cannot return null for non-nullable field Timelog.project"
+                                }
+                        } == true
+                    if (result.exception != null) {
+                        errors =
+                            listOf(result.exception?.message.orEmpty())
+                    } else if (failedBecauseOfEpic()) {
+                        manualRefresh()
+                    } else if (result.hasErrors()) {
+                        errors = result.errors?.map { it.message }
+                    } else {
+                        settingsRepository.setOpenTracking(null)
+                    }
                 }
             }
-        }
         job?.join()
         return errors
     }

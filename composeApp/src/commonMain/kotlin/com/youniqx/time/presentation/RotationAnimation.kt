@@ -14,7 +14,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 
 @Composable
-fun rememberRotationAnimation(enabled: Boolean, duration: Int = 1_000): RotationAnimationState {
+fun rememberRotationAnimation(
+    enabled: Boolean,
+    duration: Int = 1_000,
+): RotationAnimationState {
     val coroutineScope = rememberCoroutineScope()
     val state = remember { RotationAnimationState(coroutineScope = coroutineScope, duration = duration) }
     LaunchedEffect(enabled) {
@@ -28,9 +31,8 @@ fun rememberRotationAnimation(enabled: Boolean, duration: Int = 1_000): Rotation
 // Retrieved 2026-01-20, License - CC BY-SA 4.0
 class RotationAnimationState(
     val coroutineScope: CoroutineScope,
-    val duration: Int
-): State<Float> {
-
+    val duration: Int,
+) : State<Float> {
     override val value: Float
         get() = animatable.value
 
@@ -40,17 +42,18 @@ class RotationAnimationState(
     var rotationStatus: RotationStatus = RotationStatus.Idle
 
     fun start() {
-        if(rotationStatus == RotationStatus.Idle){
+        if (rotationStatus == RotationStatus.Idle) {
             coroutineScope.launch {
                 rotationStatus = RotationStatus.Rotating
 
                 while (isActive && rotationStatus == RotationStatus.Rotating) {
                     animatable.animateTo(
                         targetValue = 360f,
-                        animationSpec = tween(
-                            durationMillis = duration,
-                            easing = LinearEasing
-                        )
+                        animationSpec =
+                            tween(
+                                durationMillis = duration,
+                                easing = LinearEasing,
+                            ),
                     )
 
                     yield()
@@ -64,7 +67,7 @@ class RotationAnimationState(
     }
 
     fun stop() {
-        if (rotationStatus == RotationStatus.Rotating){
+        if (rotationStatus == RotationStatus.Rotating) {
             coroutineScope.launch {
                 rotationStatus = RotationStatus.Stopping
                 val currentValue = animatable.value
@@ -76,8 +79,8 @@ class RotationAnimationState(
                     targetValue = 360f,
                     tween(
                         durationMillis = durationToZero,
-                        easing = LinearEasing
-                    )
+                        easing = LinearEasing,
+                    ),
                 )
                 animatable.snapTo(0f)
                 rotationStatus = RotationStatus.Idle
@@ -87,5 +90,7 @@ class RotationAnimationState(
 }
 
 enum class RotationStatus {
-    Idle, Rotating, Stopping
+    Idle,
+    Rotating,
+    Stopping,
 }

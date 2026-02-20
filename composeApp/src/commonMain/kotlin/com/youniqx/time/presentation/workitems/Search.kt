@@ -60,7 +60,7 @@ fun Search(
     show: Boolean,
     canFocus: Boolean,
     modifier: Modifier = Modifier,
-    onPress: () -> Unit
+    onPress: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
@@ -73,42 +73,43 @@ fun Search(
         value = search,
         onValueChange = onSearchChange,
         singleLine = true,
-        modifier = modifier
-            .focusProperties { this.canFocus = canFocus }
-            .onPreviewKeyEvent {
-                if (
-                    !it.isMetaPressed &&
-                    !it.isAltPressed &&
-                    !it.isCtrlPressed &&
-                    !it.isShiftPressed &&
-                    it.key == Key.Tab &&
-                    it.type == KeyEventType.KeyDown
-                ) {
-                    focusManager.moveFocus(FocusDirection.Next)
-                    true
-                } else {
-                    false
-                }
-            }
-            .fillMaxWidth()
-            .then(
-                if (show) {
-                    Modifier.padding(vertical = 4.dp)
-                } else {
-                    Modifier.height(0.dp).alpha(0f)
-                }
-            ),
+        modifier =
+            modifier
+                .focusProperties { this.canFocus = canFocus }
+                .onPreviewKeyEvent {
+                    if (
+                        !it.isMetaPressed &&
+                        !it.isAltPressed &&
+                        !it.isCtrlPressed &&
+                        !it.isShiftPressed &&
+                        it.key == Key.Tab &&
+                        it.type == KeyEventType.KeyDown
+                    ) {
+                        focusManager.moveFocus(FocusDirection.Next)
+                        true
+                    } else {
+                        false
+                    }
+                }.fillMaxWidth()
+                .then(
+                    if (show) {
+                        Modifier.padding(vertical = 4.dp)
+                    } else {
+                        Modifier.height(0.dp).alpha(0f)
+                    },
+                ),
         placeholder = { SearchPlaceholder() },
         trailingIcon = {
             if (search.isEmpty()) {
                 val rotation by rememberRotationAnimation(loading)
                 SimpleTooltip("Refresh") {
                     IconButton(
-                        modifier = Modifier
-                            .rotate(degrees = rotation)
-                            .focusProperties { this.canFocus = canFocus }
-                            .pointerHoverIcon(PointerIcon.Default),
-                        onClick = refresh
+                        modifier =
+                            Modifier
+                                .rotate(degrees = rotation)
+                                .focusProperties { this.canFocus = canFocus }
+                                .pointerHoverIcon(PointerIcon.Default),
+                        onClick = refresh,
                     ) {
                         Icon(
                             imageVector = Icons.Default.Refresh,
@@ -119,10 +120,11 @@ fun Search(
             } else {
                 SimpleTooltip("Clear search") {
                     IconButton(
-                        modifier = Modifier
-                            .focusProperties { this.canFocus = canFocus }
-                            .pointerHoverIcon(PointerIcon.Default),
-                        onClick = { onSearchChange("") }
+                        modifier =
+                            Modifier
+                                .focusProperties { this.canFocus = canFocus }
+                                .pointerHoverIcon(PointerIcon.Default),
+                        onClick = { onSearchChange("") },
                     ) {
                         Icon(
                             imageVector = Icons.Default.Clear,
@@ -132,91 +134,99 @@ fun Search(
                 }
             }
         },
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
     )
 }
 
 @Composable
 fun SearchPlaceholder() {
     Text(
-        text = buildAnnotatedString {
-            append("Search for ")
-            appendInlineContent("issues", "issues")
-            append(", ")
-            appendInlineContent("epics", "epics")
-            append(", ")
-            appendInlineContent("tasks", "tasks")
-            append(", ")
-            appendInlineContent("labels", "labels")
-            append(", ")
-            appendInlineContent("assignees", "assignees")
-            append(", IDs, …")
-        },
-        inlineContent = mapOf(
-            "issues" to InlineTextContent(
-                Placeholder(
-                    width = 16.sp,
-                    height = 16.sp,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                )
-            ) {
-                WorkItemTypeIcon("Issue", "Issues")
+        text =
+            buildAnnotatedString {
+                append("Search for ")
+                appendInlineContent("issues", "issues")
+                append(", ")
+                appendInlineContent("epics", "epics")
+                append(", ")
+                appendInlineContent("tasks", "tasks")
+                append(", ")
+                appendInlineContent("labels", "labels")
+                append(", ")
+                appendInlineContent("assignees", "assignees")
+                append(", IDs, …")
             },
-            "epics" to InlineTextContent(
-                Placeholder(
-                    width = 16.sp,
-                    height = 16.sp,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                )
-            ) {
-                WorkItemTypeIcon("Epic", "Epics")
-            },
-            "epics" to InlineTextContent(
-                Placeholder(
-                    width = 16.sp,
-                    height = 16.sp,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                )
-            ) {
-                WorkItemTypeIcon("Epic", "Epics")
-            },
-            "tasks" to InlineTextContent(
-                Placeholder(
-                    width = 16.sp,
-                    height = 16.sp,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                )
-            ) {
-                WorkItemTypeIcon("Task", "Tasks")
-            },
-            "labels" to InlineTextContent(
-                Placeholder(
-                    width = 20.sp,
-                    height = 20.sp,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                )
-            ) {
-                SimpleTooltip("Labels") {
-                    Label(__typename = "", id = "", color = "#BC8F8F", title = "L")(
-                        useColors = false
-                    )
-                }
-            },
-            "assignees" to InlineTextContent(
-                Placeholder(
-                    width = 16.sp,
-                    height = 16.sp,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.Center
-                )
-            ) {
-                SimpleTooltip("Assignees") {
-                    Icon(
-                        imageVector = Icons.Default.People,
-                        contentDescription = "Assignees",
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-            },
-        )
+        inlineContent =
+            mapOf(
+                "issues" to
+                    InlineTextContent(
+                        Placeholder(
+                            width = 16.sp,
+                            height = 16.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                        ),
+                    ) {
+                        WorkItemTypeIcon("Issue", "Issues")
+                    },
+                "epics" to
+                    InlineTextContent(
+                        Placeholder(
+                            width = 16.sp,
+                            height = 16.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                        ),
+                    ) {
+                        WorkItemTypeIcon("Epic", "Epics")
+                    },
+                "epics" to
+                    InlineTextContent(
+                        Placeholder(
+                            width = 16.sp,
+                            height = 16.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                        ),
+                    ) {
+                        WorkItemTypeIcon("Epic", "Epics")
+                    },
+                "tasks" to
+                    InlineTextContent(
+                        Placeholder(
+                            width = 16.sp,
+                            height = 16.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                        ),
+                    ) {
+                        WorkItemTypeIcon("Task", "Tasks")
+                    },
+                "labels" to
+                    InlineTextContent(
+                        Placeholder(
+                            width = 20.sp,
+                            height = 20.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                        ),
+                    ) {
+                        SimpleTooltip("Labels") {
+                            Label(__typename = "", id = "", color = "#BC8F8F", title = "L")(
+                                useColors = false,
+                            )
+                        }
+                    },
+                "assignees" to
+                    InlineTextContent(
+                        Placeholder(
+                            width = 16.sp,
+                            height = 16.sp,
+                            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
+                        ),
+                    ) {
+                        SimpleTooltip("Assignees") {
+                            Icon(
+                                imageVector = Icons.Default.People,
+                                contentDescription = "Assignees",
+                                modifier = Modifier.size(16.dp),
+                            )
+                        }
+                    },
+            ),
     )
 }

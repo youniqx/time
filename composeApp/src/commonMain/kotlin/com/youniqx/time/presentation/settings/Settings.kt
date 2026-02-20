@@ -67,12 +67,12 @@ import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 
 @Serializable
-object SettingsRoute: NavKey
+object SettingsRoute : NavKey
 
 @Composable
 fun Settings(
     viewModel: SettingsViewModel = metroViewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     SettingsScreen(
@@ -108,9 +108,10 @@ fun SettingsScreen(
     iterationCadenceSearcher: (String) -> Unit,
 ) {
     Column(
-        modifier = Modifier
-            .verticalScroll(rememberScrollState())
-            .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
+        modifier =
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents),
     ) {
         TopAppBar(
             title = { Text("Settings") },
@@ -119,155 +120,195 @@ fun SettingsScreen(
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             },
-            windowInsets = WindowInsets.systemBarsForVisualComponents
+            windowInsets = WindowInsets.systemBarsForVisualComponents,
         )
         val lightInteractionSource = remember { MutableInteractionSource() }
         val lightIsHovered by lightInteractionSource.collectIsHoveredAsState()
         val darkInteractionSource = remember { MutableInteractionSource() }
         val darkIsHovered by darkInteractionSource.collectIsHoveredAsState()
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(
-                // enabled = !lightIsHovered && !darkIsHovered,
-                onClickLabel = if (settings.darkTheme) "Enable light theme" else "Enable dark theme",
-                role = Role.Switch,
-                onClick = updater::toggleDarkTheme
-            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        // enabled = !lightIsHovered && !darkIsHovered,
+                        onClickLabel = if (settings.darkTheme) "Enable light theme" else "Enable dark theme",
+                        role = Role.Switch,
+                        onClick = updater::toggleDarkTheme,
+                    ).padding(horizontal = 12.dp)
+                    .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Theme")
             SingleChoiceSegmentedButtonRow {
                 SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = 0, count = 2
-                    ),
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = 0,
+                            count = 2,
+                        ),
                     onClick = { if (settings.darkTheme) updater.toggleDarkTheme() },
                     selected = !settings.darkTheme,
                     interactionSource = lightInteractionSource,
                     icon = {
                         Icon(
                             imageVector = if (lightIsHovered) Icons.Filled.LightMode else Icons.Outlined.LightMode,
-                            contentDescription = null
+                            contentDescription = null,
                         )
                     },
-                    label = { Text("Light") })
+                    label = { Text("Light") },
+                )
                 SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = 1, count = 2
-                    ),
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = 1,
+                            count = 2,
+                        ),
                     onClick = { if (!settings.darkTheme) updater.toggleDarkTheme() },
                     selected = settings.darkTheme,
                     interactionSource = darkInteractionSource,
                     icon = {
                         Icon(
                             imageVector = if (darkIsHovered) Icons.Filled.DarkMode else Icons.Outlined.DarkMode,
-                            contentDescription = null
+                            contentDescription = null,
                         )
                     },
-                    label = { Text("Dark") })
+                    label = { Text("Dark") },
+                )
             }
         }
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (settings.highContrastColors) "Disable high contrast colors" else "Enable high contrast colors",
-                role = Role.Switch,
-                onClick = updater::toggleHighContrastColors
-            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClickLabel = if (settings.highContrastColors) "Disable high contrast colors" else "Enable high contrast colors",
+                        role = Role.Switch,
+                        onClick = updater::toggleHighContrastColors,
+                    ).padding(horizontal = 12.dp)
+                    .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Use high contrast colors")
             Switch(checked = settings.highContrastColors, onCheckedChange = { updater.toggleHighContrastColors() })
         }
         Row(
-            modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (settings.groupSprintInEpics) {
-                    "Show individual work items of sprint even if they have parents"
-                } else {
-                    "Show parent instead of individual work items if available"
-                },
-                role = Role.Switch,
-                onClick = updater::toggleGroupSprintInEpics
-            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClickLabel =
+                            if (settings.groupSprintInEpics) {
+                                "Show individual work items of sprint even if they have parents"
+                            } else {
+                                "Show parent instead of individual work items if available"
+                            },
+                        role = Role.Switch,
+                        onClick = updater::toggleGroupSprintInEpics,
+                    ).padding(horizontal = 12.dp)
+                    .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Group sprint in epics")
             Switch(checked = settings.groupSprintInEpics, onCheckedChange = { updater.toggleGroupSprintInEpics() })
         }
-        FlowRow (
-            modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (settings.showLabelsByDefault) "Hide labels" else "Show labels",
-                role = Role.Switch,
-                onClick = updater::toggleShowLabelsByDefault
-            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
+        FlowRow(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(
+                        onClickLabel = if (settings.showLabelsByDefault) "Hide labels" else "Show labels",
+                        role = Role.Switch,
+                        onClick = updater::toggleShowLabelsByDefault,
+                    ).padding(horizontal = 12.dp)
+                    .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            itemVerticalAlignment = Alignment.CenterVertically
+            itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Labels")
             SingleChoiceSegmentedButtonRow {
                 SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = 0, count = 3
-                    ),
-                    onClick = { if(settings.showLabelsByDefault) updater.toggleShowLabelsByDefault() },
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = 0,
+                            count = 3,
+                        ),
+                    onClick = { if (settings.showLabelsByDefault) updater.toggleShowLabelsByDefault() },
                     selected = !settings.showLabelsByDefault,
-                    label = { Text("None", style = MaterialTheme.typography.labelSmall) }
+                    label = { Text("None", style = MaterialTheme.typography.labelSmall) },
                 )
                 SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = 1, count = 3
-                    ),
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = 1,
+                            count = 3,
+                        ),
                     onClick = {
                         if (!settings.showLabelsByDefault) updater.toggleShowLabelsByDefault()
                         if (settings.useLabelColors) updater.toggleUseLabelColors()
                     },
                     selected = settings.showLabelsByDefault && !settings.useLabelColors,
-                    label = { Label(__typename = "", id = "", color = "#a4c639", title = "Simple")(useColors = false) }
+                    label = { Label(__typename = "", id = "", color = "#a4c639", title = "Simple")(useColors = false) },
                 )
                 SegmentedButton(
-                    shape = SegmentedButtonDefaults.itemShape(
-                        index = 2, count = 3
-                    ),
+                    shape =
+                        SegmentedButtonDefaults.itemShape(
+                            index = 2,
+                            count = 3,
+                        ),
                     onClick = {
                         if (!settings.showLabelsByDefault) updater.toggleShowLabelsByDefault()
                         if (!settings.useLabelColors) updater.toggleUseLabelColors()
                     },
                     selected = settings.showLabelsByDefault && settings.useLabelColors,
-                    label = { Label(__typename = "", id = "", color = "#a4c639", title = "Color")(useColors = true) }
+                    label = { Label(__typename = "", id = "", color = "#a4c639", title = "Color")(useColors = true) },
                 )
             }
         }
-        if (additionalTimerSupport.isSupported) Row(
-            modifier = Modifier.fillMaxWidth().clickable(
-                onClickLabel = if (settings.showMenuBarTimer) "Hide timer in menu bar" else "Show timer in menu bar",
-                role = Role.Switch,
-                onClick = updater::toggleShowMenuBarTimer
-            ).padding(horizontal = 12.dp).padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(additionalTimerSupport.settingsText.orEmpty())
-            Switch(checked = settings.showMenuBarTimer, onCheckedChange = { updater.toggleShowMenuBarTimer() })
+        if (additionalTimerSupport.isSupported) {
+            Row(
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable(
+                            onClickLabel = if (settings.showMenuBarTimer) "Hide timer in menu bar" else "Show timer in menu bar",
+                            role = Role.Switch,
+                            onClick = updater::toggleShowMenuBarTimer,
+                        ).padding(horizontal = 12.dp)
+                        .padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(additionalTimerSupport.settingsText.orEmpty())
+                Switch(checked = settings.showMenuBarTimer, onCheckedChange = { updater.toggleShowMenuBarTimer() })
+            }
         }
         InstanceUrlInput(
-            modifier = Modifier
-                .disableGlobalSearchIfFocused()
-                .padding(vertical = 8.dp)
-                .padding(horizontal = 12.dp),
+            modifier =
+                Modifier
+                    .disableGlobalSearchIfFocused()
+                    .padding(vertical = 8.dp)
+                    .padding(horizontal = 12.dp),
             instanceUrl = settings.instanceUrl,
-            onInstanceUrlChange = updater::setInstanceUrl
+            onInstanceUrlChange = updater::setInstanceUrl,
         )
         val uriHandler = LocalUriHandler.current
         TokenInput(
-            modifier = Modifier
-                .disableGlobalSearchIfFocused()
-                .padding(vertical = 8.dp)
-                .padding(horizontal = 12.dp),
+            modifier =
+                Modifier
+                    .disableGlobalSearchIfFocused()
+                    .padding(vertical = 8.dp)
+                    .padding(horizontal = 12.dp),
             token = settings.token,
             onTokenChange = updater::setToken,
             trailingIcon = {
-                SimpleTooltip("Create new GitLab token" + if (settings.instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "") {
+                SimpleTooltip(
+                    "Create new GitLab token" +
+                        if (settings.instanceUrl.isNullOrEmpty()) "\nPlease enter Instance Url first." else "",
+                ) {
                     IconButton(
                         modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
                         enabled = !settings.instanceUrl.isNullOrEmpty(),
@@ -276,14 +317,15 @@ fun SettingsScreen(
                                 val tokenUrl = createTokenUrl(fromInstanceUrl = settings.instanceUrl)
                                 uriHandler.openUri(tokenUrl.toString())
                             }
-                        }) {
+                        },
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.OpenInNew,
-                            contentDescription = "Create new GitLab token"
+                            contentDescription = "Create new GitLab token",
                         )
                     }
                 }
-            }
+            },
         )
         Column(modifier = Modifier.padding(horizontal = 12.dp)) {
             NamespacesAndIterationCadenceInputs(
@@ -297,7 +339,7 @@ fun SettingsScreen(
                 settings.iterationCadence,
                 iterationCadences,
                 iterationCadenceSearcher,
-                onIterationCadenceChange = updater::setIterationCadence
+                onIterationCadenceChange = updater::setIterationCadence,
             )
         }
     }
@@ -310,34 +352,47 @@ fun SettingsPreview() {
         val resultStore = rememberResultStore(SavedStateConfiguration {})
         CompositionLocalProvider(LocalResultStore provides resultStore) {
             SettingsScreen(
-                settings = Settings(
-                    darkTheme = true,
-                    highContrastColors = false,
-                    groupSprintInEpics = false,
-                    showLabelsByDefault = true,
-                    useLabelColors = true,
-                    showMenuBarTimer = true,
-                    instanceUrl = null,
-                    token = "𐂂",
-                    namespaceFullPath = null,
-                    iterationCadence = null,
-                    pinnedWorkItems = emptyList(),
-                    openTracking = null,
-                ),
-                updater = object : UpdateSettingsUseCase {
-                    override fun toggleDarkTheme() {}
-                    override fun toggleHighContrastColors() {}
-                    override fun toggleGroupSprintInEpics() {}
-                    override fun toggleShowLabelsByDefault() {}
-                    override fun toggleUseLabelColors() {}
-                    override fun toggleShowMenuBarTimer() {}
-                    override fun setInstanceUrl(instanceUrl: String) {}
-                    override fun setToken(token: String) {}
-                    override fun setNamespaceFullPath(fullPath: String) {}
-                    override fun setIterationCadence(iterationCadence: IterationCadence?) {}
-                    override fun togglePinWorkItem(id: String) {}
-                    override fun setOpenTracking(openTracking: OpenTracking?) {}
-                },
+                settings =
+                    Settings(
+                        darkTheme = true,
+                        highContrastColors = false,
+                        groupSprintInEpics = false,
+                        showLabelsByDefault = true,
+                        useLabelColors = true,
+                        showMenuBarTimer = true,
+                        instanceUrl = null,
+                        token = "𐂂",
+                        namespaceFullPath = null,
+                        iterationCadence = null,
+                        pinnedWorkItems = emptyList(),
+                        openTracking = null,
+                    ),
+                updater =
+                    object : UpdateSettingsUseCase {
+                        override fun toggleDarkTheme() {}
+
+                        override fun toggleHighContrastColors() {}
+
+                        override fun toggleGroupSprintInEpics() {}
+
+                        override fun toggleShowLabelsByDefault() {}
+
+                        override fun toggleUseLabelColors() {}
+
+                        override fun toggleShowMenuBarTimer() {}
+
+                        override fun setInstanceUrl(instanceUrl: String) {}
+
+                        override fun setToken(token: String) {}
+
+                        override fun setNamespaceFullPath(fullPath: String) {}
+
+                        override fun setIterationCadence(iterationCadence: IterationCadence?) {}
+
+                        override fun togglePinWorkItem(id: String) {}
+
+                        override fun setOpenTracking(openTracking: OpenTracking?) {}
+                    },
                 namespaceSearcher = {},
                 onBack = {},
                 namespaces = emptyPagingData(),

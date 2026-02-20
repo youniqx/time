@@ -12,4 +12,3 @@ expect val WindowInsets.Companion.additionalInsets: WindowInsets
 
 val WindowInsets.Companion.systemBarsForVisualComponents: WindowInsets
     @Composable get() = systemBars.union(displayCutout).union(additionalInsets)
-

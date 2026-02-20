@@ -9,13 +9,14 @@ import androidx.compose.ui.unit.Dp
  */
 fun Modifier.adaptivePadding(
     minWidth: Dp,
-    horizontalPadding: Dp
+    horizontalPadding: Dp,
 ) = this.layout { measurable, constraints ->
     val paddingPx = horizontalPadding.roundToPx()
     if (constraints.maxWidth >= minWidth.roundToPx()) {
         val contentWidth = constraints.maxWidth - (paddingPx * 2)
-        val newConstraints = constraints.takeIf { !it.hasBoundedWidth } ?:
-            constraints.copy(maxWidth = contentWidth.coerceAtLeast(constraints.minWidth))
+        val newConstraints =
+            constraints.takeIf { !it.hasBoundedWidth }
+                ?: constraints.copy(maxWidth = contentWidth.coerceAtLeast(constraints.minWidth))
         val placeable = measurable.measure(newConstraints)
         layout(placeable.width + 2 * paddingPx, placeable.height) {
             placeable.placeRelative(x = paddingPx, y = 0)

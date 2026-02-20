@@ -11,15 +11,13 @@ import com.youniqx.time.presentation.Label
 import com.youniqx.time.presentation.invoke
 
 @Composable
-operator fun List<Label?>?.invoke(
-    useLabelColors: Boolean
-) {
+operator fun List<Label?>?.invoke(useLabelColors: Boolean) {
     this?.let {
         AnimatedVisibility(visible = this.isNotEmpty()) {
             FlowRow(
                 modifier = Modifier.padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 it.filterNotNull().forEach { label -> label(useColors = useLabelColors) }
             }

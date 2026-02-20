@@ -1,4 +1,5 @@
 @file:OptIn(ExperimentalTime::class)
+
 package com.youniqx.time.domain.models
 
 import androidx.compose.runtime.Composable
@@ -64,10 +65,11 @@ fun OpenTracking.toTimelog(currentUserId: String): BareWorkItemWidgets.Node2 {
         spentAt = Clock.System.now().toString(),
         summary = summary,
         timeSpent = timeSpent.inWholeSeconds.toInt(),
-        user = BareWorkItemWidgets.User(
-            __typename = "",
-            id = currentUserId
-        )
+        user =
+            BareWorkItemWidgets.User(
+                __typename = "",
+                id = currentUserId,
+            ),
     )
 }
 

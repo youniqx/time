@@ -27,22 +27,29 @@ data class UiState(
 class HistoryViewModel(
     timelogsRepository: TimelogsRepository,
     dispatchers: IDispatchers,
-) : ViewModel(), LoadTimelogsUseCase by timelogsRepository {
-    val uiState = timelogsRepository.timelogs
-        .map { it.toUiState() }
-        .stateIn(
-            scope = CoroutineScope(dispatchers.Default),
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = timelogsRepository.timelogs.value.toUiState()
-        )
+) : ViewModel(),
+    LoadTimelogsUseCase by timelogsRepository {
+    val uiState =
+        timelogsRepository.timelogs
+            .map { it.toUiState() }
+            .stateIn(
+                scope = CoroutineScope(dispatchers.Default),
+                started = SharingStarted.WhileSubscribed(5_000),
+                initialValue = timelogsRepository.timelogs.value.toUiState(),
+            )
 
-    private fun SourceAware<TimelogsQuery.Data?>?.toUiState(): UiState {
-        return UiState(
+    private fun SourceAware<TimelogsQuery.Data?>?.toUiState(): UiState =
+        UiState(
             loading = this?.source != DataSource.Remote,
-            timelogs = this?.data?.currentUser?.timelogs?.nodes.orEmpty()
-                        .mapNotNull { timelog -> timelog?.toTimelogEntry() },
+            timelogs =
+                this
+                    ?.data
+                    ?.currentUser
+                    ?.timelogs
+                    ?.nodes
+                    .orEmpty()
+                    .mapNotNull { timelog -> timelog?.toTimelogEntry() },
         )
-    }
 }
 
 data class TimelogEntry(

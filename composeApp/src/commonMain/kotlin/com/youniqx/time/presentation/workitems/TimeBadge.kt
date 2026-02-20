@@ -33,12 +33,13 @@ fun TimeBadge(
     trailingIcon: (@Composable () -> Unit)? = null,
 ) {
     Row(
-        modifier = modifier
-            .clip(RoundedCornerShape(4.dp))
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 6.dp, vertical = 2.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier =
+            modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(backgroundColor)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = time,
@@ -54,23 +55,29 @@ fun TimeBadge(
 }
 
 @Composable
-fun rememberTimeBadgePlaceholder(time: String, trailingIconSize: Dp? = null): Placeholder {
+fun rememberTimeBadgePlaceholder(
+    time: String,
+    trailingIconSize: Dp? = null,
+): Placeholder {
     val textMeasurer = rememberTextMeasurer()
     val style = MaterialTheme.typography.labelSmall
-    val result = remember(time, style) {
-        textMeasurer.measure(
-            text = time,
-            style = style.copy(fontFamily = FontFamily.Monospace),
-        )
-    }
+    val result =
+        remember(time, style) {
+            textMeasurer.measure(
+                text = time,
+                style = style.copy(fontFamily = FontFamily.Monospace),
+            )
+        }
     return with(LocalDensity.current) {
         val trailingIconWidth = trailingIconSize?.let { trailingIconSize + 4.dp } ?: 0.dp
         Placeholder(
             width = (result.size.width + (12.dp + trailingIconWidth).toPx()).toSp(),
-            height = (result.size.height
-                .coerceAtLeast(trailingIconSize?.roundToPx() ?: 0) + 4.dp.toPx()
-                    ).toSp(),
-            placeholderVerticalAlign = PlaceholderVerticalAlign.Center
+            height =
+                (
+                    result.size.height
+                        .coerceAtLeast(trailingIconSize?.roundToPx() ?: 0) + 4.dp.toPx()
+                ).toSp(),
+            placeholderVerticalAlign = PlaceholderVerticalAlign.Center,
         )
     }
 }

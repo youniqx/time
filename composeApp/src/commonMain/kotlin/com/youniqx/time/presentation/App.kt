@@ -84,33 +84,37 @@ fun App(
         // See b/444438086
         val windowAdaptiveInfo = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true)
         // if (forceSinglePane) singlePaneDirective else defaultPaneDirective // Todo
-        val directive = remember(windowAdaptiveInfo) {
-            calculatePaneScaffoldDirective(windowAdaptiveInfo)
-                .copy(horizontalPartitionSpacerSize = 0.dp, verticalPartitionSpacerSize = 0.dp)
-        }
-        val navigationState = rememberNavigationState(
-            directive = directive,
-            configuration = navBackStackSavedStateConfiguration,
-            WelcomeRoute
-        )
-        val navigator = remember(navigationState) { Navigator(navigationState) }
-        val entryDecorators = listOf<NavEntryDecorator<NavKey>>(
-            rememberSaveableStateHolderNavEntryDecorator(),
-            rememberNavEntryProviderDecorator(),
-        )
-        val entryProvider = remember {
-            entryProvider(fallback = { key ->
-                NavEntry(key) {
-                    LaunchedEffect(key) {
-                        println("Unknown key: $key")
-                        navigator.removeLast()
-                        navigator.add(NotFoundRoute)
-                    }
-                }
-            }) {
-                navScopes.forEach { scope -> scope() }
+        val directive =
+            remember(windowAdaptiveInfo) {
+                calculatePaneScaffoldDirective(windowAdaptiveInfo)
+                    .copy(horizontalPartitionSpacerSize = 0.dp, verticalPartitionSpacerSize = 0.dp)
             }
-        }
+        val navigationState =
+            rememberNavigationState(
+                directive = directive,
+                configuration = navBackStackSavedStateConfiguration,
+                WelcomeRoute,
+            )
+        val navigator = remember(navigationState) { Navigator(navigationState) }
+        val entryDecorators =
+            listOf<NavEntryDecorator<NavKey>>(
+                rememberSaveableStateHolderNavEntryDecorator(),
+                rememberNavEntryProviderDecorator(),
+            )
+        val entryProvider =
+            remember {
+                entryProvider(fallback = { key ->
+                    NavEntry(key) {
+                        LaunchedEffect(key) {
+                            println("Unknown key: $key")
+                            navigator.removeLast()
+                            navigator.add(NotFoundRoute)
+                        }
+                    }
+                }) {
+                    navScopes.forEach { scope -> scope() }
+                }
+            }
         val entries =
             rememberDecoratedNavEntries(
                 backStack = navigationState.activeBackStack,
@@ -128,13 +132,15 @@ fun App(
 
         // Override the defaults so that the supporting pane can be dismissed by pressing back.
         // See b/445826749
-        val supportingPaneStrategy = rememberSupportingPaneSceneStrategy<NavKey>(
-            backNavigationBehavior = BackNavigationBehavior.PopUntilCurrentDestinationChange,
-            directive = directive,
-            adaptStrategies = SupportingPaneScaffoldDefaults.adaptStrategies(
-                supportingPaneAdaptStrategy = AdaptStrategy.Hide
-            ),
-        )
+        val supportingPaneStrategy =
+            rememberSupportingPaneSceneStrategy<NavKey>(
+                backNavigationBehavior = BackNavigationBehavior.PopUntilCurrentDestinationChange,
+                directive = directive,
+                adaptStrategies =
+                    SupportingPaneScaffoldDefaults.adaptStrategies(
+                        supportingPaneAdaptStrategy = AdaptStrategy.Hide,
+                    ),
+            )
         val singlePaneStrategy = remember { SinglePaneSceneStrategy<NavKey>() }
         val dialogStrategy = remember { DialogSceneStrategy<NavKey>() }
         SharedTransitionLayout {
@@ -142,29 +148,31 @@ fun App(
                 LocalSharedTransitionScope provides this,
                 LocalResultStore provides resultStore,
                 LocalSearchFocusRequester provides focusRequester,
-                LocalNavigator provides navigator
+                LocalNavigator provides navigator,
             ) {
                 Scaffold(
                     floatingActionButton = {
                         if (
-                            entries.last().onboardingIndex == null
-                            && SettingsRoute !in navigationState.activeBackStack
-                        ) CompositionLocalProvider(
-                            LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant
+                            entries.last().onboardingIndex == null &&
+                            SettingsRoute !in navigationState.activeBackStack
                         ) {
-                            val interactionSource = remember { MutableInteractionSource() }
-                            val isHovered by interactionSource.collectIsHoveredAsState()
-                            SmallFloatingActionButton(
-                                onClick = {
-                                    navigator.add(SettingsRoute)
-                                },
-                                interactionSource = interactionSource,
+                            CompositionLocalProvider(
+                                LocalContentColor provides MaterialTheme.colorScheme.onSurfaceVariant,
                             ) {
-                                val icon = if (isHovered) Icons.Filled.Settings else Icons.Outlined.Settings
-                                Icon(imageVector = icon, contentDescription = null)
+                                val interactionSource = remember { MutableInteractionSource() }
+                                val isHovered by interactionSource.collectIsHoveredAsState()
+                                SmallFloatingActionButton(
+                                    onClick = {
+                                        navigator.add(SettingsRoute)
+                                    },
+                                    interactionSource = interactionSource,
+                                ) {
+                                    val icon = if (isHovered) Icons.Filled.Settings else Icons.Outlined.Settings
+                                    Icon(imageVector = icon, contentDescription = null)
+                                }
                             }
                         }
-                    }
+                    },
                 ) {
                     NavDisplay(
                         entries = entries,
@@ -186,29 +194,33 @@ fun App(
     }
 }
 
-private val navBackStackSavedStateConfiguration = SavedStateConfiguration {
-    serializersModule = SerializersModule {
-        polymorphic(NavKey::class) {
-            subclass(NotFoundRoute::class, NotFoundRoute.serializer())
-            subclass(WelcomeRoute::class, WelcomeRoute.serializer())
-            subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
-            subclass(
-                NamespacesAndIterationCadenceSetupRoute::class,
-                NamespacesAndIterationCadenceSetupRoute.serializer()
-            )
-            subclass(WorkItemsRoute::class, WorkItemsRoute.serializer())
-            subclass(SwitchTrackingRoute::class, SwitchTrackingRoute.serializer())
-            subclass(HistoryRoute::class, HistoryRoute.serializer())
-            subclass(SettingsRoute::class, SettingsRoute.serializer())
-        }
+private val navBackStackSavedStateConfiguration =
+    SavedStateConfiguration {
+        serializersModule =
+            SerializersModule {
+                polymorphic(NavKey::class) {
+                    subclass(NotFoundRoute::class, NotFoundRoute.serializer())
+                    subclass(WelcomeRoute::class, WelcomeRoute.serializer())
+                    subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
+                    subclass(
+                        NamespacesAndIterationCadenceSetupRoute::class,
+                        NamespacesAndIterationCadenceSetupRoute.serializer(),
+                    )
+                    subclass(WorkItemsRoute::class, WorkItemsRoute.serializer())
+                    subclass(SwitchTrackingRoute::class, SwitchTrackingRoute.serializer())
+                    subclass(HistoryRoute::class, HistoryRoute.serializer())
+                    subclass(SettingsRoute::class, SettingsRoute.serializer())
+                }
+            }
     }
-}
 
-private val resultStoreSavedStateConfiguration = SavedStateConfiguration {
-    serializersModule = SerializersModule {
-        polymorphic(ResultStoreValue::class) {
-            subclass(ScrollToWorkItem::class, ScrollToWorkItem.serializer())
-            subclass(DisableGlobalSearch::class, DisableGlobalSearch.serializer())
-        }
+private val resultStoreSavedStateConfiguration =
+    SavedStateConfiguration {
+        serializersModule =
+            SerializersModule {
+                polymorphic(ResultStoreValue::class) {
+                    subclass(ScrollToWorkItem::class, ScrollToWorkItem.serializer())
+                    subclass(DisableGlobalSearch::class, DisableGlobalSearch.serializer())
+                }
+            }
     }
-}

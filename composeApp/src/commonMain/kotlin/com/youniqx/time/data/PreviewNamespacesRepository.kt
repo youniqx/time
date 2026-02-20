@@ -12,12 +12,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 // Todo: figure out how to easily swap these in
-//@ContributesBinding(AppScope::class)
-//@SingleIn(AppScope::class)
-//class PreviewNamespacesRepository : NamespacesRepository {
+// @ContributesBinding(AppScope::class)
+// @SingleIn(AppScope::class)
+// class PreviewNamespacesRepository : NamespacesRepository {
 //    override val namespaces = MutableStateFlow(
 //        SourceAware<NamespaceQuery.Data?>(
 //            data = previewNamespaces, source = DataSource.Remote
 //        )
 //    ).asStateFlow()
-//}
+// }

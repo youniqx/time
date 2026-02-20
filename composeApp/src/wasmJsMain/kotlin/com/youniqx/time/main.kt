@@ -39,7 +39,7 @@ fun main() {
             App(
                 navScopes = graph.navScopes,
                 settingsRepository = graph.settingsRepository,
-                focusRequester = focusRequester
+                focusRequester = focusRequester,
             )
             DisposableEffect(focusRequester) {
                 val handleKeyDown: (Event) -> Unit = { event ->
@@ -54,7 +54,6 @@ fun main() {
                             focusRequester.requestFocus()
                         }
                     }
-
                 }
 
                 window.addEventListener("keydown", handleKeyDown)

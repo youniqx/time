@@ -45,7 +45,7 @@ fun SwitchTracking(
     targetTitle: String,
     onShowCurrent: (workItemId: String) -> Unit,
     onDismiss: () -> Unit,
-    settingsViewModel: SettingsViewModel = metroViewModel()
+    settingsViewModel: SettingsViewModel = metroViewModel(),
 ) {
     val openTracking by settingsViewModel.uiState
         .map { it.settings.openTracking }
@@ -59,8 +59,8 @@ fun SwitchTracking(
                 settingsViewModel.setOpenTracking(
                     currentTracking.copy(
                         workItemId = targetId,
-                        workItemTitle = targetTitle
-                    )
+                        workItemTitle = targetTitle,
+                    ),
                 )
             }
             onDismiss()
@@ -70,8 +70,8 @@ fun SwitchTracking(
                 OpenTracking(
                     workItemId = targetId,
                     workItemTitle = targetTitle,
-                    timeOfOpen = Clock.System.now()
-                )
+                    timeOfOpen = Clock.System.now(),
+                ),
             )
             onDismiss()
         },
@@ -79,7 +79,7 @@ fun SwitchTracking(
             val workItemId = openTracking?.workItemId ?: return@SwitchTrackingScreen
             onShowCurrent(workItemId)
         },
-        onDismiss = onDismiss
+        onDismiss = onDismiss,
     )
 }
 
@@ -91,28 +91,28 @@ fun SwitchTrackingScreen(
     onKeepTimeAndSwitch: () -> Unit,
     onDiscardAndSwitch: () -> Unit,
     onShowCurrent: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
 ) {
     val currentTitle = currentTracking?.workItemTitle ?: "another work item"
     val spacing = LocalSpacing.current
     DialogSurface {
         Column(
             modifier = Modifier.padding(spacing.screenPadding),
-            verticalArrangement = Arrangement.spacedBy(spacing.sm)
+            verticalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
             Text("Switch tracking?", style = MaterialTheme.typography.headlineMedium)
             Text("Currently tracking:")
             Text(
                 text = currentTitle,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.size(spacing.xs))
             Text("Switch to:")
             Text(
                 text = targetTitle,
                 style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
             Spacer(Modifier.size(spacing.sm))
             Column(
@@ -124,9 +124,10 @@ fun SwitchTrackingScreen(
                 if (currentTracking != null) {
                     Button(
                         onClick = onKeepTimeAndSwitch,
-                        modifier = Modifier
-                            .widthIn(max = spacing.maxButtonWidth)
-                            .fillMaxWidth()
+                        modifier =
+                            Modifier
+                                .widthIn(max = spacing.maxButtonWidth)
+                                .fillMaxWidth(),
                     ) {
                         Text("Keep time & switch")
                     }
@@ -134,27 +135,30 @@ fun SwitchTrackingScreen(
                 // Discard and start new
                 OutlinedButton(
                     onClick = onDiscardAndSwitch,
-                    modifier = Modifier
-                        .widthIn(max = spacing.maxButtonWidth)
-                        .fillMaxWidth()
+                    modifier =
+                        Modifier
+                            .widthIn(max = spacing.maxButtonWidth)
+                            .fillMaxWidth(),
                 ) {
                     Text("Discard time & switch")
                 }
                 // Show current work item
                 TextButton(
                     onClick = onShowCurrent,
-                    modifier = Modifier
-                        .widthIn(max = spacing.maxButtonWidth)
-                        .fillMaxWidth()
+                    modifier =
+                        Modifier
+                            .widthIn(max = spacing.maxButtonWidth)
+                            .fillMaxWidth(),
                 ) {
                     Text("Show current work item")
                 }
                 // Cancel
                 TextButton(
                     onClick = onDismiss,
-                    modifier = Modifier
-                        .widthIn(max = spacing.maxButtonWidth)
-                        .fillMaxWidth()
+                    modifier =
+                        Modifier
+                            .widthIn(max = spacing.maxButtonWidth)
+                            .fillMaxWidth(),
                 ) {
                     Text("Cancel")
                 }
@@ -169,12 +173,13 @@ fun SwitchTrackingPreview() {
     AppTheme {
         SwitchTrackingScreen(
             targetTitle = "The best work item",
-            currentTracking = OpenTracking(
-                workItemId = "",
-                workItemTitle = "Some boring work",
-                timeOfOpen = Instant.fromEpochSeconds(0L),
-                customTimeSpent = "2h 45m",
-            ),
+            currentTracking =
+                OpenTracking(
+                    workItemId = "",
+                    workItemTitle = "Some boring work",
+                    timeOfOpen = Instant.fromEpochSeconds(0L),
+                    customTimeSpent = "2h 45m",
+                ),
             onKeepTimeAndSwitch = {},
             onDiscardAndSwitch = {},
             onShowCurrent = {},

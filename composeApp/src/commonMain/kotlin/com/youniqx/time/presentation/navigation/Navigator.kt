@@ -33,18 +33,28 @@ import com.youniqx.time.presentation.workitems.WorkItemsRoute
 /**
  * Handles navigation events by updating the navigation state.
  */
-class Navigator(val state: NavigationState) {
+class Navigator(
+    val state: NavigationState,
+) {
     fun onFinished(route: NavKey) {
         when (route) {
-            WelcomeRoute -> add(GitLabSetupRoute)
-            GitLabSetupRoute -> add(NamespacesAndIterationCadenceSetupRoute)
+            WelcomeRoute -> {
+                add(GitLabSetupRoute)
+            }
+
+            GitLabSetupRoute -> {
+                add(NamespacesAndIterationCadenceSetupRoute)
+            }
+
             NamespacesAndIterationCadenceSetupRoute -> {
                 state.backStacks.forEach { it.clear() }
                 add(listOf(WorkItemsRoute, HistoryRoute, SettingsRoute))
             }
+
             HistoryRoute,
             SettingsRoute,
-            is SwitchTrackingRoute -> {
+            is SwitchTrackingRoute,
+            -> {
                 removeLast(route = route)
             }
         }
@@ -70,7 +80,7 @@ class Navigator(val state: NavigationState) {
 
     fun removeLast(
         fromBackStack: NavBackStack<NavKey> = state.activeBackStack,
-        route: NavKey? = fromBackStack.lastOrNull()
+        route: NavKey? = fromBackStack.lastOrNull(),
     ) {
         route ?: return
         if (fromBackStack.size == 1) return
@@ -90,7 +100,6 @@ class Navigator(val state: NavigationState) {
 private val PrivateLocalNavigator = compositionLocalOf<Navigator?> { null }
 
 object LocalNavigator {
-
     interface Accessor {
         val current: Navigator
             @Composable
@@ -100,23 +109,19 @@ object LocalNavigator {
     /**
      * Provides a [Navigator] to the composition
      */
-    infix fun provides(
-        navigator: Navigator
-    ): ProvidedValue<Navigator?> {
-        return PrivateLocalNavigator.provides(navigator)
-    }
+    infix fun provides(navigator: Navigator): ProvidedValue<Navigator?> = PrivateLocalNavigator.provides(navigator)
 }
 
 /**
  * The current [Navigator]
  * Prevent nested composables to access the navigator directly
  */
-val EntryProviderScope<NavKey>.LocalNavigator: LocalNavigator.Accessor get() = object : LocalNavigator.Accessor {
-    /**
-     * The current [Navigator]
-     */
-    override val current: Navigator
-        @Composable
-        get() = PrivateLocalNavigator.current ?: error("No Navigator has been provided")
-}
-
+val EntryProviderScope<NavKey>.LocalNavigator: LocalNavigator.Accessor get() =
+    object : LocalNavigator.Accessor {
+        /**
+         * The current [Navigator]
+         */
+        override val current: Navigator
+            @Composable
+            get() = PrivateLocalNavigator.current ?: error("No Navigator has been provided")
+    }

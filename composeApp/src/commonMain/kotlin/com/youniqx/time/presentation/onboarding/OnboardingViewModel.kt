@@ -23,18 +23,20 @@ data class UiState(
     val showOnboarding: Boolean,
 )
 
-fun SourceAware<Settings>.toInitialUiState() = UiState(
-    loading = source == DataSource.Default,
-    settings = data,
-    showOnboarding = data.instanceUrl.isNullOrEmpty() || data.token.isNullOrEmpty(),
-)
+fun SourceAware<Settings>.toInitialUiState() =
+    UiState(
+        loading = source == DataSource.Default,
+        settings = data,
+        showOnboarding = data.instanceUrl.isNullOrEmpty() || data.token.isNullOrEmpty(),
+    )
 
 @ViewModelKey(OnboardingViewModel::class)
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class OnboardingViewModel(
     settingsRepository: SettingsRepository,
     dispatchers: IDispatchers,
-) : ViewModel(), UpdateSettingsUseCase by settingsRepository {
+) : ViewModel(),
+    UpdateSettingsUseCase by settingsRepository {
     private val initialSettings = settingsRepository.settings.value
     private val _uiState = MutableStateFlow(initialSettings.toInitialUiState())
     val uiState = _uiState.asStateFlow()
@@ -44,13 +46,18 @@ class OnboardingViewModel(
         viewModelScope.launch(dispatchers.Default) {
             var lastDataSource: DataSource? = null
             settingsRepository.settings.collect { newSettings ->
-                _uiState.update { it.copy(
-                    loading = newSettings.source == DataSource.Default,
-                    settings = newSettings.data,
-                    showOnboarding = if (newSettings.source != lastDataSource) {
-                        newSettings.data.instanceUrl.isNullOrEmpty() || newSettings.data.token.isNullOrEmpty()
-                    } else it.showOnboarding
-                ) }
+                _uiState.update {
+                    it.copy(
+                        loading = newSettings.source == DataSource.Default,
+                        settings = newSettings.data,
+                        showOnboarding =
+                            if (newSettings.source != lastDataSource) {
+                                newSettings.data.instanceUrl.isNullOrEmpty() || newSettings.data.token.isNullOrEmpty()
+                            } else {
+                                it.showOnboarding
+                            },
+                    )
+                }
                 lastDataSource = newSettings.source
             }
         }

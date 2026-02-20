@@ -64,76 +64,88 @@ class SettingsViewModel(
     UpdateSettingsUseCase by settingsRepository,
     SaveSearchNamespaceUseCase,
     SaveIterationCadenceNamespaceUseCase {
-
     private val initialSettings = settingsRepository.settings.value.data
     private val initialSelectedNamespaces = selectedNamespacesRepository.selectedNamespaces.value
     private var namespaceSearchTerm = MutableStateFlow("")
     private var iterationCadenceNamespaceSearchTerm = MutableStateFlow("")
     private var iterationCadenceSearchTerm = MutableStateFlow("")
-    val uiState = combine(
-        namespaceSearchTerm
-            .asPagingData(namespacesRepository::search)
-            .map { it.insertSeparators() }
-            .cachedIn(viewModelScope),
-        iterationCadenceNamespaceSearchTerm
-            .asPagingData(namespacesRepository::search)
-            .replaceUserWithSelectedSearchNamespace()
-            .map { it.insertSeparators() }
-            .cachedIn(viewModelScope),
-        iterationCadenceSearchTerm
-            .asPagingData(iterationCadencesRepository::search)
-            .cachedIn(viewModelScope),
-        settingsRepository.settings.map { it.data },
-        selectedNamespacesRepository.selectedNamespaces
-    ) { namespaceSearchPagingData, iterationCadenceNamespaceSearchPagingData, iterationCadenceSearchPagingData,
-        settings, selectedNamespaces ->
-        UiState(
-            settings = settings,
-            namespaces = namespaceSearchPagingData,
-            iterationCadenceNamespaces = iterationCadenceNamespaceSearchPagingData,
-            iterationCadences = iterationCadenceSearchPagingData,
-            selectedNamespaces = selectedNamespaces,
-        )
-    }.stateIn(
+    val uiState =
+        combine(
+            namespaceSearchTerm
+                .asPagingData(namespacesRepository::search)
+                .map { it.insertSeparators() }
+                .cachedIn(viewModelScope),
+            iterationCadenceNamespaceSearchTerm
+                .asPagingData(namespacesRepository::search)
+                .replaceUserWithSelectedSearchNamespace()
+                .map { it.insertSeparators() }
+                .cachedIn(viewModelScope),
+            iterationCadenceSearchTerm
+                .asPagingData(iterationCadencesRepository::search)
+                .cachedIn(viewModelScope),
+            settingsRepository.settings.map { it.data },
+            selectedNamespacesRepository.selectedNamespaces,
+        ) {
+            namespaceSearchPagingData,
+            iterationCadenceNamespaceSearchPagingData,
+            iterationCadenceSearchPagingData,
+            settings,
+            selectedNamespaces,
+            ->
+            UiState(
+                settings = settings,
+                namespaces = namespaceSearchPagingData,
+                iterationCadenceNamespaces = iterationCadenceNamespaceSearchPagingData,
+                iterationCadences = iterationCadenceSearchPagingData,
+                selectedNamespaces = selectedNamespaces,
+            )
+        }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5.seconds),
-            initialValue = UiState(
-                settings = initialSettings,
-                namespaces = emptyPagingData(),
-                iterationCadenceNamespaces = emptyPagingData(),
-                iterationCadences = emptyPagingData(),
-                selectedNamespaces = initialSelectedNamespaces
-            )
-    )
+            initialValue =
+                UiState(
+                    settings = initialSettings,
+                    namespaces = emptyPagingData(),
+                    iterationCadenceNamespaces = emptyPagingData(),
+                    iterationCadences = emptyPagingData(),
+                    selectedNamespaces = initialSelectedNamespaces,
+                ),
+        )
 
     private fun Flow<PagingData<NamespaceEntry>>.replaceUserWithSelectedSearchNamespace() =
-    // We also cache the intermediate result here,
+        // We also cache the intermediate result here,
         // as otherwise the upstream paging flow gets collected multiple times, which is not allowed
         cachedIn(viewModelScope)
             .combine(selectedNamespacesRepository.selectedNamespaces) { pagingData, selectedNamespaces ->
                 pagingData.flatMap {
                     if (it is NamespaceEntry.User) {
                         val selectedSearchNamespace = selectedNamespaces.search
-                        if (selectedSearchNamespace != null) listOf(
-                            NamespaceEntry.SelectedSearch(
-                                name = selectedSearchNamespace.name,
-                                fullPath = selectedSearchNamespace.fullPath,
-                                iterationCadences = selectedSearchNamespace.iterationCadences,
+                        if (selectedSearchNamespace != null) {
+                            listOf(
+                                NamespaceEntry.SelectedSearch(
+                                    name = selectedSearchNamespace.name,
+                                    fullPath = selectedSearchNamespace.fullPath,
+                                    iterationCadences = selectedSearchNamespace.iterationCadences,
+                                ),
                             )
-                        ) else emptyList()
-                    } else listOf(it)
+                        } else {
+                            emptyList()
+                        }
+                    } else {
+                        listOf(it)
+                    }
                 }
             }
 
     private fun <Key : Any, Value : Any> Flow<Key>.asPagingData(
-        pagingSourceFactory: (searchTerm: Key) -> PagingSource<Key, Value>
+        pagingSourceFactory: (searchTerm: Key) -> PagingSource<Key, Value>,
     ): Flow<PagingData<Value>> =
         debounce(timeoutMillis = 300)
             .distinctUntilChanged()
             .flatMapLatest { searchTerm ->
                 Pager(
                     config = PagingConfig(pageSize = 10),
-                    pagingSourceFactory = { pagingSourceFactory(searchTerm) }
+                    pagingSourceFactory = { pagingSourceFactory(searchTerm) },
                 ).flow
             }
 
@@ -155,7 +167,9 @@ class SettingsViewModel(
     }
 
     override fun saveIterationCadenceNamespace(namespace: Namespace) {
-        val namespaceFullPath = uiState.value.selectedNamespaces.iterationCadence?.fullPath
+        val namespaceFullPath =
+            uiState.value.selectedNamespaces.iterationCadence
+                ?.fullPath
         if (namespaceFullPath != namespace.fullPath) {
             selectedNamespacesRepository.saveIterationCadenceNamespace(namespace = namespace)
             this.setIterationCadence(IterationCadence(namespaceFullPath = namespace.fullPath))
@@ -163,17 +177,21 @@ class SettingsViewModel(
     }
 }
 
-inline fun <reified T : Any> emptyPagingData() = PagingData.empty<T>(
-    sourceLoadStates = LoadStates(
-        LoadState.Loading,
-        NotLoading(endOfPaginationReached = false),
-        NotLoading(endOfPaginationReached = false),
+inline fun <reified T : Any> emptyPagingData() =
+    PagingData.empty<T>(
+        sourceLoadStates =
+            LoadStates(
+                LoadState.Loading,
+                NotLoading(endOfPaginationReached = false),
+                NotLoading(endOfPaginationReached = false),
+            ),
     )
-)
 
 private fun PagingData<NamespaceEntry>.insertSeparators(): PagingData<NamespaceEntry> =
     insertSeparators { entry, entry1 ->
         if (entry != null && entry1 != null && !entry.isOfSameType(entry1)) {
             NamespaceEntry.Separator
-        } else null
+        } else {
+            null
+        }
     }

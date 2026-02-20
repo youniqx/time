@@ -12,7 +12,7 @@ class NavEntryProviderDecorator<T : Any> :
                 LocalNavEntry provides entry,
                 content = {
                     entry.Content()
-                }
+                },
             )
         },
     )

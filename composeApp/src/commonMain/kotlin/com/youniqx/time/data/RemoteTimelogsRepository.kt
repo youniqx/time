@@ -27,9 +27,8 @@ import kotlin.time.Duration.Companion.days
 @SingleIn(AppScope::class)
 class RemoteTimelogsRepository(
     private val apolloClientFlow: Flow<ApolloClient?>,
-    dispatchers: IDispatchers
-): TimelogsRepository {
-
+    dispatchers: IDispatchers,
+) : TimelogsRepository {
     private var job: Job? = null
     private val scope = CoroutineScope(dispatchers.Default)
 
@@ -44,16 +43,25 @@ class RemoteTimelogsRepository(
 
     override fun refresh() {
         job?.cancel()
-        job = scope.launch {
-            apolloClientFlow.filterNotNull().collectLatest { apolloClient ->
-                val now = Clock.System.now()
-                val query = TimelogsQuery.Builder()
-                    .startDate((now - 365.days).toString())
-                    .endDate((now + 1.days).toString())
-                    .build()
-                val response = apolloClient.query(query).execute()
-                _timelogs.update { SourceAware(source = DataSource.Remote, data = response.data, isSyncing = false) }
+        job =
+            scope.launch {
+                apolloClientFlow.filterNotNull().collectLatest { apolloClient ->
+                    val now = Clock.System.now()
+                    val query =
+                        TimelogsQuery
+                            .Builder()
+                            .startDate((now - 365.days).toString())
+                            .endDate((now + 1.days).toString())
+                            .build()
+                    val response = apolloClient.query(query).execute()
+                    _timelogs.update {
+                        SourceAware(
+                            source = DataSource.Remote,
+                            data = response.data,
+                            isSyncing = false,
+                        )
+                    }
+                }
             }
-        }
     }
 }

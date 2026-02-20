@@ -26,35 +26,38 @@ operator fun Label.invoke(useColors: Boolean) {
     val defaultBg = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
     val defaultText = MaterialTheme.colorScheme.onSurfaceVariant
 
-    val (bgColor, textColor) = if (useColors) {
-        remember(color) {
-            val color = try {
-                Color(color.toColorInt()).copy(alpha = 0.85f)
-            } catch (_: Exception) {
-                defaultBg
+    val (bgColor, textColor) =
+        if (useColors) {
+            remember(color) {
+                val color =
+                    try {
+                        Color(color.toColorInt()).copy(alpha = 0.85f)
+                    } catch (_: Exception) {
+                        defaultBg
+                    }
+                color to color.contrastingTextColor()
             }
-            color to color.contrastingTextColor()
+        } else {
+            defaultBg to defaultText
         }
-    } else {
-        defaultBg to defaultText
-    }
 
     val displayText = title.replace("::", " | ")
 
     Box(
-        modifier = Modifier
-            .height(20.dp)
-            .clip(RoundedCornerShape(4.dp))
-            .background(bgColor)
-            .padding(horizontal = 6.dp),
-        contentAlignment = Alignment.Center
+        modifier =
+            Modifier
+                .height(20.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(bgColor)
+                .padding(horizontal = 6.dp),
+        contentAlignment = Alignment.Center,
     ) {
         Text(
             text = displayText,
             color = textColor,
             style = MaterialTheme.typography.labelSmall,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

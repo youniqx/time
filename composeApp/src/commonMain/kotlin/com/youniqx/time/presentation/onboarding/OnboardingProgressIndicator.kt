@@ -32,12 +32,13 @@ fun OnboardingProgressIndicator(stepCount: Int) {
             }
         }
         LinearProgressIndicator(
-            modifier = Modifier
-                .fillMaxWidth()
-                .sharedElement(
-                    sharedContentState = rememberSharedContentState("onboardingProgress"),
-                    animatedVisibilityScope = LocalNavAnimatedContentScope.current,
-                ),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .sharedElement(
+                        sharedContentState = rememberSharedContentState("onboardingProgress"),
+                        animatedVisibilityScope = LocalNavAnimatedContentScope.current,
+                    ),
             progress = {
                 // we do not subtract 1 from the stepCount as the imaginary final step is the app
                 myOnboardingIndex.toFloat() / stepCount + transitionOffset

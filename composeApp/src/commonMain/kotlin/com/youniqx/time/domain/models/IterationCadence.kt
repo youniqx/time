@@ -7,4 +7,3 @@ data class IterationCadence(
     val namespaceFullPath: String,
     val id: String? = null,
 )
-

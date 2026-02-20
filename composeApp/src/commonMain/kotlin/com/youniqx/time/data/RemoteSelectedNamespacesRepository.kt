@@ -46,37 +46,41 @@ class RemoteSelectedNamespacesRepository(
 
     init {
         scope.launch {
-            val selectedNamespacesFullPathsFlow = settingsRepository.settings.mapNotNull {
-                it.takeIf { it.source != DataSource.Default }?.selectedNamespacesFullPaths
-            }
-            apolloClientFlow.filterNotNull().combine(selectedNamespacesFullPathsFlow, ::Pair)
+            val selectedNamespacesFullPathsFlow =
+                settingsRepository.settings.mapNotNull {
+                    it.takeIf { it.source != DataSource.Default }?.selectedNamespacesFullPaths
+                }
+            apolloClientFlow
+                .filterNotNull()
+                .combine(selectedNamespacesFullPathsFlow, ::Pair)
                 .collectLatest { (apolloClient, selectedNamespacesFullPaths) ->
-                    val query = with(SelectedNamespacesQuery.Builder()) {
-                        fetchNamespace(false)
-                        fetchIterationCadenceNamespace(false)
-                        selectedNamespacesFullPaths.run {
-                            search?.let {
-                                fetchNamespace(true)
-                                namespaceFullPath(it)
+                    val query =
+                        with(SelectedNamespacesQuery.Builder()) {
+                            fetchNamespace(false)
+                            fetchIterationCadenceNamespace(false)
+                            selectedNamespacesFullPaths.run {
+                                search?.let {
+                                    fetchNamespace(true)
+                                    namespaceFullPath(it)
+                                }
+                                iterationCadence?.let {
+                                    fetchIterationCadenceNamespace(true)
+                                    iterationCadenceNamespaceFullPath(it)
+                                }
                             }
-                            iterationCadence?.let {
-                                fetchIterationCadenceNamespace(true)
-                                iterationCadenceNamespaceFullPath(it)
-                            }
+                            build()
                         }
-                        build()
-                    }
                     apolloClient.query(query).watch().collect { response ->
                         with(response.data ?: return@collect) {
                             _selectedNamespaces.update {
                                 SelectedNamespaces(
                                     search = namespace?.simpleNamespace?.toNamespace(),
-                                    iterationCadence = iterationCadenceNamespace?.simpleNamespace?.toNamespace()
+                                    iterationCadence = iterationCadenceNamespace?.simpleNamespace?.toNamespace(),
                                 )
                             }
                         }
                     }
-            }
+                }
         }
     }
 

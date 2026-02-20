@@ -12,16 +12,20 @@ import androidx.compose.ui.unit.dp
 import com.youniqx.time.presentation.SimpleTooltip
 
 @Composable
-fun WorkItemTypeIcon(type: String, text: String = type) {
+fun WorkItemTypeIcon(
+    type: String,
+    text: String = type,
+) {
     SimpleTooltip(text) {
         Icon(
-            imageVector = when (type) {
-                "Task" -> Icons.Default.Task
-                "Epic" -> Icons.Default.Style
-                else -> Icons.Default.Sell
-            },
+            imageVector =
+                when (type) {
+                    "Task" -> Icons.Default.Task
+                    "Epic" -> Icons.Default.Style
+                    else -> Icons.Default.Sell
+                },
             contentDescription = text,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(16.dp),
         )
     }
 }

@@ -53,7 +53,7 @@ fun SwipeableWorkItemCard(
     onStartTracking: () -> Unit,
     onTogglePin: () -> Unit,
     modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val spacing = LocalSpacing.current
     val hapticFeedback = LocalHapticFeedback.current
@@ -64,75 +64,81 @@ fun SwipeableWorkItemCard(
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
 
-    val draggableState = rememberDraggableState { delta ->
-        // Limit swipe distance and add resistance
-        val newOffset = offsetX + delta * 0.5f
-        offsetX = newOffset.coerceIn(-300f, 300f)
-    }
+    val draggableState =
+        rememberDraggableState { delta ->
+            // Limit swipe distance and add resistance
+            val newOffset = offsetX + delta * 0.5f
+            offsetX = newOffset.coerceIn(-300f, 300f)
+        }
 
     // Background color based on swipe direction
     val backgroundColor by animateColorAsState(
-        targetValue = when {
-            offsetX > 50f -> MaterialTheme.colorScheme.tertiaryContainer
-            offsetX < -50f -> MaterialTheme.colorScheme.primaryContainer
-            else -> Color.Transparent
-        },
+        targetValue =
+            when {
+                offsetX > 50f -> MaterialTheme.colorScheme.tertiaryContainer
+                offsetX < -50f -> MaterialTheme.colorScheme.primaryContainer
+                else -> Color.Transparent
+            },
         animationSpec = tween(100),
-        label = "swipeBackgroundColor"
+        label = "swipeBackgroundColor",
     )
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .hoverable(interactionSource)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .hoverable(interactionSource),
     ) {
         // Background with action indicators (for swipe)
         Box(
-            modifier = Modifier
-                .matchParentSize()
-                .clip(RoundedCornerShape(spacing.cardRadius))
-                .background(backgroundColor)
-                .padding(horizontal = 24.dp),
-            contentAlignment = when {
-                offsetX > 0 -> Alignment.CenterStart
-                offsetX < 0 -> Alignment.CenterEnd
-                else -> Alignment.Center
-            }
+            modifier =
+                Modifier
+                    .matchParentSize()
+                    .clip(RoundedCornerShape(spacing.cardRadius))
+                    .background(backgroundColor)
+                    .padding(horizontal = 24.dp),
+            contentAlignment =
+                when {
+                    offsetX > 0 -> Alignment.CenterStart
+                    offsetX < 0 -> Alignment.CenterEnd
+                    else -> Alignment.Center
+                },
         ) {
             when {
                 offsetX > 50f && !isTracking -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = "Start tracking",
                             modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.tertiary
+                            tint = MaterialTheme.colorScheme.tertiary,
                         )
                         Text(
                             text = "Start",
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
                         )
                     }
                 }
+
                 offsetX < -50f -> {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
                     ) {
                         Text(
                             text = if (isPinned) "Unpin" else "Pin",
                             style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
                         )
                         Icon(
                             imageVector = Icons.Default.PushPin,
                             contentDescription = if (isPinned) "Unpin" else "Pin",
                             modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colorScheme.primary,
                         )
                     }
                 }
@@ -141,26 +147,28 @@ fun SwipeableWorkItemCard(
 
         // Foreground content
         Box(
-            modifier = Modifier
-                .offset { IntOffset(offsetX.roundToInt(), 0) }
-                .draggable(
-                    enabled = !isTracking,
-                    state = draggableState,
-                    orientation = Orientation.Horizontal,
-                    onDragStopped = {
-                        when {
-                            offsetX > swipeThreshold && !isTracking -> {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onStartTracking()
+            modifier =
+                Modifier
+                    .offset { IntOffset(offsetX.roundToInt(), 0) }
+                    .draggable(
+                        enabled = !isTracking,
+                        state = draggableState,
+                        orientation = Orientation.Horizontal,
+                        onDragStopped = {
+                            when {
+                                offsetX > swipeThreshold && !isTracking -> {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onStartTracking()
+                                }
+
+                                offsetX < -swipeThreshold -> {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onTogglePin()
+                                }
                             }
-                            offsetX < -swipeThreshold -> {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onTogglePin()
-                            }
-                        }
-                        offsetX = 0f
-                    }
-                )
+                            offsetX = 0f
+                        },
+                    ),
         ) {
             content()
         }
@@ -170,12 +178,12 @@ fun SwipeableWorkItemCard(
             visible = !isTracking && isHovered && offsetX == 0f,
             enter = fadeIn(tween(150)),
             exit = fadeOut(tween(150)),
-            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp)
+            modifier = Modifier.align(Alignment.CenterEnd).padding(end = 8.dp),
         ) {
             if (isTracking) return@AnimatedVisibility
             Row(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 // Start tracking button
                 SimpleTooltip("Start tracking") {
@@ -184,16 +192,17 @@ fun SwipeableWorkItemCard(
                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             onStartTracking()
                         },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
-                            contentColor = MaterialTheme.colorScheme.tertiary
-                        ),
-                        modifier = Modifier.size(32.dp)
+                        colors =
+                            IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f),
+                                contentColor = MaterialTheme.colorScheme.tertiary,
+                            ),
+                        modifier = Modifier.size(32.dp),
                     ) {
                         Icon(
                             imageVector = Icons.Default.PlayArrow,
                             contentDescription = "Start tracking",
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 }
@@ -204,16 +213,17 @@ fun SwipeableWorkItemCard(
                             hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                             onTogglePin()
                         },
-                        colors = IconButtonDefaults.iconButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
-                            contentColor = MaterialTheme.colorScheme.primary
-                        ),
-                        modifier = Modifier.size(32.dp)
+                        colors =
+                            IconButtonDefaults.iconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                contentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                        modifier = Modifier.size(32.dp),
                     ) {
                         Icon(
                             imageVector = if (isPinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
                             contentDescription = if (isPinned) "Unpin" else "Pin",
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(18.dp),
                         )
                     }
                 }

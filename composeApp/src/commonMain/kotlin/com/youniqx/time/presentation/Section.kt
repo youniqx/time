@@ -21,23 +21,29 @@ import androidx.compose.ui.unit.dp
 import com.youniqx.time.presentation.theme.AppTheme
 
 @Composable
-fun Section(title: @Composable () -> Unit, open: Boolean, count: Int, modifier: Modifier = Modifier) {
+fun Section(
+    title: @Composable () -> Unit,
+    open: Boolean,
+    count: Int,
+    modifier: Modifier = Modifier,
+) {
     val mergedStyle = LocalTextStyle.current.merge(MaterialTheme.typography.titleSmall)
     CompositionLocalProvider(
         LocalTextStyle provides mergedStyle,
     ) {
         Row(
             modifier = modifier.padding(horizontal = 12.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             if (open) OpenSectionIcon() else ClosedSectionIcon()
             title()
             Badge(
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), CircleShape),
+                modifier =
+                    Modifier
+                        .padding(start = 8.dp)
+                        .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), CircleShape),
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ) { Text(count.toString()) }
         }
     }
@@ -56,7 +62,7 @@ fun OpenSectionPreview() {
         Section(
             title = { Text("Doing") },
             open = true,
-            count = 63
+            count = 63,
         )
     }
 }
@@ -68,7 +74,7 @@ fun ClosedSectionPreview() {
         Section(
             title = { Text("Doing") },
             open = false,
-            count = 6
+            count = 6,
         )
     }
 }

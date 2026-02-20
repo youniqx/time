@@ -13,7 +13,6 @@ data class Spacing(
     val xl: Dp = 24.dp,
     val xxl: Dp = 32.dp,
     val xxxl: Dp = 48.dp,
-
     // Component-specific
     val cardPadding: Dp = 16.dp,
     val cardGap: Dp = 12.dp,

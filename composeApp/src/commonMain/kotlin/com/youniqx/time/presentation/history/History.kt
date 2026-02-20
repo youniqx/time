@@ -82,22 +82,23 @@ import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.ExperimentalTime
 
 @Serializable
-object HistoryRoute: NavKey
+object HistoryRoute : NavKey
 
 @Composable
 fun History(
     viewModel: HistoryViewModel = metroViewModel(),
     settingsViewModel: SettingsViewModel = metroViewModel(),
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val openTracking by settingsViewModel.uiState
         .map { it.settings.openTracking }
         .distinctUntilChanged()
         .collectAsStateWithLifecycle(null)
-    val openTrackingAsTimelogEntry = remember(openTracking.refreshKey) {
-        openTracking?.toTimelogEntry()
-    }
+    val openTrackingAsTimelogEntry =
+        remember(openTracking.refreshKey) {
+            openTracking?.toTimelogEntry()
+        }
 
     var range by remember { mutableStateOf(TimeRange.Today) }
     HistoryScreen(
@@ -110,24 +111,29 @@ fun History(
     )
 }
 
-enum class TimeRange(val label: String, val daysBack: Int) {
+enum class TimeRange(
+    val label: String,
+    val daysBack: Int,
+) {
     Today("Today", 1),
     Week("Week", 7),
-    Month("Month", 30);
+    Month("Month", 30),
+    ;
 
-    fun getLabel(offset: Int): String = when {
-        offset == 0 -> label
-        this == Today -> "$offset days ago"
-        this == Week -> if (offset == 1) "Last week" else "$offset weeks ago"
-        this == Month -> if (offset == 1) "Last month" else "$offset months ago"
-        else -> label
-    }
+    fun getLabel(offset: Int): String =
+        when {
+            offset == 0 -> label
+            this == Today -> "$offset days ago"
+            this == Week -> if (offset == 1) "Last week" else "$offset weeks ago"
+            this == Month -> if (offset == 1) "Last month" else "$offset months ago"
+            else -> label
+        }
 }
 
 data class DayGroup(
     val dayLabel: String,
     val entries: List<TimelogEntry>,
-    val totalSeconds: Int
+    val totalSeconds: Int,
 )
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3AdaptiveApi::class)
@@ -139,7 +145,7 @@ fun HistoryScreen(
     onRangeChange: (TimeRange) -> Unit,
     onBack: () -> Unit,
     openTracking: OpenTracking?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
     val insets = WindowInsets.systemBarsForVisualComponents.asPaddingValues()
@@ -148,51 +154,57 @@ fun HistoryScreen(
     var periodOffset by remember(selectedRange) { mutableStateOf(0) }
 
     // Filter timelogs based on selected range and offset
-    val filteredTimelogs = remember(timelogs, selectedRange, periodOffset) {
-        val timeZone = TimeZone.currentSystemDefault()
-        val now = Clock.System.now()
-        val endOfDay = now
-            .toLocalDateTime(timeZone).date
-            .plus(DatePeriod(days = 1))
-            .atStartOfDayIn(timeZone)
-            .minus(1.nanoseconds)
-        val periodDays = selectedRange.daysBack
-        val startOffset = periodOffset * periodDays
-        val endOffset = (periodOffset + 1) * periodDays
+    val filteredTimelogs =
+        remember(timelogs, selectedRange, periodOffset) {
+            val timeZone = TimeZone.currentSystemDefault()
+            val now = Clock.System.now()
+            val endOfDay =
+                now
+                    .toLocalDateTime(timeZone)
+                    .date
+                    .plus(DatePeriod(days = 1))
+                    .atStartOfDayIn(timeZone)
+                    .minus(1.nanoseconds)
+            val periodDays = selectedRange.daysBack
+            val startOffset = periodOffset * periodDays
+            val endOffset = (periodOffset + 1) * periodDays
 
-        val periodStart = endOfDay - endOffset.days
-        val periodEnd = endOfDay - startOffset.days
+            val periodStart = endOfDay - endOffset.days
+            val periodEnd = endOfDay - startOffset.days
 
-        timelogs.filter { entry ->
-            entry.spentAt in periodStart..<periodEnd
+            timelogs.filter { entry ->
+                entry.spentAt in periodStart..<periodEnd
+            }
         }
-    }
 
     // Group timelogs by day
-    val groupedByDay = remember(filteredTimelogs) {
-        val now = Clock.System.now()
-        filteredTimelogs
-            .groupBy { entry ->
-                val age = now - entry.spentAt
-                when {
-                    age < 1.days -> "Today"
-                    age < 2.days -> "Yesterday"
-                    age < 7.days -> "${age.inWholeDays.toInt()} days ago"
-                    else -> "${(age.inWholeDays / 7).toInt()} weeks ago"
+    val groupedByDay =
+        remember(filteredTimelogs) {
+            val now = Clock.System.now()
+            filteredTimelogs
+                .groupBy { entry ->
+                    val age = now - entry.spentAt
+                    when {
+                        age < 1.days -> "Today"
+                        age < 2.days -> "Yesterday"
+                        age < 7.days -> "${age.inWholeDays.toInt()} days ago"
+                        else -> "${(age.inWholeDays / 7).toInt()} weeks ago"
+                    }
+                }.map { (label, entries) ->
+                    DayGroup(
+                        dayLabel = label,
+                        entries = entries.sortedByDescending { it.spentAt },
+                        totalSeconds = entries.sumOf { it.timeSpent },
+                    )
+                }.sortedBy { group ->
+                    // Sort by the first entry's time (most recent first)
+                    group.entries
+                        .firstOrNull()
+                        ?.spentAt
+                        ?.let { now - it }
+                        ?.inWholeMilliseconds ?: Long.MAX_VALUE
                 }
-            }
-            .map { (label, entries) ->
-                DayGroup(
-                    dayLabel = label,
-                    entries = entries.sortedByDescending { it.spentAt },
-                    totalSeconds = entries.sumOf { it.timeSpent }
-                )
-            }
-            .sortedBy { group ->
-                // Sort by the first entry's time (most recent first)
-                group.entries.firstOrNull()?.spentAt?.let { now - it }?.inWholeMilliseconds ?: Long.MAX_VALUE
-            }
-    }
+        }
 
     Scaffold(
         topBar =
@@ -204,34 +216,37 @@ fun HistoryScreen(
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                         }
                     },
-                    windowInsets = WindowInsets.systemBarsForVisualComponents
+                    windowInsets = WindowInsets.systemBarsForVisualComponents,
                 )
             },
         contentWindowInsets = WindowInsets.systemBarsForVisualComponents,
-        modifier = modifier
+        modifier = modifier,
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
         ) {
             // Time range selector
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = spacing.screenPadding)
-                    .padding(bottom = spacing.sm),
-                horizontalArrangement = Arrangement.Center
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = spacing.screenPadding)
+                        .padding(bottom = spacing.sm),
+                horizontalArrangement = Arrangement.Center,
             ) {
                 SingleChoiceSegmentedButtonRow {
                     TimeRange.entries.forEachIndexed { index, range ->
                         SegmentedButton(
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = TimeRange.entries.size
-                            ),
+                            shape =
+                                SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = TimeRange.entries.size,
+                                ),
                             onClick = { onRangeChange(range) },
-                            selected = selectedRange == range
+                            selected = selectedRange == range,
                         ) {
                             Text(range.label)
                         }
@@ -241,12 +256,13 @@ fun HistoryScreen(
 
             // Period navigation
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = spacing.screenPadding)
-                    .padding(bottom = spacing.md),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = spacing.screenPadding)
+                        .padding(bottom = spacing.md),
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 IconButton(onClick = { periodOffset++ }) {
                     Icon(Icons.Default.ChevronLeft, contentDescription = "Previous period")
@@ -254,11 +270,11 @@ fun HistoryScreen(
                 Text(
                     text = selectedRange.getLabel(periodOffset),
                     style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(horizontal = spacing.md)
+                    modifier = Modifier.padding(horizontal = spacing.md),
                 )
                 IconButton(
                     onClick = { if (periodOffset > 0) periodOffset-- },
-                    enabled = periodOffset > 0
+                    enabled = periodOffset > 0,
                 ) {
                     Icon(Icons.Default.ChevronRight, contentDescription = "Next period")
                 }
@@ -266,58 +282,60 @@ fun HistoryScreen(
 
             // Summary card
             HistorySummaryCard(
-                modifier = Modifier
-                    .padding(horizontal = spacing.screenPadding)
-                    .padding(bottom = spacing.lg),
+                modifier =
+                    Modifier
+                        .padding(horizontal = spacing.screenPadding)
+                        .padding(bottom = spacing.lg),
                 groupedByDay = groupedByDay,
                 openTracking = openTracking,
                 timelogs = filteredTimelogs,
-                visible = true
+                visible = true,
             )
 
             // Content
             if (isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     CircularProgressIndicator()
                 }
             } else if (filteredTimelogs.isEmpty()) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(spacing.md)
+                        verticalArrangement = Arrangement.spacedBy(spacing.md),
                     ) {
                         Icon(
                             imageVector = Icons.Default.Schedule,
                             contentDescription = null,
                             modifier = Modifier.size(64.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                         )
                         Text(
                             text = "No time entries",
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Text(
                             text = "Track time on work items to see your history here",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                         )
                     }
                 }
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(
-                        start = spacing.screenPadding,
-                        end = spacing.screenPadding,
-                        bottom = spacing.screenPadding + insets.calculateBottomPadding()
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(spacing.sm)
+                    contentPadding =
+                        PaddingValues(
+                            start = spacing.screenPadding,
+                            end = spacing.screenPadding,
+                            bottom = spacing.screenPadding + insets.calculateBottomPadding(),
+                        ),
+                    verticalArrangement = Arrangement.spacedBy(spacing.sm),
                 ) {
                     groupedByDay.forEach { dayGroup ->
                         // Day header
@@ -325,16 +343,18 @@ fun HistoryScreen(
                             DayHeader(
                                 dayLabel = dayGroup.dayLabel,
                                 totalSeconds = dayGroup.totalSeconds,
-                                openTrackingRepresentation = openTracking.takeIf {
-                                    dayGroup.entries.firstOrNull()?.isOpenTracking == true
-                                }?.run {
-                                    {
-                                        RepresentingIndicator(
-                                            modifier = Modifier.size(16.dp),
-                                            color = representingColors.color
-                                        )
-                                    }
-                                }
+                                openTrackingRepresentation =
+                                    openTracking
+                                        .takeIf {
+                                            dayGroup.entries.firstOrNull()?.isOpenTracking == true
+                                        }?.run {
+                                            {
+                                                RepresentingIndicator(
+                                                    modifier = Modifier.size(16.dp),
+                                                    color = representingColors.color,
+                                                )
+                                            }
+                                        },
                             )
                         }
 
@@ -342,14 +362,15 @@ fun HistoryScreen(
                         items(dayGroup.entries, key = { it.id }) { entry ->
                             TimelogCard(
                                 entry = entry,
-                                openTrackingRepresentation = openTracking.takeIf { entry.isOpenTracking }?.run {
-                                    {
-                                        RepresentingIndicator(
-                                            modifier = Modifier.size(16.dp),
-                                            color = representingColors.color
-                                        )
-                                    }
-                                }
+                                openTrackingRepresentation =
+                                    openTracking.takeIf { entry.isOpenTracking }?.run {
+                                        {
+                                            RepresentingIndicator(
+                                                modifier = Modifier.size(16.dp),
+                                                color = representingColors.color,
+                                            )
+                                        }
+                                    },
                             )
                         }
                     }
@@ -369,32 +390,33 @@ private fun DayHeader(
     val spacing = LocalSpacing.current
 
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(vertical = spacing.sm),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(vertical = spacing.sm),
         horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(spacing.sm)
+            horizontalArrangement = Arrangement.spacedBy(spacing.sm),
         ) {
             Icon(
                 imageVector = Icons.Default.CalendarMonth,
                 contentDescription = null,
                 modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.primary
+                tint = MaterialTheme.colorScheme.primary,
             )
             Text(
                 text = dayLabel,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
         Surface(
             shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.secondaryContainer
+            color = MaterialTheme.colorScheme.secondaryContainer,
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 openTrackingRepresentation?.let {
@@ -405,7 +427,7 @@ private fun DayHeader(
                     text = formatTimeSpent(totalSeconds),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                 )
             }
         }
@@ -423,23 +445,26 @@ private fun TimelogCard(
     var expanded by remember { mutableStateOf(false) }
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { expanded = !expanded },
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .clickable { expanded = !expanded },
+        colors =
+            CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(spacing.cardPadding)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(spacing.cardPadding),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.Top,
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     // Issue title
@@ -449,7 +474,7 @@ private fun TimelogCard(
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium,
                             maxLines = if (expanded) Int.MAX_VALUE else 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
                         )
                     }
 
@@ -458,7 +483,7 @@ private fun TimelogCard(
                         Text(
                             text = "#${entry.workItemIid}",
                             style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                 }
@@ -468,7 +493,7 @@ private fun TimelogCard(
                 // Time spent
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         openTrackingRepresentation?.let {
@@ -480,7 +505,7 @@ private fun TimelogCard(
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         )
                     }
                 }
@@ -494,35 +519,36 @@ private fun TimelogCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = if (expanded) Int.MAX_VALUE else 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = spacing.sm)
+                    modifier = Modifier.padding(top = spacing.sm),
                 )
             }
 
             // Time stamp and actions
             AnimatedVisibility(visible = expanded) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = spacing.sm),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = spacing.sm),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         text = formatDuration(Clock.System.now() - entry.spentAt, RelativeTime.Past) + " ago",
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     )
 
                     if (!entry.workItemUrl.isNullOrEmpty()) {
                         SimpleTooltip("Open in GitLab") {
                             IconButton(
                                 onClick = { uriHandler.openUri(entry.workItemUrl) },
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(32.dp),
                             ) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.OpenInNew,
                                     contentDescription = "Open in GitLab",
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(16.dp),
                                 )
                             }
                         }

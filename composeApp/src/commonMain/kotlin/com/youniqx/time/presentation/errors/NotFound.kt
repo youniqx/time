@@ -18,7 +18,7 @@ import com.youniqx.time.systemBarsForVisualComponents
 import kotlinx.serialization.Serializable
 
 @Serializable
-object NotFoundRoute: NavKey
+object NotFoundRoute : NavKey
 
 @Composable
 fun NotFound() {
@@ -28,20 +28,22 @@ fun NotFound() {
 @Composable
 fun NotFoundScreen() {
     Surface(
-        modifier = Modifier
-            .fillMaxSize(),
-        color = MaterialTheme.colorScheme.errorContainer
+        modifier =
+            Modifier
+                .fillMaxSize(),
+        color = MaterialTheme.colorScheme.errorContainer,
     ) {
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
-                .padding(horizontal = 12.dp)
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
+                    .padding(horizontal = 12.dp),
         ) {
             Text(
                 text = "Requested content was not found.",
                 style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onErrorContainer
+                color = MaterialTheme.colorScheme.onErrorContainer,
             )
         }
     }

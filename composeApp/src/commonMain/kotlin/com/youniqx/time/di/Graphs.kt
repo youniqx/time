@@ -24,7 +24,6 @@ import kotlinx.serialization.json.Json
 
 @OptIn(ExperimentalSettingsApi::class)
 interface AppGraph : ViewModelGraph {
-
     val settingsRepository: SettingsRepository
 
     @Multibinds
@@ -45,12 +44,13 @@ interface AppGraph : ViewModelGraph {
     @Provides
     @SingleIn(AppScope::class)
     fun apolloClientFlow(dispatchers: IDispatchers): Flow<ApolloClient?> =
-        settingsRepository.settings.distinctUntilChanged { old, new ->
-            old.data.instanceUrl == new.data.instanceUrl && old.data.token == new.data.token
-        }.map { it.toApolloClientOrNull() }
+        settingsRepository.settings
+            .distinctUntilChanged { old, new ->
+                old.data.instanceUrl == new.data.instanceUrl && old.data.token == new.data.token
+            }.map { it.toApolloClientOrNull() }
             .stateIn(
                 scope = CoroutineScope(dispatchers.Default),
                 started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = null
+                initialValue = null,
             )
 }

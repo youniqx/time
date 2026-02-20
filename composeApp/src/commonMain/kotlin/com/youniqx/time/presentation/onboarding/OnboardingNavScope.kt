@@ -16,14 +16,14 @@ class OnboardingNavScope {
     @IntoSet
     fun provideNavScope(): NavScope =
         {
-
             var stepCount = 0
-            val onboardingSteps = iterator {
-                while (true) yield(onboardingStep(stepCount++))
-            }
+            val onboardingSteps =
+                iterator {
+                    while (true) yield(onboardingStep(stepCount++))
+                }
 
             entry<WelcomeRoute>(
-                metadata = onboardingSteps.next() + onboardingTransitions
+                metadata = onboardingSteps.next() + onboardingTransitions,
             ) {
                 val navigator = LocalNavigator.current
                 Welcome(
@@ -32,12 +32,12 @@ class OnboardingNavScope {
                     },
                     hideOnboarding = {
                         navigator.onFinished(route = NamespacesAndIterationCadenceSetupRoute)
-                    }
+                    },
                 )
             }
 
             entry<GitLabSetupRoute>(
-                metadata = onboardingSteps.next() + onboardingTransitions
+                metadata = onboardingSteps.next() + onboardingTransitions,
             ) {
                 val navigator = LocalNavigator.current
                 GitLabSetup(
@@ -49,7 +49,7 @@ class OnboardingNavScope {
             }
 
             entry<NamespacesAndIterationCadenceSetupRoute>(
-                metadata = onboardingSteps.next() + onboardingTransitions
+                metadata = onboardingSteps.next() + onboardingTransitions,
             ) {
                 val navigator = LocalNavigator.current
                 NamespacesAndIterationCadenceSetup(

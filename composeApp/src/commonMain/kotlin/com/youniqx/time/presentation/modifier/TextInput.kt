@@ -28,11 +28,12 @@ fun Modifier.changeFocusOnTab(afterTab: (() -> Unit)? = null): Modifier {
     }
 }
 
-fun Modifier.onCtrlOrMetaEnter(block: () -> Unit) = onPreviewKeyEvent {
-    if (it.key == Key.Enter && (it.isMetaPressed || it.isCtrlPressed) && it.type == KeyEventType.KeyUp) {
-        block()
-        true
-    } else {
-        false
+fun Modifier.onCtrlOrMetaEnter(block: () -> Unit) =
+    onPreviewKeyEvent {
+        if (it.key == Key.Enter && (it.isMetaPressed || it.isCtrlPressed) && it.type == KeyEventType.KeyUp) {
+            block()
+            true
+        } else {
+            false
+        }
     }
-}

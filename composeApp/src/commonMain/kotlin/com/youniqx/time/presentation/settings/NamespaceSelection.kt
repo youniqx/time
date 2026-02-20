@@ -44,7 +44,9 @@ import com.youniqx.time.presentation.modifier.changeFocusOnTab
 import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
 import kotlinx.coroutines.flow.drop
 
-class NamespaceSelectionState(val textFieldState: TextFieldState) {
+class NamespaceSelectionState(
+    val textFieldState: TextFieldState,
+) {
     var expanded: Boolean by mutableStateOf(false)
     val search: String get() = textFieldState.text.toString()
 }
@@ -82,10 +84,12 @@ fun NamespaceSelection(
         }
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
-            modifier = Modifier.fillMaxWidth()
-                .changeFocusOnTab { state.expanded = false }
-                .disableGlobalSearchIfFocused()
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .changeFocusOnTab { state.expanded = false }
+                    .disableGlobalSearchIfFocused()
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
             state = if (showSelectedNamespace) emptyTextFieldState else state.textFieldState,
             readOnly = showSelectedNamespace,
             prefix = selected.takeIf { showSelectedNamespace },
@@ -97,8 +101,9 @@ fun NamespaceSelection(
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
         )
         DropdownMenu(
-            modifier = Modifier
-                .exposedDropdownSize(true),
+            modifier =
+                Modifier
+                    .exposedDropdownSize(true),
             properties = PopupProperties(focusable = false),
             expanded = state.expanded,
             onDismissRequest = {
@@ -107,70 +112,100 @@ fun NamespaceSelection(
         ) {
             when (namespaces?.loadState?.refresh) {
                 null,
-                is LoadState.Error -> ErrorDropdownMenuItem(onClick = { namespaces?.retry() })
-                LoadState.Loading -> CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+                is LoadState.Error,
+                -> {
+                    ErrorDropdownMenuItem(onClick = { namespaces?.retry() })
+                }
+
+                LoadState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                }
+
                 is LoadState.NotLoading -> {
                     namespaces.itemSnapshotList.forEach {
                         when (it) {
                             is NamespaceEntry.SelectedSearch,
                             is NamespaceEntry.FrecentGroup,
                             is NamespaceEntry.Group,
-                            is NamespaceEntry.User -> DropdownMenuItem(
-                                text = {
-                                    NamespaceItem(fullPath = it.fullPath, name = it.name)
-                                },
-                                onClick = {
-                                    onNamespaceChange(it)
-                                    state.expanded = false
-                                },
-                                trailingIcon = {
-                                    when (it) {
-                                        is NamespaceEntry.SelectedSearch -> {
-                                            val text = "Set to search scope namespace"
-                                            SimpleTooltip(text = text) {
+                            is NamespaceEntry.User,
+                            -> {
+                                DropdownMenuItem(
+                                    text = {
+                                        NamespaceItem(fullPath = it.fullPath, name = it.name)
+                                    },
+                                    onClick = {
+                                        onNamespaceChange(it)
+                                        state.expanded = false
+                                    },
+                                    trailingIcon = {
+                                        when (it) {
+                                            is NamespaceEntry.SelectedSearch -> {
+                                                val text = "Set to search scope namespace"
+                                                SimpleTooltip(text = text) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.ContentCopy,
+                                                        contentDescription = text,
+                                                    )
+                                                }
+                                            }
+
+                                            is NamespaceEntry.FrecentGroup -> {
+                                                SimpleTooltip(text = "frequently visited") {
+                                                    Icon(
+                                                        imageVector = Icons.Default.KeyboardDoubleArrowUp,
+                                                        contentDescription = "Frequently visited",
+                                                    )
+                                                }
+                                            }
+
+                                            is NamespaceEntry.Group -> {}
+
+                                            is NamespaceEntry.User -> {
                                                 Icon(
-                                                    imageVector = Icons.Default.ContentCopy,
-                                                    contentDescription = text
+                                                    imageVector = Icons.Default.AccountCircle,
+                                                    contentDescription = "Account namespace",
                                                 )
                                             }
                                         }
-                                        is NamespaceEntry.FrecentGroup -> SimpleTooltip(text = "frequently visited") {
-                                            Icon(
-                                                imageVector = Icons.Default.KeyboardDoubleArrowUp,
-                                                contentDescription = "Frequently visited"
-                                            )
-                                        }
-                                        is NamespaceEntry.Group -> {}
-                                        is NamespaceEntry.User -> Icon(
-                                            imageVector = Icons.Default.AccountCircle,
-                                            contentDescription = "Account namespace"
-                                        )
-                                    }
-                                },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                            )
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                                )
+                            }
 
-                            NamespaceEntry.Separator -> HorizontalDivider()
+                            NamespaceEntry.Separator -> {
+                                HorizontalDivider()
+                            }
+
                             null -> {}
                         }
                     }
                     when (val appendLoadingState = namespaces.loadState.append) {
-                        is LoadState.Error -> ErrorDropdownMenuItem(onClick = { namespaces.retry() })
-                        LoadState.Loading -> CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                        is LoadState.NotLoading -> if (!appendLoadingState.endOfPaginationReached) DropdownMenuItem(
-                            text = { Text("Load more items") },
-                            onClick = {
-                                try {
-                                    namespaces[namespaces.itemCount]
-                                } catch (_: Exception) {
-                                }
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                        )
+                        is LoadState.Error -> {
+                            ErrorDropdownMenuItem(onClick = { namespaces.retry() })
+                        }
+
+                        LoadState.Loading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                            )
+                        }
+
+                        is LoadState.NotLoading -> {
+                            if (!appendLoadingState.endOfPaginationReached) {
+                                DropdownMenuItem(
+                                    text = { Text("Load more items") },
+                                    onClick = {
+                                        try {
+                                            namespaces[namespaces.itemCount]
+                                        } catch (_: Exception) {
+                                        }
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -179,7 +214,10 @@ fun NamespaceSelection(
 }
 
 @Composable
-fun NamespaceItem(fullPath: String, name: String?) {
+fun NamespaceItem(
+    fullPath: String,
+    name: String?,
+) {
     Column {
         Text(
             fullPath,

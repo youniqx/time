@@ -41,9 +41,10 @@ fun SeparateIterationCadenceNamespaceSelection(
             namespaceSearcher(namespaceSelectionState.search)
         }
         NamespaceSelection(
-            selected = selectedNamespaces.iterationCadence?.let {
-                { NamespaceItem(fullPath = it.fullPath, name = it.name) }
-            },
+            selected =
+                selectedNamespaces.iterationCadence?.let {
+                    { NamespaceItem(fullPath = it.fullPath, name = it.name) }
+                },
             namespaces = namespaces,
             onNamespaceChange = onNamespaceChange,
             state = namespaceSelectionState,
@@ -52,34 +53,39 @@ fun SeparateIterationCadenceNamespaceSelection(
         )
         return
     }
-    val linkStyle = SpanStyle(
-        color = MaterialTheme.colorScheme.primary,
-    )
+    val linkStyle =
+        SpanStyle(
+            color = MaterialTheme.colorScheme.primary,
+        )
     Text(
-        modifier = Modifier
-            .padding(
-                horizontal = TextFieldDefaults.contentPaddingWithLabel()
-                    .calculateStartPadding(LocalLayoutDirection.current)
-            )
-            .padding(bottom = 8.dp),
-        text = buildAnnotatedString {
-            withLink(
-                LinkAnnotation.Clickable(
-                    tag = "IterationInDifferentNamespace",
-                    styles = TextLinkStyles(
-                        style = SpanStyle(color = OutlinedTextFieldDefaults.colors().unfocusedLabelColor),
-                        focusedStyle = linkStyle,
-                        hoveredStyle = linkStyle,
-                        pressedStyle = linkStyle,
+        modifier =
+            Modifier
+                .padding(
+                    horizontal =
+                        TextFieldDefaults
+                            .contentPaddingWithLabel()
+                            .calculateStartPadding(LocalLayoutDirection.current),
+                ).padding(bottom = 8.dp),
+        text =
+            buildAnnotatedString {
+                withLink(
+                    LinkAnnotation.Clickable(
+                        tag = "IterationInDifferentNamespace",
+                        styles =
+                            TextLinkStyles(
+                                style = SpanStyle(color = OutlinedTextFieldDefaults.colors().unfocusedLabelColor),
+                                focusedStyle = linkStyle,
+                                hoveredStyle = linkStyle,
+                                pressedStyle = linkStyle,
+                            ),
+                        linkInteractionListener = {
+                            showSelection = true
+                        },
                     ),
-                    linkInteractionListener = {
-                        showSelection = true
-                    }
-                )
-            ) {
-                append("Click if iteration cadence is not in this exact namespace.")
-            }
-        },
-        style = MaterialTheme.typography.bodySmall
+                ) {
+                    append("Click if iteration cadence is not in this exact namespace.")
+                }
+            },
+        style = MaterialTheme.typography.bodySmall,
     )
 }

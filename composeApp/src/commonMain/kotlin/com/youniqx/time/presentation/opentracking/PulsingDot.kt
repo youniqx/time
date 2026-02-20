@@ -22,25 +22,34 @@ import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 @Composable
-fun PulsingDot(color: Color, modifier: Modifier = Modifier) {
+fun PulsingDot(
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
     val infiniteTransition = rememberInfiniteTransition(label = "pulse")
     val offset = remember { Clock.System.now().toEpochMilliseconds() % 2000 }
     val alpha by infiniteTransition.animateFloat(
         initialValue = 0.4f,
         targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1000),
-            repeatMode = RepeatMode.Reverse,
-            initialStartOffset = StartOffset(offsetMillis = offset.toInt(), offsetType = StartOffsetType.FastForward)
-        ),
-        label = "pulseAlpha"
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(1000),
+                repeatMode = RepeatMode.Reverse,
+                initialStartOffset =
+                    StartOffset(
+                        offsetMillis = offset.toInt(),
+                        offsetType = StartOffsetType.FastForward,
+                    ),
+            ),
+        label = "pulseAlpha",
     )
 
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Box(
-            modifier = Modifier
-                .fillMaxSize(0.5f)
-                .background(color.copy(alpha = alpha), CircleShape)
+            modifier =
+                Modifier
+                    .fillMaxSize(0.5f)
+                    .background(color.copy(alpha = alpha), CircleShape),
         )
     }
 }

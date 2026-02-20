@@ -19,24 +19,27 @@ fun SourceAware<Settings>.toApolloClientOrNull(): ApolloClient? {
     val instanceUrl = settings.instanceUrl ?: return null
     val token = settings.token ?: return null
     val cacheFactory = MemoryCacheFactory(maxSizeBytes = 30 * 1024 * 1024)
-    return ApolloClient.Builder()
+    return ApolloClient
+        .Builder()
         .serverUrl(
             buildUrl {
                 takeFrom(instanceUrl)
                 appendPathSegments("api", "graphql")
-            }.toString()
-        )
-        .addHttpHeader("Authorization", "Bearer $token")
+            }.toString(),
+        ).addHttpHeader("Authorization", "Bearer $token")
         .normalizedCache(
             normalizedCacheFactory = cacheFactory,
-            cacheKeyGenerator = cacheKeyGenerator
-        )
-        .build()
+            cacheKeyGenerator = cacheKeyGenerator,
+        ).build()
 }
 
-val cacheKeyGenerator = object : CacheKeyGenerator {
-    override fun cacheKeyForObject(obj: Map<String, Any?>, context: CacheKeyGeneratorContext): CacheKey? {
-        // Generate the cache ID based on the object's id field
-        return (obj["id"] as? String)?.let(::CacheKey)
+val cacheKeyGenerator =
+    object : CacheKeyGenerator {
+        override fun cacheKeyForObject(
+            obj: Map<String, Any?>,
+            context: CacheKeyGeneratorContext,
+        ): CacheKey? {
+            // Generate the cache ID based on the object's id field
+            return (obj["id"] as? String)?.let(::CacheKey)
+        }
     }
-}

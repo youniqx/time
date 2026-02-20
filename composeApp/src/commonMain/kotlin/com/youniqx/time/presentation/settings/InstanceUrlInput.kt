@@ -21,9 +21,10 @@ fun InstanceUrlInput(
     OutlinedTextField(
         value = instanceUrl.orEmpty(),
         onValueChange = onInstanceUrlChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .changeFocusOnTab(),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .changeFocusOnTab(),
         isError = !instanceUrl.isNullOrEmpty() && parsedInstanceUrl == null,
         label = { Text("GitLab Instance Url") },
         placeholder = { Text("https://gitlab.com") },
@@ -31,6 +32,6 @@ fun InstanceUrlInput(
         singleLine = true,
         leadingIcon = {
             Icon(Icons.Default.Language, contentDescription = null)
-        }
+        },
     )
 }

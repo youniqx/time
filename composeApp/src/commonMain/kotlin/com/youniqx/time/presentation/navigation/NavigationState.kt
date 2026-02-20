@@ -35,7 +35,6 @@ fun rememberNavigationState(
     configuration: SavedStateConfiguration,
     vararg elements: NavKey,
 ): NavigationState {
-
     val backStacks = List(size = MAX_AVAILABLE_PANES) { rememberNavBackStack(configuration, *elements) }
 
     return remember(directive) {
@@ -53,7 +52,7 @@ fun rememberNavigationState(
  */
 class NavigationState(
     val backStacks: List<NavBackStack<NavKey>>,
-    directive: PaneScaffoldDirective
+    directive: PaneScaffoldDirective,
 ) {
     val activeBackStack = activeBackStackFor(directive = directive)
 }

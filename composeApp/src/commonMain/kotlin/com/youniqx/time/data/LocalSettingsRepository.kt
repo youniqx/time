@@ -20,20 +20,21 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 
-val defaultSettings = Settings(
-    instanceUrl = null,
-    token = null,
-    namespaceFullPath = null,
-    iterationCadence = null,
-    darkTheme = true,
-    highContrastColors = false,
-    groupSprintInEpics = false,
-    showLabelsByDefault = false,
-    useLabelColors = false,
-    showMenuBarTimer = true,
-    pinnedWorkItems = emptyList(),
-    openTracking = null,
-)
+val defaultSettings =
+    Settings(
+        instanceUrl = null,
+        token = null,
+        namespaceFullPath = null,
+        iterationCadence = null,
+        darkTheme = true,
+        highContrastColors = false,
+        groupSprintInEpics = false,
+        showLabelsByDefault = false,
+        useLabelColors = false,
+        showMenuBarTimer = true,
+        pinnedWorkItems = emptyList(),
+        openTracking = null,
+    )
 
 @OptIn(ExperimentalSettingsApi::class)
 @ContributesBinding(AppScope::class)
@@ -42,15 +43,14 @@ class LocalSettingsRepository(
     private val flowSettings: FlowSettings,
     private val json: Json,
     dispatchers: IDispatchers,
-): SettingsRepository {
-
+) : SettingsRepository {
     private val _settings =
         MutableStateFlow(
             SourceAware(
                 data = defaultSettings,
                 source = DataSource.Default,
                 isSyncing = true,
-            )
+            ),
         )
     override val settings = _settings.asStateFlow()
 
@@ -60,19 +60,34 @@ class LocalSettingsRepository(
         flowSettings.getStringOrNullFlow(SettingKey.InstanceUrl.name).loadInto { copy(instanceUrl = it) }
         flowSettings.getStringOrNullFlow(SettingKey.Token.name).loadInto { copy(token = it) }
         flowSettings.getStringOrNullFlow(SettingKey.NamespaceFullPath.name).loadInto { copy(namespaceFullPath = it) }
-        flowSettings.getStringOrNullFlow(SettingKey.IterationCadence.name)
+        flowSettings
+            .getStringOrNullFlow(SettingKey.IterationCadence.name)
             .loadInto { copy(iterationCadence = it?.let { json.decodeFromString(it) }) }
         flowSettings.getBooleanFlow(SettingKey.DarkTheme.name, true).loadInto { copy(darkTheme = it) }
-        flowSettings.getBooleanFlow(SettingKey.HighContrastColors.name, false).loadInto { copy(highContrastColors = it) }
-        flowSettings.getBooleanFlow(SettingKey.GroupSprintInEpics.name, false).loadInto { copy(groupSprintInEpics = it) }
-        flowSettings.getBooleanFlow(SettingKey.ShowLabelsByDefault.name, false).loadInto { copy(showLabelsByDefault = it) }
+        flowSettings
+            .getBooleanFlow(
+                SettingKey.HighContrastColors.name,
+                false,
+            ).loadInto { copy(highContrastColors = it) }
+        flowSettings
+            .getBooleanFlow(
+                SettingKey.GroupSprintInEpics.name,
+                false,
+            ).loadInto { copy(groupSprintInEpics = it) }
+        flowSettings
+            .getBooleanFlow(
+                SettingKey.ShowLabelsByDefault.name,
+                false,
+            ).loadInto { copy(showLabelsByDefault = it) }
         flowSettings.getBooleanFlow(SettingKey.UseLabelColors.name, false).loadInto { copy(useLabelColors = it) }
         flowSettings.getBooleanFlow(SettingKey.ShowMenuBarTimer.name, true).loadInto { copy(showMenuBarTimer = it) }
-        flowSettings.getStringFlow(
-            SettingKey.PinnedIssues.name,
-            json.encodeToString(emptyList<String>())
-        ).loadInto { copy(pinnedWorkItems = json.decodeFromString<List<String>>(it).filter(isGlobalId)) }
-        flowSettings.getStringOrNullFlow(SettingKey.OpenTracking.name)
+        flowSettings
+            .getStringFlow(
+                SettingKey.PinnedIssues.name,
+                json.encodeToString(emptyList<String>()),
+            ).loadInto { copy(pinnedWorkItems = json.decodeFromString<List<String>>(it).filter(isGlobalId)) }
+        flowSettings
+            .getStringOrNullFlow(SettingKey.OpenTracking.name)
             .loadInto { copy(openTracking = it?.let { json.decodeFromString(it) }) }
     }
 
@@ -156,7 +171,9 @@ class LocalSettingsRepository(
 
     override fun togglePinWorkItem(id: String) {
         scope.launch {
-            val pinned = settings.value.data.pinnedWorkItems.toMutableList()
+            val pinned =
+                settings.value.data.pinnedWorkItems
+                    .toMutableList()
             if (id in pinned) {
                 pinned.remove(id)
             } else {
@@ -176,7 +193,7 @@ class LocalSettingsRepository(
             }
         }
     }
-    
+
     private inline fun updateSettingsData(update: Settings.() -> Settings) {
         _settings.update { it.copy(data = it.data.update()) }
     }
@@ -188,7 +205,7 @@ class LocalSettingsRepository(
                     it.copy(
                         data = it.data.updateSettings(setting),
                         source = DataSource.Local,
-                        isSyncing = false
+                        isSyncing = false,
                     )
                 }
             }

@@ -74,11 +74,12 @@ fun GitLabSetupScreen(
     val uriHandler = LocalUriHandler.current
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
-            .padding(spacing.screenPadding)
+        modifier =
+            modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
+                .padding(spacing.screenPadding),
     ) {
         OnboardingProgressIndicator(stepCount)
 
@@ -96,7 +97,7 @@ fun GitLabSetupScreen(
         Text(
             text = "Enter your GitLab instance URL and personal access token to start tracking time.",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(modifier = Modifier.height(spacing.xl))
@@ -104,7 +105,7 @@ fun GitLabSetupScreen(
         // GitLab URL input
         InstanceUrlInput(
             instanceUrl = instanceUrl,
-            onInstanceUrlChange = onInstanceUrlChange
+            onInstanceUrlChange = onInstanceUrlChange,
         )
 
         Spacer(modifier = Modifier.height(spacing.lg))
@@ -125,12 +126,12 @@ fun GitLabSetupScreen(
                         val tokenUrl = createTokenUrl(fromInstanceUrl = instanceUrl)
                         uriHandler.openUri(tokenUrl.toString())
                     }
-                }
+                },
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.OpenInNew,
                     contentDescription = null,
-                    modifier = Modifier.padding(end = spacing.sm)
+                    modifier = Modifier.padding(end = spacing.sm),
                 )
                 Text("Create a new access token")
             }
@@ -142,7 +143,7 @@ fun GitLabSetupScreen(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             TextButton(onClick = onSkip) {
                 Text("Skip for now")
@@ -150,7 +151,7 @@ fun GitLabSetupScreen(
 
             Button(
                 onClick = onComplete,
-                enabled = !instanceUrl.isNullOrBlank() && !token.isNullOrBlank()
+                enabled = !instanceUrl.isNullOrBlank() && !token.isNullOrBlank(),
             ) {
                 Text("Continue")
             }

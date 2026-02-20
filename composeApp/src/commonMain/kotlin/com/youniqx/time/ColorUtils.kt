@@ -25,6 +25,5 @@ fun String.toColorInt(): Int {
  * You can adjust this value to fine-tune the results.
  * @return `Color.Black` if the background is light, or `Color.White` if it's dark.
  */
-fun Color.contrastingTextColor(threshold: Double = 0.25): Color {
-    return if (luminance() > threshold) Color.Black else Color.White
-}
+fun Color.contrastingTextColor(threshold: Double = 0.25): Color =
+    if (luminance() > threshold) Color.Black else Color.White

@@ -94,11 +94,12 @@ fun NamespacesAndIterationCadenceSetupScreen(
     val spacing = LocalSpacing.current
 
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
-            .padding(spacing.screenPadding)
+        modifier =
+            modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
+                .padding(spacing.screenPadding),
     ) {
         OnboardingProgressIndicator(stepCount)
 
@@ -116,7 +117,7 @@ fun NamespacesAndIterationCadenceSetupScreen(
         Text(
             text = "Select your search scope and your iteration cadence",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
         Spacer(modifier = Modifier.height(spacing.xl))
@@ -132,7 +133,7 @@ fun NamespacesAndIterationCadenceSetupScreen(
             iterationCadence = iterationCadence,
             iterationCadences = iterationCadences,
             iterationCadenceSearcher = iterationCadenceSearcher,
-            onIterationCadenceChange = onIterationCadenceChange
+            onIterationCadenceChange = onIterationCadenceChange,
         )
 
         Spacer(modifier = Modifier.weight(1f))
@@ -141,7 +142,7 @@ fun NamespacesAndIterationCadenceSetupScreen(
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             TextButton(onClick = onSkip) {
                 Text("Skip for now")
@@ -149,7 +150,7 @@ fun NamespacesAndIterationCadenceSetupScreen(
 
             Button(
                 onClick = onComplete,
-                enabled = selectedNamespaces.search != null
+                enabled = selectedNamespaces.search != null,
             ) {
                 Text("Continue")
             }

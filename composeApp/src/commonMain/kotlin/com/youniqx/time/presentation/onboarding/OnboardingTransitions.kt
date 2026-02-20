@@ -34,39 +34,53 @@ fun <T : Any> makeUsable(input: (AnimatedContentTransitionScope<Scene<T>>.(Int) 
 
 val backwards by lazy {
     (slideInHorizontally { width -> -width } + fadeIn()) togetherWith
-            (slideOutHorizontally { width -> width } + fadeOut())
+        (slideOutHorizontally { width -> width } + fadeOut())
 }
 
-val onboardingTransitions = NavDisplay.transitionSpec {
-    val initialIndex = initialState.index
-    val targetIndex = targetState.index
-    val default = makeUsable(defaultTransitionSpec())
+val onboardingTransitions =
+    NavDisplay.transitionSpec {
+        val initialIndex = initialState.index
+        val targetIndex = targetState.index
+        val default = makeUsable(defaultTransitionSpec())
 
-    when {
-        targetIndex == null || initialIndex == null -> default()
-        targetIndex > initialIndex -> (slideInHorizontally { width -> width } + fadeIn()) togetherWith
-                (slideOutHorizontally { width -> -width } + fadeOut())
-        targetIndex < initialIndex -> backwards
-        else -> default()
-    }
-} + NavDisplay.popTransitionSpec {
-    val initialIndex = initialState.index
-    val targetIndex = targetState.index
-    val default = makeUsable(defaultPopTransitionSpec())
+        when {
+            targetIndex == null || initialIndex == null -> {
+                default()
+            }
 
-    when {
-        targetIndex == null || initialIndex == null -> default()
-        targetIndex < initialIndex -> backwards
-        else -> default()
-    }
-} + NavDisplay.predictivePopTransitionSpec {
-    val initialIndex = initialState.index
-    val targetIndex = targetState.index
-    val default = makeUsable(defaultPredictivePopTransitionSpec())
+            targetIndex > initialIndex -> {
+                (slideInHorizontally { width -> width } + fadeIn()) togetherWith
+                    (slideOutHorizontally { width -> -width } + fadeOut())
+            }
 
-    when {
-        targetIndex == null || initialIndex == null -> default(it)
-        targetIndex < initialIndex -> backwards
-        else -> default(it)
-    }
-}
+            targetIndex < initialIndex -> {
+                backwards
+            }
+
+            else -> {
+                default()
+            }
+        }
+    } +
+        NavDisplay.popTransitionSpec {
+            val initialIndex = initialState.index
+            val targetIndex = targetState.index
+            val default = makeUsable(defaultPopTransitionSpec())
+
+            when {
+                targetIndex == null || initialIndex == null -> default()
+                targetIndex < initialIndex -> backwards
+                else -> default()
+            }
+        } +
+        NavDisplay.predictivePopTransitionSpec {
+            val initialIndex = initialState.index
+            val targetIndex = targetState.index
+            val default = makeUsable(defaultPredictivePopTransitionSpec())
+
+            when {
+                targetIndex == null || initialIndex == null -> default(it)
+                targetIndex < initialIndex -> backwards
+                else -> default(it)
+            }
+        }

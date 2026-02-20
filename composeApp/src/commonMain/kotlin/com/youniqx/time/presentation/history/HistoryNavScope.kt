@@ -18,17 +18,15 @@ class HistoryNavScope {
     @IntoSet
     fun provideNavScope(): NavScope =
         {
-
             entry<HistoryRoute>(
-                metadata = SupportingPaneSceneStrategy.supportingPane()
+                metadata = SupportingPaneSceneStrategy.supportingPane(),
             ) {
                 val navigator = LocalNavigator.current
                 History(
                     onBack = {
                         navigator.onFinished(route = it)
-                    }
+                    },
                 )
             }
-
         }
 }

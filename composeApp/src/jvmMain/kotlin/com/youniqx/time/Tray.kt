@@ -44,7 +44,8 @@ internal enum class DesktopPlatform {
     Linux,
     Windows,
     MacOS,
-    Unknown;
+    Unknown,
+    ;
 
     companion object {
         /**
@@ -62,22 +63,26 @@ internal enum class DesktopPlatform {
     }
 }
 
-val GraphicsConfiguration.density: Density get() = Density(
-    defaultTransform.scaleX.toFloat(),
-    fontScale = 1f
-)
+val GraphicsConfiguration.density: Density get() =
+    Density(
+        defaultTransform.scaleX.toFloat(),
+        fontScale = 1f,
+    )
 
-internal val GlobalDensity get() = GraphicsEnvironment.getLocalGraphicsEnvironment()
-    .defaultScreenDevice
-    .defaultConfiguration
-    .density
+internal val GlobalDensity get() =
+    GraphicsEnvironment
+        .getLocalGraphicsEnvironment()
+        .defaultScreenDevice
+        .defaultConfiguration
+        .density
 
 internal val ComponentOrientation.layoutDirection: LayoutDirection
-    get() = when {
-        isLeftToRight -> LayoutDirection.Ltr
-        isHorizontal -> LayoutDirection.Rtl
-        else -> LayoutDirection.Ltr
-    }
+    get() =
+        when {
+            isLeftToRight -> LayoutDirection.Ltr
+            isHorizontal -> LayoutDirection.Rtl
+            else -> LayoutDirection.Ltr
+        }
 
 internal val Locale.layoutDirection: LayoutDirection
     get() = ComponentOrientation.getOrientation(this).layoutDirection
@@ -88,15 +93,19 @@ internal val GlobalLayoutDirection get() = Locale.getDefault().layoutDirection
 // need, and not what we provide. It only affects macOs. This size will be scaled in asAwtImage to
 // support DPI=2.0
 // Unfortunately I hadn't enough time to find sources from the official docs
-private val iconSize = when (DesktopPlatform.Current) {
-    // https://doc.qt.io/qt-5/qtwidgets-desktop-systray-example.html (search 22x22)
-    DesktopPlatform.Linux -> Size(22f, 22f)
-    // https://doc.qt.io/qt-5/qtwidgets-desktop-systray-example.html (search 16x16)
-    DesktopPlatform.Windows -> Size(16f, 16f)
-    // https://medium.com/@acwrightdesign/creating-a-macos-menu-bar-application-using-swiftui-54572a5d5f87
-    DesktopPlatform.MacOS -> Size(22f, 22f)
-    DesktopPlatform.Unknown -> Size(32f, 32f)
-}
+private val iconSize =
+    when (DesktopPlatform.Current) {
+        // https://doc.qt.io/qt-5/qtwidgets-desktop-systray-example.html (search 22x22)
+        DesktopPlatform.Linux -> Size(22f, 22f)
+
+        // https://doc.qt.io/qt-5/qtwidgets-desktop-systray-example.html (search 16x16)
+        DesktopPlatform.Windows -> Size(16f, 16f)
+
+        // https://medium.com/@acwrightdesign/creating-a-macos-menu-bar-application-using-swiftui-54572a5d5f87
+        DesktopPlatform.MacOS -> Size(22f, 22f)
+
+        DesktopPlatform.Unknown -> Size(32f, 32f)
+    }
 
 /**
  * `true` if the platform supports tray icons in the taskbar
@@ -104,6 +113,7 @@ private val iconSize = when (DesktopPlatform.Current) {
 val isTraySupported: Boolean get() = SystemTray.isSupported()
 
 // TODO(demin): add mouse click/double-click/right click listeners (can we use PointerInputEvent?)
+
 /**
  * Adds tray icon to the platform taskbar if it is supported.
  *
@@ -127,9 +137,9 @@ val isTraySupported: Boolean get() = SystemTray.isSupported()
 fun ApplicationScope.Tray(
     icon: Painter,
     tooltip: String? = null,
-    onClick: (x: Int, y: Int) -> Unit = {_, _ -> },
+    onClick: (x: Int, y: Int) -> Unit = { _, _ -> },
     onAction: () -> Unit = {},
-    menu: @Composable MenuScope.() -> Unit = {}
+    menu: @Composable MenuScope.() -> Unit = {},
 ) {
     if (!isTraySupported) {
         DisposableEffect(Unit) {
@@ -141,7 +151,7 @@ fun ApplicationScope.Tray(
             // code doesn't depend on something that is created/calculated in this function.
             System.err.println(
                 "Tray is not supported on the current platform. " +
-                        "Use the global property `isTraySupported` to check."
+                    "Use the global property `isTraySupported` to check.",
             )
             onDispose {}
         }
@@ -150,45 +160,48 @@ fun ApplicationScope.Tray(
 
     val currentOnAction by rememberUpdatedState(onAction)
 
-    val awtIcon = remember(icon) {
-        // We shouldn't use LocalDensity here because Tray's density doesn't equal it. It
-        // equals to the density of the screen on which it shows. Currently Swing doesn't
-        // provide us such information, it only requests an image with the desired width/height
-        // (see MultiResolutionImage.getResolutionVariant). Resources like svg/xml should look okay
-        // because they don't use absolute '.dp' values to draw, they use values which are
-        // relative to their viewport.
-        when (icon) {
-            is MenuBarTimerIcon -> icon.createAwtImage()
-            else -> icon.toAwtImage(GlobalDensity, GlobalLayoutDirection, iconSize)
-        }
-    }
-
-    val tray = remember {
-        TrayIcon(awtIcon).apply {
-            isImageAutoSize = false
-            addMouseListener(object : MouseListener {
-                override fun mouseClicked(p0: MouseEvent?) {
-                }
-
-                override fun mousePressed(p0: MouseEvent?) {
-                }
-
-                override fun mouseReleased(p0: MouseEvent?) {
-                    p0?.let { onClick(it.x, it.y) }
-                }
-
-                override fun mouseEntered(p0: MouseEvent?) {
-                }
-
-                override fun mouseExited(p0: MouseEvent?) {
-                }
-
-            })
-            addActionListener {
-                currentOnAction()
+    val awtIcon =
+        remember(icon) {
+            // We shouldn't use LocalDensity here because Tray's density doesn't equal it. It
+            // equals to the density of the screen on which it shows. Currently Swing doesn't
+            // provide us such information, it only requests an image with the desired width/height
+            // (see MultiResolutionImage.getResolutionVariant). Resources like svg/xml should look okay
+            // because they don't use absolute '.dp' values to draw, they use values which are
+            // relative to their viewport.
+            when (icon) {
+                is MenuBarTimerIcon -> icon.createAwtImage()
+                else -> icon.toAwtImage(GlobalDensity, GlobalLayoutDirection, iconSize)
             }
         }
-    }
+
+    val tray =
+        remember {
+            TrayIcon(awtIcon).apply {
+                isImageAutoSize = false
+                addMouseListener(
+                    object : MouseListener {
+                        override fun mouseClicked(p0: MouseEvent?) {
+                        }
+
+                        override fun mousePressed(p0: MouseEvent?) {
+                        }
+
+                        override fun mouseReleased(p0: MouseEvent?) {
+                            p0?.let { onClick(it.x, it.y) }
+                        }
+
+                        override fun mouseEntered(p0: MouseEvent?) {
+                        }
+
+                        override fun mouseExited(p0: MouseEvent?) {
+                        }
+                    },
+                )
+                addActionListener {
+                    currentOnAction()
+                }
+            }
+        }
     val popupMenu = remember { PopupMenu() }
     val currentMenu by rememberUpdatedState(menu)
 
@@ -202,9 +215,10 @@ fun ApplicationScope.Tray(
     DisposableEffect(Unit) {
         tray.popupMenu = popupMenu
 
-        val menuComposition = popupMenu.setContent(composition) {
-            currentMenu()
-        }
+        val menuComposition =
+            popupMenu.setContent(composition) {
+                currentMenu()
+            }
 
         SystemTray.getSystemTray().add(tray)
 

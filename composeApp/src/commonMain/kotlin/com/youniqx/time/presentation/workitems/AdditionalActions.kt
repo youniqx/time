@@ -14,8 +14,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
 import com.youniqx.time.clipEntryOf
-import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
+import com.youniqx.time.presentation.SimpleTooltip
 import kotlinx.coroutines.launch
 
 @Composable
@@ -30,7 +30,7 @@ fun AdditionalActions(
         IconToggleButton(checked = pinned, onCheckedChange = { togglePinned() }) {
             Icon(
                 imageVector = if (pinned) Icons.Filled.PushPin else Icons.Outlined.PushPin,
-                contentDescription = text
+                contentDescription = text,
             )
         }
     }
@@ -44,25 +44,29 @@ fun AdditionalActions(
         }) {
             Icon(
                 imageVector = Icons.Default.Numbers,
-                contentDescription = "Copy work item ID\n${workItem.iid}"
+                contentDescription = "Copy work item ID\n${workItem.iid}",
             )
         }
     }
-    if (workItem.webUrl != null) SimpleTooltip("Copy work item URL") {
-        IconButton(onClick = {
-            coroutineScope.launch {
-                clipboard.setClipEntry(clipEntryOf(workItem.webUrl))
+    if (workItem.webUrl != null) {
+        SimpleTooltip("Copy work item URL") {
+            IconButton(onClick = {
+                coroutineScope.launch {
+                    clipboard.setClipEntry(clipEntryOf(workItem.webUrl))
+                }
+            }) {
+                Icon(
+                    imageVector = Icons.Default.Link,
+                    contentDescription = "Copy work item URL",
+                )
             }
-        }) {
-            Icon(
-                imageVector = Icons.Default.Link,
-                contentDescription = "Copy work item URL"
-            )
         }
     }
-    if (workItem.webUrl != null) SimpleTooltip("Open work item") {
-        IconButton(onClick = { uriHandler.openUri(workItem.webUrl) }) {
-            Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open work item")
+    if (workItem.webUrl != null) {
+        SimpleTooltip("Open work item") {
+            IconButton(onClick = { uriHandler.openUri(workItem.webUrl) }) {
+                Icon(imageVector = Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open work item")
+            }
         }
     }
 }

@@ -15,21 +15,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.zIndex
 
-private data class StickyType(val contentType: Any?)
+private data class StickyType(
+    val contentType: Any?,
+)
 
 private fun LazyListState.stickyInfoFor(index: Int): State<Int> {
     return derivedStateOf {
-        val upcomingStickyHeaders = layoutInfo.visibleItemsInfo
-            .take(10)
-            .filter { it.contentType is StickyType }
-            .iterator()
+        val upcomingStickyHeaders =
+            layoutInfo.visibleItemsInfo
+                .take(10)
+                .filter { it.contentType is StickyType }
+                .iterator()
         upcomingStickyHeaders.forEach { firstSticky ->
             if (firstSticky.index == index) {
                 val offset = (-firstSticky.offset).coerceAtLeast(0)
                 return@derivedStateOf if (upcomingStickyHeaders.hasNext()) {
                     val secondSticky = upcomingStickyHeaders.next()
                     offset - (firstSticky.size - secondSticky.offset).coerceAtLeast(0)
-                } else offset
+                } else {
+                    offset
+                }
             }
         }
         0
@@ -41,7 +46,7 @@ fun LazyListScope.stickyHeader(
     listState: LazyListState,
     key: Any? = null,
     contentType: Any? = null,
-    content: @Composable LazyItemScope.(index: Int, isSticky: Boolean) -> Unit
+    content: @Composable LazyItemScope.(index: Int, isSticky: Boolean) -> Unit,
 ) {
     stickyHeader(
         key = key,
@@ -49,12 +54,13 @@ fun LazyListScope.stickyHeader(
         content = { index ->
             val stickyInfo by remember(listState) { listState.stickyInfoFor(index) }
             Box(
-                modifier = Modifier
-                    .offset { IntOffset(x = 0, y = stickyInfo) }
-                    .zIndex(10f)
+                modifier =
+                    Modifier
+                        .offset { IntOffset(x = 0, y = stickyInfo) }
+                        .zIndex(10f),
             ) {
                 content(index, stickyInfo > 0)
             }
-        }
+        },
     )
 }

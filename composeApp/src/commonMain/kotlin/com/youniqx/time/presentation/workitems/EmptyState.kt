@@ -29,22 +29,23 @@ fun EmptyState(
     title: String,
     description: String,
     action: (@Composable () -> Unit)? = null,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     val spacing = LocalSpacing.current
 
     Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(spacing.xxxl),
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .padding(spacing.xxxl),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
         )
 
         Spacer(modifier = Modifier.height(spacing.lg))
@@ -53,7 +54,7 @@ fun EmptyState(
             text = title,
             style = MaterialTheme.typography.titleMedium,
             textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
         )
 
         Spacer(modifier = Modifier.height(spacing.sm))
@@ -62,7 +63,7 @@ fun EmptyState(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
 
         action?.let {
@@ -78,7 +79,7 @@ fun NoWorkItemsEmptyState(modifier: Modifier = Modifier) {
         icon = Icons.AutoMirrored.Outlined.Assignment,
         title = "No work items found",
         description = "Try adjusting your search or selecting a different iteration cadence",
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
@@ -88,14 +89,14 @@ fun NoSearchResultsEmptyState(modifier: Modifier = Modifier) {
         icon = Icons.Outlined.SearchOff,
         title = "No results found",
         description = "Try a different search term",
-        modifier = modifier
+        modifier = modifier,
     )
 }
 
 @Composable
 fun NotConfiguredEmptyState(
     onConfigure: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     EmptyState(
         icon = Icons.Outlined.Settings,
@@ -106,6 +107,6 @@ fun NotConfiguredEmptyState(
                 Text("Configure GitLab")
             }
         },
-        modifier = modifier
+        modifier = modifier,
     )
 }

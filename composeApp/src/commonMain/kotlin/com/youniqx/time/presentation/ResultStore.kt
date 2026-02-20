@@ -50,17 +50,14 @@ object LocalResultStore {
     /**
      * Provides a [ResultStore] to the composition
      */
-    infix fun provides(
-        store: ResultStore
-    ): ProvidedValue<ResultStore?> {
-        return LocalResultStore.provides(store)
-    }
+    infix fun provides(store: ResultStore): ProvidedValue<ResultStore?> = LocalResultStore.provides(store)
 }
 
 interface ResultStoreValue
 
-private class ResultStoreSerializer(elementSerializer: KSerializer<ResultStoreValue>) :
-    KSerializer<ResultStore> {
+private class ResultStoreSerializer(
+    elementSerializer: KSerializer<ResultStoreValue>,
+) : KSerializer<ResultStore> {
     val keySerializer: KSerializer<String> = String.serializer()
     private val delegate =
         SnapshotStateMapSerializer(keySerializer = keySerializer, valueSerializer = elementSerializer)
@@ -69,25 +66,27 @@ private class ResultStoreSerializer(elementSerializer: KSerializer<ResultStoreVa
     override val descriptor: SerialDescriptor =
         SerialDescriptor("ResultStore", delegate.descriptor)
 
-    override fun serialize(encoder: Encoder, value: ResultStore) {
+    override fun serialize(
+        encoder: Encoder,
+        value: ResultStore,
+    ) {
         encoder.encodeSerializableValue(serializer = delegate, value = value.resultStateMap)
     }
 
-    override fun deserialize(decoder: Decoder): ResultStore {
-        return ResultStore().apply {
+    override fun deserialize(decoder: Decoder): ResultStore =
+        ResultStore().apply {
             resultStateMap.putAll(decoder.decodeSerializableValue(deserializer = delegate))
         }
-    }
 }
 
 /**
  * Provides a [ResultStore] that will be remembered across configuration changes.
  */
 @Composable
-fun rememberResultStore(configuration: SavedStateConfiguration) : ResultStore {
+fun rememberResultStore(configuration: SavedStateConfiguration): ResultStore {
     require(configuration.serializersModule != SavedStateConfiguration.DEFAULT.serializersModule) {
         "You must pass a `SavedStateConfiguration.serializersModule` configured to handle " +
-                "`ResultStoreValue` open polymorphism. Define it with: `polymorphic(ResultStoreValue::class) { ... }`"
+            "`ResultStoreValue` open polymorphism. Define it with: `polymorphic(ResultStoreValue::class) { ... }`"
     }
     return rememberSerializable(
         configuration = configuration,
@@ -103,7 +102,6 @@ fun rememberResultStore(configuration: SavedStateConfiguration) : ResultStore {
  * It provides a solution for state based results.
  */
 class ResultStore {
-
     /**
      * Map from the result key to a mutable state of the result.
      */
@@ -118,7 +116,10 @@ class ResultStore {
     /**
      * Sets the result for the given resultKey.
      */
-    inline fun <reified T : ResultStoreValue> setResult(resultKey: String = T::class.toString(), result: T) {
+    inline fun <reified T : ResultStoreValue> setResult(
+        resultKey: String = T::class.toString(),
+        result: T,
+    ) {
         resultStateMap[resultKey] = result
     }
 

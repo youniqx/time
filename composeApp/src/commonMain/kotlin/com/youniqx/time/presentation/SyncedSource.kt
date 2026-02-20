@@ -9,7 +9,10 @@ import androidx.compose.runtime.remember
 private object Uninitialized
 
 @Composable
-fun <T> rememberSyncedSource(from: T, save: (T) -> Unit): MutableState<T> {
+fun <T> rememberSyncedSource(
+    from: T,
+    save: (T) -> Unit,
+): MutableState<T> {
     // 1. Keep track of the last value we intentionally sent to the repository
     val lastSaved = remember { mutableStateOf<Any?>(Uninitialized) }
 

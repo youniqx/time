@@ -8,51 +8,54 @@ fun plurals(forms: PluralForms = PluralForms()) = VoidPluralString(forms = forms
 internal enum class TimeUnit(
     val past: () -> VoidPluralString,
     val present: () -> VoidPluralString,
-    val future: () -> VoidPluralString
+    val future: () -> VoidPluralString,
 ) {
     Seconds(
         past = { plurals() },
         present = { plurals(PluralForms(one = "second", other = "seconds")) },
-        future = { plurals() }
+        future = { plurals() },
     ),
     Minutes(
         past = { plurals() },
         present = { plurals(PluralForms(one = "minute", other = "minutes")) },
-        future = { plurals() }
+        future = { plurals() },
     ),
     Hours(
         past = { plurals() },
         present = { plurals(PluralForms(one = "hour", other = "hours")) },
-        future = { plurals() }
+        future = { plurals() },
     ),
     Days(
         past = { plurals() },
         present = { plurals(PluralForms(one = "day", other = "days")) },
-        future = { plurals() }
+        future = { plurals() },
     ),
     Weeks(
         past = { plurals() },
         present = { plurals(PluralForms(one = "week", other = "weeks")) },
-        future = { plurals() }
+        future = { plurals() },
     ),
     Months(
         past = { plurals() },
         present = { plurals(PluralForms(one = "month", other = "months")) },
-        future = { plurals() }
+        future = { plurals() },
     ),
     Years(
         past = { plurals() },
         present = { plurals(PluralForms(one = "year", other = "years")) },
-        future = { plurals() }
-    );
+        future = { plurals() },
+    ),
+    ;
 
-    fun format(value: Int, relativeTime: RelativeTime): String {
-        return when (relativeTime) {
+    fun format(
+        value: Int,
+        relativeTime: RelativeTime,
+    ): String =
+        when (relativeTime) {
             RelativeTime.Past -> past().optionallyFormat(value) ?: present().format(value)
             RelativeTime.Present -> present().format(value)
             RelativeTime.Future -> future().optionallyFormat(value) ?: present().format(value)
         }
-    }
 }
 
 /**

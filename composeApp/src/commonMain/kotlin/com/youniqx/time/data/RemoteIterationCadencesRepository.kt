@@ -33,11 +33,12 @@ class IterationCadencesPagingSource(
     dispatchers: IDispatchers,
     @Assisted val query: String?,
 ) : PagingSource<String, IterationCadenceMarker.Filled>() {
-
     private val scope = CoroutineScope(dispatchers.Default)
-    private val selectedNamespaceFullPath = selectedNamespacesRepository.selectedNamespaces.map {
-        (it.iterationCadence ?: it.search)?.fullPath
-    }.distinctUntilChanged()
+    private val selectedNamespaceFullPath =
+        selectedNamespacesRepository.selectedNamespaces
+            .map {
+                (it.iterationCadence ?: it.search)?.fullPath
+            }.distinctUntilChanged()
 
     init {
         scope.launch {
@@ -48,50 +49,57 @@ class IterationCadencesPagingSource(
         }
     }
 
-    override suspend fun load(
-        params: LoadParams<String>
-    ): LoadResult<String, IterationCadenceMarker.Filled> {
+    override suspend fun load(params: LoadParams<String>): LoadResult<String, IterationCadenceMarker.Filled> {
         try {
-            val namespaceFullPath = selectedNamespaceFullPath.firstOrNull() ?: return LoadResult.Page(
-                data = emptyList(),
-                prevKey = null,
-                nextKey = null,
-            )
+            val namespaceFullPath =
+                selectedNamespaceFullPath.firstOrNull() ?: return LoadResult.Page(
+                    data = emptyList(),
+                    prevKey = null,
+                    nextKey = null,
+                )
             val apolloClient = apolloClientFlow.filterNotNull().first()
-            val query = with(IterationCadencesQuery.Builder()) {
-                // This is just set to true here because we need the variable in the fragment
-                // which is also used in another query
-                initial(true)
-                namespaceFullPath(namespaceFullPath)
-                iterationCadencesSearch(query.takeUnless { it.isNullOrEmpty() })
-                iterationCadencesFirst(params.loadSize)
-                when (params) {
-                    is LoadParams.Append<*> -> iterationCadencesAfter(params.key)
-                    is LoadParams.Prepend<*> -> iterationCadencesBefore(params.key)
-                    is LoadParams.Refresh<*> -> {
-                        params.key?.let { iterationCadencesAfter(it) }
+            val query =
+                with(IterationCadencesQuery.Builder()) {
+                    // This is just set to true here because we need the variable in the fragment
+                    // which is also used in another query
+                    initial(true)
+                    namespaceFullPath(namespaceFullPath)
+                    iterationCadencesSearch(query.takeUnless { it.isNullOrEmpty() })
+                    iterationCadencesFirst(params.loadSize)
+                    when (params) {
+                        is LoadParams.Append<*> -> {
+                            iterationCadencesAfter(params.key)
+                        }
+
+                        is LoadParams.Prepend<*> -> {
+                            iterationCadencesBefore(params.key)
+                        }
+
+                        is LoadParams.Refresh<*> -> {
+                            params.key?.let { iterationCadencesAfter(it) }
+                        }
                     }
+                    build()
                 }
-                build()
-            }
             val response = apolloClient.query(query).execute()
             if (response.errors != null) println(response.errors)
             if (response.exception != null) println(response.exception)
             val group = response.data?.group?.groupWithIterationCadences
             return with(
                 group?.iterationCadences
-                    ?: return LoadResult.Error(Throwable())
+                    ?: return LoadResult.Error(Throwable()),
             ) {
                 LoadResult.Page(
-                    data = nodes.orEmpty().mapNotNull {
-                        it?.run {
-                            IterationCadenceMarker.Filled(
-                                namespaceFullPath = group.fullPath,
-                                title = title.orEmpty(),
-                                id = id.toString()
-                            )
-                        }
-                    },
+                    data =
+                        nodes.orEmpty().mapNotNull {
+                            it?.run {
+                                IterationCadenceMarker.Filled(
+                                    namespaceFullPath = group.fullPath,
+                                    title = title.orEmpty(),
+                                    id = id.toString(),
+                                )
+                            }
+                        },
                     prevKey = pageInfo.run { startCursor.takeIf { hasPreviousPage } },
                     nextKey = pageInfo.run { endCursor.takeIf { hasNextPage } },
                 )
@@ -131,7 +139,6 @@ class IterationCadencesPagingSource(
 @SingleIn(AppScope::class)
 class RemoteIterationCadencesRepository(
     private val iterationCadencesPagingSourceFactory: IterationCadencesPagingSource.Factory,
-): IterationCadencesRepository {
-    override fun search(search: String) =
-        iterationCadencesPagingSourceFactory.create(query = search)
+) : IterationCadencesRepository {
+    override fun search(search: String) = iterationCadencesPagingSourceFactory.create(query = search)
 }

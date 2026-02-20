@@ -6,6 +6,8 @@ import dev.zacsweers.metro.createGraph
 import dev.zacsweers.metrox.android.MetroAppComponentProviders
 import dev.zacsweers.metrox.android.MetroApplication
 
-class Application : Application(), MetroApplication {
+class Application :
+    Application(),
+    MetroApplication {
     override val appComponentProviders: MetroAppComponentProviders by lazy { createGraph<AndroidAppGraph>() }
 }

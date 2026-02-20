@@ -25,7 +25,7 @@ fun NamespacesAndIterationCadenceInputs(
     iterationCadence: IterationCadence?,
     iterationCadences: PagingData<IterationCadenceMarker.Filled>,
     iterationCadenceSearcher: (String) -> Unit,
-    onIterationCadenceChange: (iterationCadence: IterationCadence?) -> Unit
+    onIterationCadenceChange: (iterationCadence: IterationCadence?) -> Unit,
 ) {
     val namespaceSelectionState = rememberNamespaceSelectionState()
     LaunchedEffect(namespaceSelectionState.search) {
@@ -34,9 +34,10 @@ fun NamespacesAndIterationCadenceInputs(
     val namespaceLazyPagingItems = namespaces.collectAsLazyPagingItems()
     val iterationCadencesNamespaceLazyPagingItems = iterationCadencesNamespaces.collectAsLazyPagingItems()
     NamespaceSelection(
-        selected = selectedNamespaces.search?.let {
-            { NamespaceItem(fullPath = it.fullPath, name = it.name) }
-        },
+        selected =
+            selectedNamespaces.search?.let {
+                { NamespaceItem(fullPath = it.fullPath, name = it.name) }
+            },
         namespaces = namespaceLazyPagingItems,
         onNamespaceChange = onSearchNamespaceChange,
         state = namespaceSelectionState,
@@ -55,7 +56,8 @@ fun NamespacesAndIterationCadenceInputs(
     IterationCadenceSelection(
         iterationCadence = iterationCadence,
         iterationCadences = iterationCadences.collectAsLazyPagingItems(),
-        additionalItems = namespaceLazyPagingItems.mapToIterationCadences() +
+        additionalItems =
+            namespaceLazyPagingItems.mapToIterationCadences() +
                 iterationCadencesNamespaceLazyPagingItems.mapToIterationCadences(),
         iterationCadenceSearcher = iterationCadenceSearcher,
         onIterationCadenceChange = onIterationCadenceChange,
@@ -63,16 +65,21 @@ fun NamespacesAndIterationCadenceInputs(
 }
 
 @Composable
-private fun LazyPagingItems<*>.hasAllResults() = loadState.run {
-    prepend is LoadState.NotLoading &&
+private fun LazyPagingItems<*>.hasAllResults() =
+    loadState.run {
+        prepend is LoadState.NotLoading &&
             prepend.endOfPaginationReached &&
             append is LoadState.NotLoading &&
             append.endOfPaginationReached
-}
+    }
 
 @Composable
 private fun LazyPagingItems<NamespaceEntry>.mapToIterationCadences() =
-    takeIf { it.hasAllResults() }?.itemSnapshotList?.flatMap {
-        (it as? Namespace)?.iterationCadences?.filterIsInstance<IterationCadenceMarker.Filled>()
-            .orEmpty()
-    }.orEmpty()
+    takeIf { it.hasAllResults() }
+        ?.itemSnapshotList
+        ?.flatMap {
+            (it as? Namespace)
+                ?.iterationCadences
+                ?.filterIsInstance<IterationCadenceMarker.Filled>()
+                .orEmpty()
+        }.orEmpty()

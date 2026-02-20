@@ -38,9 +38,8 @@ import kotlin.time.Clock
 class RemoteWorkItemsRepository(
     private val apolloClientFlow: Flow<ApolloClient?>,
     private val settingsRepository: SettingsRepository,
-    dispatchers: IDispatchers
-): WorkItemsRepository {
-
+    dispatchers: IDispatchers,
+) : WorkItemsRepository {
     private var job: Job? = null
     private val scope = CoroutineScope(dispatchers.Default)
 
@@ -53,50 +52,68 @@ class RemoteWorkItemsRepository(
         search("")
     }
 
-    override fun search(search: String, setSyncing: Boolean) {
+    override fun search(
+        search: String,
+        setSyncing: Boolean,
+    ) {
         job?.cancel()
-        job = scope.launch {
-            delay(300)
-            if (setSyncing) _workItemsFromCurrentUser.update { it?.copy(isSyncing = true) }
-            val settingsFlow = settingsRepository.settings.map { it.dataIfNotFrom(DataSource.Default) }
-                .filterNotNull()
-            apolloClientFlow.filterNotNull().combine(settingsFlow, ::Pair)
-                .collectLatest { (apolloClient, settings) ->
-                val namespaceFullPath = settings.namespaceFullPath ?: return@collectLatest
-                val iterationCadenceNamespaceFullPath = settings.iterationCadence?.namespaceFullPath
-                    ?: return@collectLatest
-                if (search.isNotEmpty()) delay(300)
-                val pinnedPlusOpen = settings.pinnedWorkItems +
-                        (settings.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
-                val query = WorkItemsQuery.Builder()
-                    .namespaceFullPath(namespaceFullPath)
-                    .iterationCadenceNamespaceFullPath(iterationCadenceNamespaceFullPath)
-                    .iterationCadenceId(settings.iterationCadence.id?.let { listOf(it) } ?: emptyList())
-                    .pinnedIds(pinnedPlusOpen)
-                    // skip when searching to reduce query complexity
-                    .doPinnedSearch(pinnedPlusOpen.isNotEmpty() && search.isBlank())
-                    .search(search)
-                    .doSearch(search.isNotBlank())
-                    .build()
-                apolloClient.query(query).fetchPolicy(FetchPolicy.NetworkFirst).watch().collect { result ->
-                    if (result.errors != null) println(result.errors)
-                    if (result.exception != null) println(result.exception)
-                    _workItemsFromCurrentUser.update {
-                        SourceAware(
-                            data = WorkItemsFromCurrentUser(
-                                currentUserId = result.data?.currentUser?.id.toString(),
-                                workItems = result.extractIssues(
-                                    groupSprintInEpics = settings.groupSprintInEpics,
-                                ),
-                                lastUpdated = Clock.System.now()
-                            ),
-                            source = DataSource.Remote,
-                            isSyncing = false,
-                        )
+        job =
+            scope.launch {
+                delay(300)
+                if (setSyncing) _workItemsFromCurrentUser.update { it?.copy(isSyncing = true) }
+                val settingsFlow =
+                    settingsRepository.settings
+                        .map { it.dataIfNotFrom(DataSource.Default) }
+                        .filterNotNull()
+                apolloClientFlow
+                    .filterNotNull()
+                    .combine(settingsFlow, ::Pair)
+                    .collectLatest { (apolloClient, settings) ->
+                        val namespaceFullPath = settings.namespaceFullPath ?: return@collectLatest
+                        val iterationCadenceNamespaceFullPath =
+                            settings.iterationCadence?.namespaceFullPath
+                                ?: return@collectLatest
+                        if (search.isNotEmpty()) delay(300)
+                        val pinnedPlusOpen =
+                            settings.pinnedWorkItems +
+                                (settings.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
+                        val query =
+                            WorkItemsQuery
+                                .Builder()
+                                .namespaceFullPath(namespaceFullPath)
+                                .iterationCadenceNamespaceFullPath(iterationCadenceNamespaceFullPath)
+                                .iterationCadenceId(settings.iterationCadence.id?.let { listOf(it) } ?: emptyList())
+                                .pinnedIds(pinnedPlusOpen)
+                                // skip when searching to reduce query complexity
+                                .doPinnedSearch(pinnedPlusOpen.isNotEmpty() && search.isBlank())
+                                .search(search)
+                                .doSearch(search.isNotBlank())
+                                .build()
+                        apolloClient.query(query).fetchPolicy(FetchPolicy.NetworkFirst).watch().collect { result ->
+                            if (result.errors != null) println(result.errors)
+                            if (result.exception != null) println(result.exception)
+                            _workItemsFromCurrentUser.update {
+                                SourceAware(
+                                    data =
+                                        WorkItemsFromCurrentUser(
+                                            currentUserId =
+                                                result.data
+                                                    ?.currentUser
+                                                    ?.id
+                                                    .toString(),
+                                            workItems =
+                                                result.extractIssues(
+                                                    groupSprintInEpics = settings.groupSprintInEpics,
+                                                ),
+                                            lastUpdated = Clock.System.now(),
+                                        ),
+                                    source = DataSource.Remote,
+                                    isSyncing = false,
+                                )
+                            }
+                        }
                     }
-                }
             }
-        }
     }
 }
 
@@ -106,18 +123,46 @@ private fun ApolloResponse<WorkItemsQuery.Data>.extractIssues(
 ): List<BareWorkItem> {
     val searchNamespace = data?.searchNamespace
     return buildList {
-        addAll(data?.iterationCadenceNamespace?.workItems?.nodes?.map {
-            if (groupSprintInEpics) {
-                it?.parent ?: it?.bareWorkItem
-            } else {
-                it?.bareWorkItem
-            }
-        }.orEmpty())
-        addAll(searchNamespace?.pinned?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(searchNamespace?.searchIid?.nodes?.map { it?.bareWorkItem }.orEmpty())
-        addAll(searchNamespace?.search?.nodes?.map { it?.bareWorkItem }.orEmpty())
+        addAll(
+            data
+                ?.iterationCadenceNamespace
+                ?.workItems
+                ?.nodes
+                ?.map {
+                    if (groupSprintInEpics) {
+                        it?.parent ?: it?.bareWorkItem
+                    } else {
+                        it?.bareWorkItem
+                    }
+                }.orEmpty(),
+        )
+        addAll(
+            searchNamespace
+                ?.pinned
+                ?.nodes
+                ?.map { it?.bareWorkItem }
+                .orEmpty(),
+        )
+        addAll(
+            searchNamespace
+                ?.searchIid
+                ?.nodes
+                ?.map { it?.bareWorkItem }
+                .orEmpty(),
+        )
+        addAll(
+            searchNamespace
+                ?.search
+                ?.nodes
+                ?.map { it?.bareWorkItem }
+                .orEmpty(),
+        )
     }.filterNotNull().distinctBy { it.id }.sortedByDescending { it.state.name }
 }
 
-val WorkItemsQuery.Node.parent get() = this.widgets?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
-    ?.onWorkItemWidgetHierarchy?.parent?.bareWorkItem
+val WorkItemsQuery.Node.parent get() =
+    this.widgets
+        ?.firstOrNull { it.onWorkItemWidgetHierarchy != null }
+        ?.onWorkItemWidgetHierarchy
+        ?.parent
+        ?.bareWorkItem

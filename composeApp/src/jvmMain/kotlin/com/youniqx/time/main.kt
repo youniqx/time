@@ -54,8 +54,14 @@ val isMacOs = System.getProperty("os.name") == "Mac OS X"
 val isDarkMenuBar: Boolean by lazy {
     if (isMacOs) {
         try {
-            val result = Runtime.getRuntime().exec(arrayOf("defaults", "read", "-g", "AppleInterfaceStyle"))
-                .inputStream.bufferedReader().readText().trim()
+            val result =
+                Runtime
+                    .getRuntime()
+                    .exec(arrayOf("defaults", "read", "-g", "AppleInterfaceStyle"))
+                    .inputStream
+                    .bufferedReader()
+                    .readText()
+                    .trim()
             result.equals("Dark", ignoreCase = true)
         } catch (_: Exception) {
             false // Default to light mode if detection fails
@@ -124,9 +130,11 @@ fun main() {
                         }
                     }
                     LaunchedEffect(isVisible) {
-                        if (isVisible) try {
-                            Desktop.getDesktop().requestForeground(true)
-                        } catch (_: Exception) {
+                        if (isVisible) {
+                            try {
+                                Desktop.getDesktop().requestForeground(true)
+                            } catch (_: Exception) {
+                            }
                         }
                     }
                     DisposableEffect(window) {
@@ -169,22 +177,23 @@ private fun ApplicationScope.Tray(
     val settings = sourceAwareSettings.data
 
     // Create dynamic tray icon
-    val trayIcon = remember(
-        settings.showMenuBarTimer,
-        settings.openTracking.refreshKey,
-    ) {
-        val showTimer = settings.showMenuBarTimer
-        val openTracking = settings.openTracking
+    val trayIcon =
+        remember(
+            settings.showMenuBarTimer,
+            settings.openTracking.refreshKey,
+        ) {
+            val showTimer = settings.showMenuBarTimer
+            val openTracking = settings.openTracking
 
-        if (showTimer && openTracking != null) {
-            MenuBarTimerIcon(
-                title = openTracking.workItemTitle,
-                elapsed = openTracking.toDurationOrNull() ?: Duration.ZERO
-            )
-        } else {
-            TrayIcon
+            if (showTimer && openTracking != null) {
+                MenuBarTimerIcon(
+                    title = openTracking.workItemTitle,
+                    elapsed = openTracking.toDurationOrNull() ?: Duration.ZERO,
+                )
+            } else {
+                TrayIcon
+            }
         }
-    }
 
     if (SystemTray.isSupported()) {
         Tray(
@@ -221,7 +230,7 @@ object TrayIcon : Painter() {
 @OptIn(ExperimentalTime::class)
 class MenuBarTimerIcon(
     private val title: String?,
-    private val elapsed: Duration
+    private val elapsed: Duration,
 ) : Painter() {
     // Menu bar on macOS is 22pt height, we need proper width for text
     private val iconHeight = 22f
@@ -234,11 +243,12 @@ class MenuBarTimerIcon(
         get() {
             // Calculate total width based on content
             val hasLabel = !title.isNullOrBlank()
-            val totalWidth = if (hasLabel) {
-                iconWidth + spacing + maxLabelWidth + spacing + timeWidth
-            } else {
-                iconWidth + spacing + timeWidth
-            }
+            val totalWidth =
+                if (hasLabel) {
+                    iconWidth + spacing + maxLabelWidth + spacing + timeWidth
+                } else {
+                    iconWidth + spacing + timeWidth
+                }
             return Size(totalWidth, iconHeight)
         }
 
@@ -270,20 +280,24 @@ class MenuBarTimerIcon(
 
         // Calculate label width with truncation (120px max for label)
         val maxLabelPx = (120 * scaleFactor)
-        val labelText = if (hasLabel) {
-            truncateLabel(title!!, fontMetrics, maxLabelPx)
-        } else ""
+        val labelText =
+            if (hasLabel) {
+                truncateLabel(title!!, fontMetrics, maxLabelPx)
+            } else {
+                ""
+            }
         val labelTextWidth = if (hasLabel) fontMetrics.stringWidth(labelText) else 0
 
         tempG2d.dispose()
 
         // Calculate total width with proper padding
         val spacingPx = (spacing * scaleFactor).toInt()
-        val totalWidth = if (hasLabel) {
-            padding + iconSize + spacingPx + labelTextWidth + spacingPx + timeTextWidth + padding
-        } else {
-            padding + iconSize + spacingPx + timeTextWidth + padding
-        }
+        val totalWidth =
+            if (hasLabel) {
+                padding + iconSize + spacingPx + labelTextWidth + spacingPx + timeTextWidth + padding
+            } else {
+                padding + iconSize + spacingPx + timeTextWidth + padding
+            }
 
         // Create the actual image
         val image = BufferedImage(totalWidth, height, BufferedImage.TYPE_INT_ARGB)
@@ -325,7 +339,11 @@ class MenuBarTimerIcon(
         return image
     }
 
-    private fun truncateLabel(text: String, fontMetrics: java.awt.FontMetrics, maxWidth: Int): String {
+    private fun truncateLabel(
+        text: String,
+        fontMetrics: java.awt.FontMetrics,
+        maxWidth: Int,
+    ): String {
         if (fontMetrics.stringWidth(text) <= maxWidth) {
             return text
         }

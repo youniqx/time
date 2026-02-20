@@ -48,17 +48,19 @@ fun IterationCadenceSelection(
         expanded = state.expanded,
         onExpandedChange = { state.expanded = it },
     ) {
-        val allIterationCadences = remember(
-            iterationCadences.itemSnapshotList,
-            additionalItems
-        ) { (iterationCadences.itemSnapshotList + additionalItems).distinct() }
-        val selected: (@Composable () -> Unit)? = iterationCadence?.let {
-            {
-                Text(
-                    allIterationCadences.firstOrNull { it?.id == iterationCadence.id }?.title.orEmpty()
-                )
+        val allIterationCadences =
+            remember(
+                iterationCadences.itemSnapshotList,
+                additionalItems,
+            ) { (iterationCadences.itemSnapshotList + additionalItems).distinct() }
+        val selected: (@Composable () -> Unit)? =
+            iterationCadence?.let {
+                {
+                    Text(
+                        allIterationCadences.firstOrNull { it?.id == iterationCadence.id }?.title.orEmpty(),
+                    )
+                }
             }
-        }
         val showSelected = selected != null && !state.expanded
         val emptyTextFieldState = rememberTextFieldState(" ")
         LaunchedEffect(state.textFieldState) {
@@ -70,10 +72,12 @@ fun IterationCadenceSelection(
         }
         OutlinedTextField(
             // The `menuAnchor` modifier must be passed to the text field for correctness.
-            modifier = Modifier.fillMaxWidth()
-                .changeFocusOnTab { state.expanded = false }
-                .disableGlobalSearchIfFocused()
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .changeFocusOnTab { state.expanded = false }
+                    .disableGlobalSearchIfFocused()
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
             state = if (showSelected) emptyTextFieldState else state.textFieldState,
             readOnly = showSelected,
             prefix = selected.takeIf { showSelected },
@@ -84,8 +88,9 @@ fun IterationCadenceSelection(
             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
         )
         DropdownMenu(
-            modifier = Modifier
-                .exposedDropdownSize(true),
+            modifier =
+                Modifier
+                    .exposedDropdownSize(true),
             properties = PopupProperties(focusable = false),
             expanded = state.expanded,
             onDismissRequest = {
@@ -93,44 +98,63 @@ fun IterationCadenceSelection(
             },
         ) {
             when (iterationCadences.loadState.refresh) {
-                is LoadState.Error -> ErrorDropdownMenuItem(onClick = iterationCadences::retry)
-                LoadState.Loading -> CircularProgressIndicator(
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
+                is LoadState.Error -> {
+                    ErrorDropdownMenuItem(onClick = iterationCadences::retry)
+                }
+
+                LoadState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
+                }
+
                 is LoadState.NotLoading -> {
                     allIterationCadences.forEach {
                         when (it) {
-                            is IterationCadenceMarker.Filled -> DropdownMenuItem(
-                                text = { Text(it.title) },
-                                onClick = {
-                                    onIterationCadenceChange(
-                                        IterationCadence(
-                                            namespaceFullPath = it.namespaceFullPath,
-                                            id = it.id
+                            is IterationCadenceMarker.Filled -> {
+                                DropdownMenuItem(
+                                    text = { Text(it.title) },
+                                    onClick = {
+                                        onIterationCadenceChange(
+                                            IterationCadence(
+                                                namespaceFullPath = it.namespaceFullPath,
+                                                id = it.id,
+                                            ),
                                         )
-                                    )
-                                    state.expanded = false
-                                },
-                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                            )
+                                        state.expanded = false
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                                )
+                            }
+
                             null -> {}
                         }
                     }
                     when (val appendLoadingState = iterationCadences.loadState.append) {
-                        is LoadState.Error -> ErrorDropdownMenuItem(onClick = { iterationCadences.retry() })
-                        LoadState.Loading -> CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.CenterHorizontally)
-                        )
-                        is LoadState.NotLoading -> if (!appendLoadingState.endOfPaginationReached) DropdownMenuItem(
-                            text = { Text("Load more items") },
-                            onClick = {
-                                try {
-                                    iterationCadences[iterationCadences.itemCount]
-                                } catch (_: Exception) {
-                                }
-                            },
-                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                        )
+                        is LoadState.Error -> {
+                            ErrorDropdownMenuItem(onClick = { iterationCadences.retry() })
+                        }
+
+                        LoadState.Loading -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                            )
+                        }
+
+                        is LoadState.NotLoading -> {
+                            if (!appendLoadingState.endOfPaginationReached) {
+                                DropdownMenuItem(
+                                    text = { Text("Load more items") },
+                                    onClick = {
+                                        try {
+                                            iterationCadences[iterationCadences.itemCount]
+                                        } catch (_: Exception) {
+                                        }
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                                )
+                            }
+                        }
                     }
                 }
             }

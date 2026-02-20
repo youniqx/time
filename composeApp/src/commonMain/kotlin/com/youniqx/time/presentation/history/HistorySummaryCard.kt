@@ -47,65 +47,69 @@ fun HistorySummaryCard(
     with(LocalSharedTransitionScope.current) {
         if (this == null) return@with
         Card(
-            modifier = modifier
-                .clip(CardDefaults.shape)
-                .sharedElementWithCallerManagedVisibility(
-                    sharedContentState = rememberSharedContentState("historySummaryCard"),
-                    visible = visible,
-                    // renderInOverlayDuringTransition = false,
+            modifier =
+                modifier
+                    .clip(CardDefaults.shape)
+                    .sharedElementWithCallerManagedVisibility(
+                        sharedContentState = rememberSharedContentState("historySummaryCard"),
+                        visible = visible,
+                        // renderInOverlayDuringTransition = false,
+                    ),
+            colors =
+                CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
                 ),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-            )
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(spacing.cardPadding),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(spacing.cardPadding),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Column {
                     CompositionLocalProvider(
                         LocalTextStyle provides MaterialTheme.typography.labelMedium,
                         LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
-                        content = heading
+                        content = heading,
                     )
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             text = formatTimeSpent(totalTime),
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                         if (timelogs.firstOrNull()?.isOpenTracking ?: false) {
                             Spacer(Modifier.width(spacing.sm))
                             val resultStore = LocalResultStore.current
                             openTracking?.RepresentingIndicator(
-                                modifier = Modifier
-                                    .size(24.dp)
-                                    .clickable(onClickLabel = "Scroll to open tracking") {
-                                        resultStore.setResult(result = ScrollToWorkItem(openTracking.workItemId))
-                                    },
-                                color = openTracking.representingColors.color
+                                modifier =
+                                    Modifier
+                                        .size(24.dp)
+                                        .clickable(onClickLabel = "Scroll to open tracking") {
+                                            resultStore.setResult(result = ScrollToWorkItem(openTracking.workItemId))
+                                        },
+                                color = openTracking.representingColors.color,
                             )
                         }
                     }
                 }
                 Column(
-                    horizontalAlignment = Alignment.End
+                    horizontalAlignment = Alignment.End,
                 ) {
                     groupedByDay?.let {
                         Text(
                             text = "${it.size} ${if (it.size == 1) "day" else "days"}",
                             style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
                         )
                     } ?: Text("")
                     Text(
                         text = "${timelogs.size} ${if (timelogs.size == 1) "entry" else "entries"}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                     )
                 }
             }
