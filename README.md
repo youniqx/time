@@ -1,3 +1,15 @@
+# Time
+
+Simplify GitLab time tracking!
+
+<img src="assets/Time-demo.gif" alt="Demo GIF showing some functionality of Time">
+
+Jump to:
+[Introduction](#Introduction) |
+[Build and Run](#Build-and-Run)
+
+## Introduction
+
 This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM).
 
 * [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
@@ -11,6 +23,8 @@ This is a Kotlin Multiplatform project targeting Android, iOS, Web, Desktop (JVM
 
 * [/iosApp](./iosApp/iosApp) contains iOS applications. Even if you’re sharing your UI with Compose Multiplatform,
   you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+
+## Build and Run
 
 ### Build and Run Android Application
 
