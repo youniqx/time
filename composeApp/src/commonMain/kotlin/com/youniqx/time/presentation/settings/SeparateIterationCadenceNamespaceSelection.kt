@@ -21,23 +21,19 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
-import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.domain.models.Namespace
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.domain.models.SelectedNamespaces
 
 @Composable
 fun SeparateIterationCadenceNamespaceSelection(
-    iterationCadence: IterationCadence?,
     selectedNamespaces: SelectedNamespaces,
     namespaces: LazyPagingItems<NamespaceEntry>?,
     namespaceSearcher: (String) -> Unit,
     onNamespaceChange: (namespace: Namespace) -> Unit,
 ) {
-    var showSelection by remember(iterationCadence) {
-        mutableStateOf(
-            iterationCadence != null && iterationCadence.namespaceFullPath != selectedNamespaces.search?.fullPath
-        )
+    var showSelection by remember(selectedNamespaces) {
+        mutableStateOf(selectedNamespaces.iterationCadence != selectedNamespaces.search)
     }
     if (showSelection) {
         val namespaceSelectionState = rememberNamespaceSelectionState()

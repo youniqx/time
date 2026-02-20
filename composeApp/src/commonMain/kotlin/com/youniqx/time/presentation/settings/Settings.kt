@@ -306,7 +306,6 @@ fun SettingsScreen(
         val hasAllResults = namespaceLazyPagingItems.hasAllResults()
         if (namespaceSelectionState.search.isEmpty() && !hasAllResults) {
             SeparateIterationCadenceNamespaceSelection(
-                iterationCadence = settings.iterationCadence,
                 selectedNamespaces = selectedNamespaces,
                 namespaces = iterationCadencesNamespaceLazyPagingItems,
                 namespaceSearcher = iterationCadenceNamespaceSearcher,

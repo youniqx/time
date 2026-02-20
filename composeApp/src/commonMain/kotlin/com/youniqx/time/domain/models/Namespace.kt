@@ -17,8 +17,14 @@ interface Namespace {
     val iterationCadences: List<IterationCadenceMarker>?
 }
 
-fun SimpleNamespace.toNamespace() = object : Namespace {
-    override val name = this@toNamespace.name
-    override val fullPath = this@toNamespace.fullPath
-    override val iterationCadences: List<IterationCadenceMarker>? = null
-}
+data class NamespaceImpl(
+    override val name: String?,
+    override val fullPath: String,
+    override val iterationCadences: List<IterationCadenceMarker>?
+): Namespace
+
+fun SimpleNamespace.toNamespace() = NamespaceImpl(
+    name = this@toNamespace.name,
+    fullPath = this@toNamespace.fullPath,
+    iterationCadences = null,
+)
