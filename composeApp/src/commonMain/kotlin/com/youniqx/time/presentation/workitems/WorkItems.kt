@@ -367,7 +367,8 @@ fun WorkItemsScreen(
                             coroutineScope.launch {
                                 commitTimeTrackingErrors = timeTrackingCommiter.commitTimeTracking()
                                 commitTimeTrackingEnabled = true
-                                timelogsLoader.refresh() // Todo: properly update the apollo cache with the data we already get
+                                // Todo: properly update the apollo cache with the data we already get
+                                timelogsLoader.refresh()
                             }
                         },
                     )

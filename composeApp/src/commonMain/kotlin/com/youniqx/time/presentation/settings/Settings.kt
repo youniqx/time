@@ -183,7 +183,12 @@ fun SettingsScreen(
                 Modifier
                     .fillMaxWidth()
                     .clickable(
-                        onClickLabel = if (settings.highContrastColors) "Disable high contrast colors" else "Enable high contrast colors",
+                        onClickLabel =
+                            if (settings.highContrastColors) {
+                                "Disable high contrast colors"
+                            } else {
+                                "Enable high contrast colors"
+                            },
                         role = Role.Switch,
                         onClick = updater::toggleHighContrastColors,
                     ).padding(horizontal = 12.dp)
@@ -274,7 +279,8 @@ fun SettingsScreen(
                     Modifier
                         .fillMaxWidth()
                         .clickable(
-                            onClickLabel = if (settings.showMenuBarTimer) "Hide timer in menu bar" else "Show timer in menu bar",
+                            onClickLabel =
+                                if (settings.showMenuBarTimer) "Hide timer in menu bar" else "Show timer in menu bar",
                             role = Role.Switch,
                             onClick = updater::toggleShowMenuBarTimer,
                         ).padding(horizontal = 12.dp)

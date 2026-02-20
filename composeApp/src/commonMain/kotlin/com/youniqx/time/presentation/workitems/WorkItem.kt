@@ -197,7 +197,8 @@ operator fun BareWorkItem.invoke(
                                             ),
                                     ) {
                                         SimpleTooltip(
-                                            text = "Timelog Sum\nClick to ${if (showTimelogs) "hide" else "see"} details.",
+                                            text =
+                                                "Timelog Sum\nClick to ${if (showTimelogs) "hide" else "see"} details.",
                                         ) {
                                             openTracking.takeIf { open }?.run {
                                                 val representingColors = representingColors

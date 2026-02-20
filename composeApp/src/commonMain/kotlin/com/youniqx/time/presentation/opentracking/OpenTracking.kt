@@ -14,7 +14,10 @@ import com.youniqx.time.domain.models.OpenTracking
 import com.youniqx.time.presentation.SimpleTooltip
 import kotlin.time.ExperimentalTime
 
+@Suppress("ktlint:standard:property-naming")
 const val customTimeSpentHasErrorMessage = "Manually entered time is not valid"
+
+@Suppress("ktlint:standard:property-naming")
 private const val customTimeSpentInfoMessage = "Manually entered time.\nTimer not running."
 
 val OpenTracking.representingColors: OpenTracking.RepresentingColors
