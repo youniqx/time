@@ -11,10 +11,7 @@ import com.youniqx.time.domain.models.IterationCadenceMarker
 import com.youniqx.time.domain.models.Namespace
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.domain.models.SelectedNamespaces
-import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.presentation.collectAsLazyPagingItems
-import kotlin.collections.orEmpty
-import kotlin.collections.plus
 
 @Composable
 fun NamespacesAndIterationCadenceInputs(
@@ -28,7 +25,7 @@ fun NamespacesAndIterationCadenceInputs(
     iterationCadence: IterationCadence?,
     iterationCadences: PagingData<IterationCadenceMarker.Filled>,
     iterationCadenceSearcher: (String) -> Unit,
-    updater: UpdateSettingsUseCase
+    onIterationCadenceChange: (iterationCadence: IterationCadence?) -> Unit
 ) {
     val namespaceSelectionState = rememberNamespaceSelectionState()
     LaunchedEffect(namespaceSelectionState.search) {
@@ -61,7 +58,7 @@ fun NamespacesAndIterationCadenceInputs(
         additionalItems = namespaceLazyPagingItems.mapToIterationCadences() +
                 iterationCadencesNamespaceLazyPagingItems.mapToIterationCadences(),
         iterationCadenceSearcher = iterationCadenceSearcher,
-        onIterationCadenceChange = updater::setIterationCadence,
+        onIterationCadenceChange = onIterationCadenceChange,
     )
 }
 

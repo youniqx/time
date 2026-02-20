@@ -24,6 +24,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
+import com.youniqx.time.presentation.onboarding.NamespacesAndIterationCadenceSetupRoute
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
 import com.youniqx.time.presentation.settings.SettingsRoute
 import com.youniqx.time.presentation.workitems.SwitchTrackingRoute
@@ -36,7 +37,8 @@ class Navigator(val state: NavigationState) {
     fun onFinished(route: NavKey) {
         when (route) {
             WelcomeRoute -> add(GitLabSetupRoute)
-            GitLabSetupRoute -> {
+            GitLabSetupRoute -> add(NamespacesAndIterationCadenceSetupRoute)
+            NamespacesAndIterationCadenceSetupRoute -> {
                 state.backStacks.forEach { it.clear() }
                 add(listOf(WorkItemsRoute, HistoryRoute, SettingsRoute))
             }

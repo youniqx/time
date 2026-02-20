@@ -31,6 +31,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import androidx.paging.PagingData
+import androidx.savedstate.serialization.SavedStateConfiguration
 import com.youniqx.time.additionalTimerSupport
 import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.domain.models.IterationCadenceMarker
@@ -54,9 +56,11 @@ import com.youniqx.time.domain.models.SelectedNamespaces
 import com.youniqx.time.domain.models.Settings
 import com.youniqx.time.domain.usecases.UpdateSettingsUseCase
 import com.youniqx.time.presentation.Label
+import com.youniqx.time.presentation.LocalResultStore
 import com.youniqx.time.presentation.SimpleTooltip
 import com.youniqx.time.presentation.invoke
 import com.youniqx.time.presentation.modifier.disableGlobalSearchIfFocused
+import com.youniqx.time.presentation.rememberResultStore
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
@@ -281,19 +285,21 @@ fun SettingsScreen(
                 }
             }
         )
-        NamespacesAndIterationCadenceInputs(
-            selectedNamespaces,
-            namespaces,
-            namespaceSearcher,
-            onSearchNamespaceChange,
-            iterationCadencesNamespaces,
-            iterationCadenceNamespaceSearcher,
-            onIterationCadenceNamespaceChange,
-            settings.iterationCadence,
-            iterationCadences,
-            iterationCadenceSearcher,
-            updater
-        )
+        Column(modifier = Modifier.padding(horizontal = 12.dp)) {
+            NamespacesAndIterationCadenceInputs(
+                selectedNamespaces,
+                namespaces,
+                namespaceSearcher,
+                onSearchNamespaceChange,
+                iterationCadencesNamespaces,
+                iterationCadenceNamespaceSearcher,
+                onIterationCadenceNamespaceChange,
+                settings.iterationCadence,
+                iterationCadences,
+                iterationCadenceSearcher,
+                onIterationCadenceChange = updater::setIterationCadence
+            )
+        }
     }
 }
 
@@ -301,45 +307,48 @@ fun SettingsScreen(
 @Composable
 fun SettingsPreview() {
     AppTheme {
-        SettingsScreen(
-            settings = Settings(
-                darkTheme = true,
-                highContrastColors = false,
-                groupSprintInEpics = false,
-                showLabelsByDefault = true,
-                useLabelColors = true,
-                showMenuBarTimer = true,
-                instanceUrl = null,
-                token = "𐂂",
-                namespaceFullPath = null,
-                iterationCadence = null,
-                pinnedWorkItems = emptyList(),
-                openTracking = null,
-            ),
-            updater = object : UpdateSettingsUseCase {
-                override fun toggleDarkTheme() {}
-                override fun toggleHighContrastColors() {}
-                override fun toggleGroupSprintInEpics() {}
-                override fun toggleShowLabelsByDefault() {}
-                override fun toggleUseLabelColors() {}
-                override fun toggleShowMenuBarTimer() {}
-                override fun setInstanceUrl(instanceUrl: String) {}
-                override fun setToken(token: String) {}
-                override fun setNamespaceFullPath(fullPath: String) {}
-                override fun setIterationCadence(iterationCadence: IterationCadence?) {}
-                override fun togglePinWorkItem(id: String) {}
-                override fun setOpenTracking(openTracking: OpenTracking?) {}
-            },
-            namespaceSearcher = {},
-            onBack = {},
-            namespaces = emptyPagingData(),
-            selectedNamespaces = SelectedNamespaces(search = null, iterationCadence = null),
-            onSearchNamespaceChange = {},
-            iterationCadencesNamespaces = emptyPagingData(),
-            iterationCadenceNamespaceSearcher = {},
-            onIterationCadenceNamespaceChange = {},
-            iterationCadences = emptyPagingData(),
-            iterationCadenceSearcher = {},
-        )
+        val resultStore = rememberResultStore(SavedStateConfiguration {})
+        CompositionLocalProvider(LocalResultStore provides resultStore) {
+            SettingsScreen(
+                settings = Settings(
+                    darkTheme = true,
+                    highContrastColors = false,
+                    groupSprintInEpics = false,
+                    showLabelsByDefault = true,
+                    useLabelColors = true,
+                    showMenuBarTimer = true,
+                    instanceUrl = null,
+                    token = "𐂂",
+                    namespaceFullPath = null,
+                    iterationCadence = null,
+                    pinnedWorkItems = emptyList(),
+                    openTracking = null,
+                ),
+                updater = object : UpdateSettingsUseCase {
+                    override fun toggleDarkTheme() {}
+                    override fun toggleHighContrastColors() {}
+                    override fun toggleGroupSprintInEpics() {}
+                    override fun toggleShowLabelsByDefault() {}
+                    override fun toggleUseLabelColors() {}
+                    override fun toggleShowMenuBarTimer() {}
+                    override fun setInstanceUrl(instanceUrl: String) {}
+                    override fun setToken(token: String) {}
+                    override fun setNamespaceFullPath(fullPath: String) {}
+                    override fun setIterationCadence(iterationCadence: IterationCadence?) {}
+                    override fun togglePinWorkItem(id: String) {}
+                    override fun setOpenTracking(openTracking: OpenTracking?) {}
+                },
+                namespaceSearcher = {},
+                onBack = {},
+                namespaces = emptyPagingData(),
+                selectedNamespaces = SelectedNamespaces(search = null, iterationCadence = null),
+                onSearchNamespaceChange = {},
+                iterationCadencesNamespaces = emptyPagingData(),
+                iterationCadenceNamespaceSearcher = {},
+                onIterationCadenceNamespaceChange = {},
+                iterationCadences = emptyPagingData(),
+                iterationCadenceSearcher = {},
+            )
+        }
     }
 }

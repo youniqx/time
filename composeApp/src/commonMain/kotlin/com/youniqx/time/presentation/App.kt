@@ -54,6 +54,7 @@ import com.youniqx.time.presentation.navigation.Navigator
 import com.youniqx.time.presentation.navigation.rememberNavEntryProviderDecorator
 import com.youniqx.time.presentation.navigation.rememberNavigationState
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
+import com.youniqx.time.presentation.onboarding.NamespacesAndIterationCadenceSetupRoute
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
 import com.youniqx.time.presentation.onboarding.onboardingIndex
 import com.youniqx.time.presentation.settings.SettingsRoute
@@ -191,6 +192,10 @@ private val navBackStackSavedStateConfiguration = SavedStateConfiguration {
             subclass(NotFoundRoute::class, NotFoundRoute.serializer())
             subclass(WelcomeRoute::class, WelcomeRoute.serializer())
             subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
+            subclass(
+                NamespacesAndIterationCadenceSetupRoute::class,
+                NamespacesAndIterationCadenceSetupRoute.serializer()
+            )
             subclass(WorkItemsRoute::class, WorkItemsRoute.serializer())
             subclass(SwitchTrackingRoute::class, SwitchTrackingRoute.serializer())
             subclass(HistoryRoute::class, HistoryRoute.serializer())

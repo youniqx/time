@@ -61,8 +61,7 @@ fun SeparateIterationCadenceNamespaceSelection(
                 horizontal = TextFieldDefaults.contentPaddingWithLabel()
                     .calculateStartPadding(LocalLayoutDirection.current)
             )
-            .padding(bottom = 8.dp)
-            .padding(horizontal = 12.dp),
+            .padding(bottom = 8.dp),
         text = buildAnnotatedString {
             withLink(
                 LinkAnnotation.Clickable(

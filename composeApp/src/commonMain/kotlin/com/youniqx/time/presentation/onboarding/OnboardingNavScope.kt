@@ -31,7 +31,7 @@ class OnboardingNavScope {
                         navigator.onFinished(route = it)
                     },
                     hideOnboarding = {
-                        navigator.onFinished(route = GitLabSetupRoute)
+                        navigator.onFinished(route = NamespacesAndIterationCadenceSetupRoute)
                     }
                 )
             }
@@ -41,6 +41,18 @@ class OnboardingNavScope {
             ) {
                 val navigator = LocalNavigator.current
                 GitLabSetup(
+                    stepCount = stepCount,
+                    stepFinished = {
+                        navigator.onFinished(route = it)
+                    },
+                )
+            }
+
+            entry<NamespacesAndIterationCadenceSetupRoute>(
+                metadata = onboardingSteps.next() + onboardingTransitions
+            ) {
+                val navigator = LocalNavigator.current
+                NamespacesAndIterationCadenceSetup(
                     stepCount = stepCount,
                     stepFinished = {
                         navigator.onFinished(route = it)
