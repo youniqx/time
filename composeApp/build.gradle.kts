@@ -14,6 +14,7 @@ plugins {
     alias(libs.plugins.metro)
     alias(libs.plugins.apollo)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.kotlinter)
 }
 
 kotlin {
