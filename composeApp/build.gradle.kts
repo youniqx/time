@@ -4,6 +4,8 @@ import com.apollographql.apollo.annotations.ApolloExperimental
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jmailen.gradle.kotlinter.tasks.FormatTask
+import org.jmailen.gradle.kotlinter.tasks.LintTask
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -151,4 +153,12 @@ apollo {
         generateInputBuilders.set(true)
         addTypename.set("always")
     }
+}
+
+tasks.withType<LintTask> {
+    exclude { it.file.path.contains("/build/generated") }
+}
+
+tasks.withType<FormatTask> {
+    exclude { it.file.path.contains("/build/generated") }
 }
