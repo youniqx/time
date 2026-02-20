@@ -107,20 +107,23 @@ class SettingsViewModel(
     )
 
     private fun Flow<PagingData<NamespaceEntry>>.replaceUserWithSelectedSearchNamespace() =
-        combine(selectedNamespacesRepository.selectedNamespaces) { pagingData, selectedNamespaces ->
-            pagingData.flatMap {
-                if (it is NamespaceEntry.User) {
-                    val selectedSearchNamespace = selectedNamespaces.search
-                    if (selectedSearchNamespace != null) listOf(
-                        NamespaceEntry.SelectedSearch(
-                            name = selectedSearchNamespace.name,
-                            fullPath = selectedSearchNamespace.fullPath,
-                            iterationCadences = selectedSearchNamespace.iterationCadences,
-                        )
-                    ) else emptyList()
-                } else listOf(it)
+    // We also cache the intermediate result here,
+        // as otherwise the upstream paging flow gets collected multiple times, which is not allowed
+        cachedIn(viewModelScope)
+            .combine(selectedNamespacesRepository.selectedNamespaces) { pagingData, selectedNamespaces ->
+                pagingData.flatMap {
+                    if (it is NamespaceEntry.User) {
+                        val selectedSearchNamespace = selectedNamespaces.search
+                        if (selectedSearchNamespace != null) listOf(
+                            NamespaceEntry.SelectedSearch(
+                                name = selectedSearchNamespace.name,
+                                fullPath = selectedSearchNamespace.fullPath,
+                                iterationCadences = selectedSearchNamespace.iterationCadences,
+                            )
+                        ) else emptyList()
+                    } else listOf(it)
+                }
             }
-        }
 
     private fun <Key : Any, Value : Any> Flow<Key>.asPagingData(
         pagingSourceFactory: (searchTerm: Key) -> PagingSource<Key, Value>
