@@ -15,6 +15,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,12 +50,14 @@ fun IterationCadenceSelection(
         expanded = state.expanded,
         onExpandedChange = { state.expanded = it },
     ) {
-        val allIterationCadences = (iterationCadences.itemSnapshotList + additionalItems).distinct()
+        val allIterationCadences = remember(
+            iterationCadences.itemSnapshotList,
+            additionalItems
+        ) { (iterationCadences.itemSnapshotList + additionalItems).distinct() }
         val selected: (@Composable () -> Unit)? = iterationCadence?.let {
             {
                 Text(
-                    allIterationCadences.firstOrNull { it?.id == iterationCadence.id }?.title
-                        ?: iterationCadence.id.orEmpty()
+                    allIterationCadences.firstOrNull { it?.id == iterationCadence.id }?.title.orEmpty()
                 )
             }
         }
