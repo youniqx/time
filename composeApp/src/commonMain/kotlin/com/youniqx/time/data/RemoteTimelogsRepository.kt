@@ -15,6 +15,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -44,7 +45,7 @@ class RemoteTimelogsRepository(
     override fun refresh() {
         job?.cancel()
         job = scope.launch {
-            apolloClientFlow.filterNotNull().collect { apolloClient ->
+            apolloClientFlow.filterNotNull().collectLatest { apolloClient ->
                 val now = Clock.System.now()
                 val query = TimelogsQuery.Builder()
                     .startDate((now - 365.days).toString())

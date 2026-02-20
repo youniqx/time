@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapNotNull
@@ -49,7 +50,7 @@ class RemoteSelectedNamespacesRepository(
                 it.takeIf { it.source != DataSource.Default }?.selectedNamespacesFullPaths
             }
             apolloClientFlow.filterNotNull().combine(selectedNamespacesFullPathsFlow, ::Pair)
-                .collect { (apolloClient, selectedNamespacesFullPaths) ->
+                .collectLatest { (apolloClient, selectedNamespacesFullPaths) ->
                     val query = with(SelectedNamespacesQuery.Builder()) {
                         fetchNamespace(false)
                         fetchIterationCadenceNamespace(false)

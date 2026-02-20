@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
@@ -60,10 +61,10 @@ class RemoteWorkItemsRepository(
             val settingsFlow = settingsRepository.settings.map { it.dataIfNotFrom(DataSource.Default) }
                 .filterNotNull()
             apolloClientFlow.filterNotNull().combine(settingsFlow, ::Pair)
-                .collect { (apolloClient, settings) ->
-                val namespaceFullPath = settings.namespaceFullPath ?: return@collect
+                .collectLatest { (apolloClient, settings) ->
+                val namespaceFullPath = settings.namespaceFullPath ?: return@collectLatest
                 val iterationCadenceNamespaceFullPath = settings.iterationCadence?.namespaceFullPath
-                    ?: return@collect
+                    ?: return@collectLatest
                 if (search.isNotEmpty()) delay(300)
                 val pinnedPlusOpen = settings.pinnedWorkItems +
                         (settings.openTracking?.let { listOf(it.workItemId) } ?: emptyList())
