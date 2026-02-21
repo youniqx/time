@@ -84,7 +84,7 @@ fun main() {
     application {
         CompositionLocalProvider(LocalMetroViewModelFactory provides graph.metroViewModelFactory) {
             LaunchedEffect(true) {
-                println("--------- WE ARE RUNNING ------------")
+                println("--------- WE ARE RUNNING ---------")
             }
             var isVisible by remember { mutableStateOf(!SystemTray.isSupported()) }
             val windowState =

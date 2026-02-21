@@ -66,6 +66,7 @@ import com.youniqx.time.presentation.relativetime.RelativeTime
 import com.youniqx.time.presentation.relativetime.formatDuration
 import com.youniqx.time.presentation.settings.SettingsViewModel
 import com.youniqx.time.presentation.theme.LocalSpacing
+import com.youniqx.time.refresh
 import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -78,6 +79,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.ExperimentalTime
 
@@ -153,18 +155,21 @@ fun HistoryScreen(
     // Period offset (0 = current, 1 = previous, 2 = 2 periods ago, etc.)
     var periodOffset by remember(selectedRange) { mutableStateOf(0) }
 
+    val endOfDay =
+        remember(refresh(every = 30.minutes)) {
+            val timeZone = TimeZone.currentSystemDefault()
+            Clock.System
+                .now()
+                .toLocalDateTime(timeZone)
+                .date
+                .plus(DatePeriod(days = 1))
+                .atStartOfDayIn(timeZone)
+                .minus(1.nanoseconds)
+        }
+
     // Filter timelogs based on selected range and offset
     val filteredTimelogs =
-        remember(timelogs, selectedRange, periodOffset) {
-            val timeZone = TimeZone.currentSystemDefault()
-            val now = Clock.System.now()
-            val endOfDay =
-                now
-                    .toLocalDateTime(timeZone)
-                    .date
-                    .plus(DatePeriod(days = 1))
-                    .atStartOfDayIn(timeZone)
-                    .minus(1.nanoseconds)
+        remember(timelogs, selectedRange, periodOffset, endOfDay) {
             val periodDays = selectedRange.daysBack
             val startOffset = periodOffset * periodDays
             val endOffset = (periodOffset + 1) * periodDays
@@ -179,11 +184,10 @@ fun HistoryScreen(
 
     // Group timelogs by day
     val groupedByDay =
-        remember(filteredTimelogs) {
-            val now = Clock.System.now()
+        remember(filteredTimelogs, endOfDay) {
             filteredTimelogs
                 .groupBy { entry ->
-                    val age = now - entry.spentAt
+                    val age = endOfDay - entry.spentAt
                     when {
                         age < 1.days -> "Today"
                         age < 2.days -> "Yesterday"
@@ -196,13 +200,8 @@ fun HistoryScreen(
                         entries = entries.sortedByDescending { it.spentAt },
                         totalSeconds = entries.sumOf { it.timeSpent },
                     )
-                }.sortedBy { group ->
-                    // Sort by the first entry's time (most recent first)
-                    group.entries
-                        .firstOrNull()
-                        ?.spentAt
-                        ?.let { now - it }
-                        ?.inWholeMilliseconds ?: Long.MAX_VALUE
+                }.sortedByDescending { group ->
+                    group.entries.firstOrNull()?.spentAt
                 }
         }
 
