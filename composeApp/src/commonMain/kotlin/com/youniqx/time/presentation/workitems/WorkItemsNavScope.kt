@@ -25,10 +25,6 @@ class WorkItemsNavScope {
         NavScope(
             onFinished = {
                 when (it) {
-                    OnboardingRoute -> {
-                        add(listOf(WorkItemsRoute, HistoryRoute, SettingsRoute))
-                    }
-
                     is SwitchTrackingRoute -> {
                         popUntilLastInclusive(route = it)
                     }

@@ -94,9 +94,9 @@ fun App(
             rememberNavigationState(
                 directive = directive,
                 configuration = navBackStackSavedStateConfiguration,
-                OnboardingRoute,
             )
         val navigator = remember(navigationState) { Navigator(navigationState, navScopes) }
+        remember { navigator.add(listOf(WorkItemsRoute, HistoryRoute, SettingsRoute), listOf(OnboardingRoute)) }
         val entryDecorators =
             listOf<NavEntryDecorator<NavKey>>(
                 rememberSaveableStateHolderNavEntryDecorator(),
