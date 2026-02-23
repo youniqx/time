@@ -61,6 +61,7 @@ import com.youniqx.time.presentation.onboarding.onboardingIndex
 import com.youniqx.time.presentation.settings.SettingsRoute
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.Theme
+import com.youniqx.time.presentation.windowsize.WindowResizerRoute
 import com.youniqx.time.presentation.workitems.DisableGlobalSearch
 import com.youniqx.time.presentation.workitems.LocalSearchFocusRequester
 import com.youniqx.time.presentation.workitems.ScrollToWorkItem
@@ -212,6 +213,7 @@ private val navBackStackSavedStateConfiguration =
                     subclass(SwitchTrackingRoute::class, SwitchTrackingRoute.serializer())
                     subclass(HistoryRoute::class, HistoryRoute.serializer())
                     subclass(SettingsRoute::class, SettingsRoute.serializer())
+                    subclass(WindowResizerRoute::class, WindowResizerRoute.serializer())
                 }
             }
     }

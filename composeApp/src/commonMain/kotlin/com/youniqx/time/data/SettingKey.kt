@@ -13,4 +13,5 @@ enum class SettingKey {
     ShowMenuBarTimer,
     PinnedIssues,
     OpenTracking,
+    WindowSize,
 }

@@ -1,4 +1,5 @@
 @file:Suppress("ktlint:standard:filename")
+@file:OptIn(FlowPreview::class)
 
 package com.youniqx.time
 
@@ -11,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -27,6 +30,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ApplicationScope
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.WindowPosition
@@ -35,19 +39,34 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.youniqx.time.di.JvmAppGraph
 import com.youniqx.time.domain.SettingsRepository
+import com.youniqx.time.domain.models.DataSource
+import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.domain.models.refreshKey
 import com.youniqx.time.domain.models.toDurationOrNull
 import com.youniqx.time.presentation.App
 import dev.zacsweers.metro.createGraph
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.runBlocking
 import java.awt.Desktop
+import java.awt.Dimension
 import java.awt.Font
+import java.awt.MouseInfo
 import java.awt.RenderingHints
 import java.awt.SystemTray
+import java.awt.Toolkit
 import java.awt.event.WindowEvent
 import java.awt.event.WindowFocusListener
 import java.awt.image.BufferedImage
+import javax.swing.SwingUtilities
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 val isMacOs = System.getProperty("os.name") == "Mac OS X"
@@ -86,14 +105,9 @@ fun main() {
             LaunchedEffect(true) {
                 println("--------- WE ARE RUNNING ---------")
             }
-            var isVisible by remember { mutableStateOf(!SystemTray.isSupported()) }
-            val windowState =
-                rememberWindowState(
-                    placement = WindowPlacement.Floating,
-                    position = WindowPosition(0.dp, 0.dp),
-                    size = DpSize(400.dp, 800.dp),
-                )
+            var isVisible by remember { mutableStateOf(true) }
             val settingsRepository = graph.settingsRepository
+            val windowState = settingsRepository.windowState
             Tray(settingsRepository, windowState, onClick = { isVisible = !isVisible })
             val focusRequester = remember { FocusRequester() }
             Window(
@@ -155,6 +169,16 @@ fun main() {
                         }
                     }
                 }
+                LaunchedEffect(windowState) {
+                    snapshotFlow { windowState.size }
+                        // .debounce(1.seconds)
+                        .onEach {
+                            val location = MouseInfo.getPointerInfo().location
+                            SwingUtilities.convertPointFromScreen(location, window)
+                            println("onWindowResize $it ${location.x} ${location.y}")
+                        }
+                        .launchIn(this)
+                }
                 App(
                     navScopes = graph.navScopes,
                     settingsRepository = settingsRepository,
@@ -166,6 +190,36 @@ fun main() {
             }
         }
     }
+}
+
+private val defaultWindowSize = DpSize(400.dp, 800.dp)
+
+private val SettingsRepository.windowState: WindowState
+    @Composable
+    get() {
+        val t: Toolkit = Toolkit.getDefaultToolkit()
+        val dimensions: Dimension? = t.screenSize
+        val height = dimensions?.height?.dp?.div(1.5f) ?: 800.dp
+        // val width = height / 2 * 3
+        val width = height * 2
+        // val width = height / 2
+        val size = DpSize(width, height)
+        // println(t.getScreenInsets())
+        val windowSize = runBlocking {
+            settings.map { it.dataIfNotFrom(DataSource.Default) }
+                .filterNotNull()
+                .map { it.windowSize }
+                .firstOrNull() ?: size
+        }
+        return rememberWindowState(
+            placement = WindowPlacement.Floating,
+            position = WindowPosition(alignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.25f)),
+            size = windowSize,
+        )
+    }
+
+private fun onWindowResize(size: DpSize) {
+
 }
 
 @Composable

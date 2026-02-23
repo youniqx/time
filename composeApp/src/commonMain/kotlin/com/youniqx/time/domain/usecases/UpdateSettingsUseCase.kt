@@ -1,5 +1,6 @@
 package com.youniqx.time.domain.usecases
 
+import androidx.compose.ui.unit.DpSize
 import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.domain.models.OpenTracking
 
@@ -27,4 +28,6 @@ interface UpdateSettingsUseCase {
     fun togglePinWorkItem(id: String)
 
     fun setOpenTracking(openTracking: OpenTracking?)
+
+    fun setWindowSize(size: DpSize?)
 }

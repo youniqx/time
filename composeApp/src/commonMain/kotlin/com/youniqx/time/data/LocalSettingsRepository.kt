@@ -1,5 +1,6 @@
 package com.youniqx.time.data
 
+import androidx.compose.ui.unit.DpSize
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.russhwolf.settings.coroutines.FlowSettings
 import com.youniqx.time.di.IDispatchers
@@ -34,6 +35,7 @@ val defaultSettings =
         showMenuBarTimer = true,
         pinnedWorkItems = emptyList(),
         openTracking = null,
+        windowSize = null,
     )
 
 @OptIn(ExperimentalSettingsApi::class)
@@ -190,6 +192,17 @@ class LocalSettingsRepository(
                 flowSettings.remove(SettingKey.OpenTracking.name)
             } else {
                 flowSettings.putString(SettingKey.OpenTracking.name, json.encodeToString(openTracking))
+            }
+        }
+    }
+
+    override fun setWindowSize(size: DpSize?) {
+        scope.launch {
+            updateSettingsData { copy(windowSize = size) } // optimistic ui
+            if (size == null) {
+                flowSettings.remove(SettingKey.WindowSize.name)
+            } else {
+                // flowSettings.putString(SettingKey.OpenTracking.name, json.encodeToString(openTracking))
             }
         }
     }
