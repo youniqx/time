@@ -22,42 +22,22 @@ import androidx.compose.runtime.compositionLocalOf
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
-import com.youniqx.time.presentation.history.HistoryRoute
-import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
-import com.youniqx.time.presentation.onboarding.NamespacesAndIterationCadenceSetupRoute
-import com.youniqx.time.presentation.onboarding.WelcomeRoute
-import com.youniqx.time.presentation.settings.SettingsRoute
-import com.youniqx.time.presentation.workitems.SwitchTrackingRoute
-import com.youniqx.time.presentation.workitems.WorkItemsRoute
 
 /**
  * Handles navigation events by updating the navigation state.
  */
 class Navigator(
     val state: NavigationState,
+    private val navScopes: Set<NavScope>,
 ) {
-    fun onFinished(route: NavKey) {
-        when (route) {
-            WelcomeRoute -> {
-                add(GitLabSetupRoute)
-            }
-
-            GitLabSetupRoute -> {
-                add(NamespacesAndIterationCadenceSetupRoute)
-            }
-
-            NamespacesAndIterationCadenceSetupRoute -> {
-                state.backStacks.forEach { it.clear() }
-                add(listOf(WorkItemsRoute, HistoryRoute, SettingsRoute))
-            }
-
-            HistoryRoute,
-            SettingsRoute,
-            is SwitchTrackingRoute,
-            -> {
-                removeLast(route = route)
-            }
+    init {
+        state.backStacks.firstOrNull()?.toList()?.forEach { navKey ->
+            navScopes.forEach { navScope -> navScope.onAdd?.invoke(this, navKey) }
         }
+    }
+
+    fun onFinished(route: NavKey) {
+        navScopes.forEach { navScope -> navScope.onFinished?.invoke(this, route) }
     }
 
     fun add(vararg toAdd: NavKey) {
@@ -65,6 +45,7 @@ class Navigator(
             state.backStacks.forEach { backstack ->
                 backstack += navKey
             }
+            navScopes.forEach { navScope -> navScope.onAdd?.invoke(this, navKey) }
         }
     }
 
@@ -74,12 +55,18 @@ class Navigator(
                 state.backStacks.forEachIndexed { availablePanesIndex, backstack ->
                     if (availablePanesIndex >= paneIndex) backstack += navKey
                 }
+                navScopes.forEach { navScope -> navScope.onAdd?.invoke(this, navKey) }
             }
         }
     }
 
-    fun removeLast(
-        fromBackStack: NavBackStack<NavKey> = state.activeBackStack,
+    fun popUntilLastInclusive(route: NavKey? = null) {
+        val fromBackStack = state.activeBackStack
+        popUntilLastInclusive(fromBackStack = fromBackStack, route = route ?: fromBackStack.lastOrNull())
+    }
+
+    fun popUntilLastInclusive(
+        fromBackStack: NavBackStack<NavKey>,
         route: NavKey? = fromBackStack.lastOrNull(),
     ) {
         route ?: return

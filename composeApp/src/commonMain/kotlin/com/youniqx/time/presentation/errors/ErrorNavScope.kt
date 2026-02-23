@@ -13,7 +13,7 @@ object ErrorNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        {
+        NavScope {
             entry<NotFoundRoute> { _ ->
                 NotFound()
             }

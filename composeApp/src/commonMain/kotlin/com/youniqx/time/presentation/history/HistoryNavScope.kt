@@ -17,7 +17,15 @@ class HistoryNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        {
+        NavScope(
+            onFinished = {
+                when (it) {
+                    HistoryRoute -> {
+                        popUntilLastInclusive(it)
+                    }
+                }
+            },
+        ) {
             entry<HistoryRoute>(
                 metadata = SupportingPaneSceneStrategy.supportingPane(),
             ) {

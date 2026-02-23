@@ -17,12 +17,20 @@ class SettingsNavScope {
     @Provides
     @IntoSet
     fun provideNavScope(): NavScope =
-        {
+        NavScope(
+            onFinished = {
+                when (it) {
+                    SettingsRoute -> {
+                        popUntilLastInclusive(route = it)
+                    }
+                }
+            },
+        ) {
             entry<SettingsRoute>(
                 metadata = SupportingPaneSceneStrategy.extraPane(),
             ) {
                 val navigator = LocalNavigator.current
-                Settings(onBack = { navigator.removeLast(route = it) })
+                Settings(onBack = { navigator.onFinished(route = it) })
             }
         }
 }

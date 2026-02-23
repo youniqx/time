@@ -55,6 +55,7 @@ import com.youniqx.time.presentation.navigation.rememberNavEntryProviderDecorato
 import com.youniqx.time.presentation.navigation.rememberNavigationState
 import com.youniqx.time.presentation.onboarding.GitLabSetupRoute
 import com.youniqx.time.presentation.onboarding.NamespacesAndIterationCadenceSetupRoute
+import com.youniqx.time.presentation.onboarding.OnboardingRoute
 import com.youniqx.time.presentation.onboarding.WelcomeRoute
 import com.youniqx.time.presentation.onboarding.onboardingIndex
 import com.youniqx.time.presentation.settings.SettingsRoute
@@ -93,9 +94,9 @@ fun App(
             rememberNavigationState(
                 directive = directive,
                 configuration = navBackStackSavedStateConfiguration,
-                WelcomeRoute,
+                OnboardingRoute,
             )
-        val navigator = remember(navigationState) { Navigator(navigationState) }
+        val navigator = remember(navigationState) { Navigator(navigationState, navScopes) }
         val entryDecorators =
             listOf<NavEntryDecorator<NavKey>>(
                 rememberSaveableStateHolderNavEntryDecorator(),
@@ -107,12 +108,12 @@ fun App(
                     NavEntry(key) {
                         LaunchedEffect(key) {
                             println("Unknown key: $key")
-                            navigator.removeLast()
+                            navigator.popUntilLastInclusive()
                             navigator.add(NotFoundRoute)
                         }
                     }
                 }) {
-                    navScopes.forEach { scope -> scope() }
+                    navScopes.forEach { scope -> scope.entryProvider(this) }
                 }
             }
         val entries =
@@ -182,7 +183,7 @@ fun App(
                                 .fillMaxSize(),
                         sceneStrategy = dialogStrategy then supportingPaneStrategy then singlePaneStrategy,
                         onBack = {
-                            navigator.removeLast()
+                            navigator.popUntilLastInclusive()
                         },
                     )
                 }
@@ -200,6 +201,7 @@ private val navBackStackSavedStateConfiguration =
             SerializersModule {
                 polymorphic(NavKey::class) {
                     subclass(NotFoundRoute::class, NotFoundRoute.serializer())
+                    subclass(OnboardingRoute::class, OnboardingRoute.serializer())
                     subclass(WelcomeRoute::class, WelcomeRoute.serializer())
                     subclass(GitLabSetupRoute::class, GitLabSetupRoute.serializer())
                     subclass(
