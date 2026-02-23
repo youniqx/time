@@ -46,11 +46,9 @@ fun FrameWindowScope.WindowResizer(windowState: WindowState) {
                         delay(16.milliseconds)
                     }
                 }
-            }
-            .onEach {
+            }.onEach {
                 location = it
-            }
-            .launchIn(this)
+            }.launchIn(this)
     }
     var isHovered by remember { mutableStateOf(false) }
     LaunchedEffect(location, isHovered) {
@@ -60,46 +58,48 @@ fun FrameWindowScope.WindowResizer(windowState: WindowState) {
         }
     }
     WindowResizeShortcuts(
-        modifier = Modifier
-            .layout { measurable, constraints ->
-                val placeable = measurable.measure(constraints)
-                layout(placeable.width, placeable.height) {
-                    val padding = 16.dp.roundToPx()
-                    location?.let {
-                        val x = it.x.dp
-                            .roundToPx()
-                            .minus(placeable.width / 2)
-                            .coerceIn(
-                                range = padding..(constraints.maxWidth - placeable.width - padding)
+        modifier =
+            Modifier
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints)
+                    layout(placeable.width, placeable.height) {
+                        val padding = 16.dp.roundToPx()
+                        location?.let {
+                            val maxX =
+                                (constraints.maxWidth - placeable.width - padding)
                                     .coerceAtLeast(padding)
-                            )
-                        val y = it.y.dp
-                            .roundToPx()
-                            .minus(placeable.height / 2)
-                            .coerceIn(
-                                range = padding..(constraints.maxHeight - placeable.height - padding)
+                            val x =
+                                it.x.dp
+                                    .roundToPx()
+                                    .minus(placeable.width / 2)
+                                    .coerceIn(range = padding..maxX)
+                            val maxY =
+                                (constraints.maxHeight - placeable.height - padding)
                                     .coerceAtLeast(padding)
-                            )
-                        placeable.place(x = x, y = y)
+                            val y =
+                                it.y.dp
+                                    .roundToPx()
+                                    .minus(placeable.height / 2)
+                                    .coerceIn(range = padding..maxY)
+                            placeable.place(x = x, y = y)
+                        }
                     }
-                }
-            }
-            .pointerInput(Unit) {
-                awaitPointerEventScope {
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        when (event.type) {
-                            PointerEventType.Enter -> {
-                                isHovered = true
-                            }
+                }.pointerInput(Unit) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            when (event.type) {
+                                PointerEventType.Enter -> {
+                                    isHovered = true
+                                }
 
-                            PointerEventType.Exit -> {
-                                isHovered = false
+                                PointerEventType.Exit -> {
+                                    isHovered = false
+                                }
                             }
                         }
                     }
-                }
-            },
+                },
         onLandscape = {
             windowState.size = windowState.size.run { copy(width = height * 2) }
         },

@@ -332,7 +332,7 @@ fun SettingsScreen(
                         Icon(
                             modifier = Modifier.rotate(90.0f),
                             imageVector = Icons.Default.Crop169,
-                            contentDescription = "Portrait"
+                            contentDescription = "Portrait",
                         )
                     },
                 )

@@ -19,13 +19,14 @@ fun WindowResizeShortcuts(
     modifier: Modifier = Modifier,
     onLandscape: () -> Unit,
     onSquare: () -> Unit,
-    onPortrait: () -> Unit
+    onPortrait: () -> Unit,
 ) {
     SingleChoiceSegmentedButtonRow(modifier = modifier) {
-        val colors = SegmentedButtonDefaults.colors(
-            inactiveContainerColor = MaterialTheme.colorScheme.inverseSurface,
-            inactiveContentColor = MaterialTheme.colorScheme.inverseOnSurface,
-        )
+        val colors =
+            SegmentedButtonDefaults.colors(
+                inactiveContainerColor = MaterialTheme.colorScheme.inverseSurface,
+                inactiveContentColor = MaterialTheme.colorScheme.inverseOnSurface,
+            )
         SegmentedButton(
             shape =
                 SegmentedButtonDefaults.itemShape(
@@ -61,7 +62,7 @@ fun WindowResizeShortcuts(
                 Icon(
                     modifier = Modifier.rotate(90.0f),
                     imageVector = Icons.Default.Crop169,
-                    contentDescription = "Portrait"
+                    contentDescription = "Portrait",
                 )
             },
         )

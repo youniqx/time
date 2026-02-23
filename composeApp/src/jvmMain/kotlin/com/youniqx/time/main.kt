@@ -194,12 +194,14 @@ private val SettingsRepository.windowState: WindowState
         // val width = height / 2
         val size = DpSize(width, height)
         // println(t.getScreenInsets())
-        val windowSize = runBlocking {
-            settings.map { it.dataIfNotFrom(DataSource.Default) }
-                .filterNotNull()
-                .map { it.windowSize }
-                .firstOrNull() ?: size
-        }
+        val windowSize =
+            runBlocking {
+                settings
+                    .map { it.dataIfNotFrom(DataSource.Default) }
+                    .filterNotNull()
+                    .map { it.windowSize }
+                    .firstOrNull() ?: size
+            }
         return rememberWindowState(
             placement = WindowPlacement.Floating,
             position = WindowPosition(alignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.25f)),
@@ -208,7 +210,6 @@ private val SettingsRepository.windowState: WindowState
     }
 
 private fun onWindowResize(size: DpSize) {
-
 }
 
 @Composable

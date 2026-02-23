@@ -77,7 +77,7 @@ fun App(
     settingsRepository: SettingsRepository,
     focusRequester: FocusRequester = remember { FocusRequester() },
     theme: Theme = com.youniqx.time.presentation.theme.teal.theme,
-    overlayContent: (@Composable () -> Unit)? = null
+    overlayContent: (@Composable () -> Unit)? = null,
 ) {
     AppTheme(settingsRepository = settingsRepository, theme = theme) {
         val resultStore = rememberResultStore(configuration = resultStoreSavedStateConfiguration)
