@@ -12,11 +12,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.tooling.preview.Preview
+import com.youniqx.time.presentation.theme.AppTheme
 
 @Composable
-@Preview
-fun WindowResizeShortcuts() {
-    SingleChoiceSegmentedButtonRow {
+fun WindowResizeShortcuts(
+    modifier: Modifier = Modifier,
+    onLandscape: () -> Unit,
+    onSquare: () -> Unit,
+    onPortrait: () -> Unit
+) {
+    SingleChoiceSegmentedButtonRow(modifier = modifier) {
         val colors = SegmentedButtonDefaults.colors(
             inactiveContainerColor = MaterialTheme.colorScheme.inverseSurface,
             inactiveContentColor = MaterialTheme.colorScheme.inverseOnSurface,
@@ -28,7 +33,7 @@ fun WindowResizeShortcuts() {
                     count = 3,
                 ),
             colors = colors,
-            onClick = {  },
+            onClick = onLandscape,
             selected = false,
             label = { Icon(Icons.Default.Crop169, "Landscape") },
         )
@@ -39,9 +44,7 @@ fun WindowResizeShortcuts() {
                     count = 3,
                 ),
             colors = colors,
-            onClick = {
-
-            },
+            onClick = onSquare,
             selected = false,
             label = { Icon(Icons.Default.CropSquare, "Square") },
         )
@@ -52,9 +55,7 @@ fun WindowResizeShortcuts() {
                     count = 3,
                 ),
             colors = colors,
-            onClick = {
-
-            },
+            onClick = onPortrait,
             selected = false,
             label = {
                 Icon(
@@ -63,6 +64,18 @@ fun WindowResizeShortcuts() {
                     contentDescription = "Portrait"
                 )
             },
+        )
+    }
+}
+
+@Composable
+@Preview
+fun WindowResizeShortcutsPreview() {
+    AppTheme {
+        WindowResizeShortcuts(
+            onLandscape = {},
+            onSquare = {},
+            onPortrait = {},
         )
     }
 }

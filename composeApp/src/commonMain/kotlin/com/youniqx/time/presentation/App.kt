@@ -61,7 +61,6 @@ import com.youniqx.time.presentation.onboarding.onboardingIndex
 import com.youniqx.time.presentation.settings.SettingsRoute
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.Theme
-import com.youniqx.time.presentation.windowsize.WindowResizerRoute
 import com.youniqx.time.presentation.workitems.DisableGlobalSearch
 import com.youniqx.time.presentation.workitems.LocalSearchFocusRequester
 import com.youniqx.time.presentation.workitems.ScrollToWorkItem
@@ -77,8 +76,8 @@ fun App(
     navScopes: Set<NavScope>,
     settingsRepository: SettingsRepository,
     focusRequester: FocusRequester = remember { FocusRequester() },
-    setWindowBackground: ((Color) -> Unit)? = null,
     theme: Theme = com.youniqx.time.presentation.theme.teal.theme,
+    overlayContent: (@Composable () -> Unit)? = null
 ) {
     AppTheme(settingsRepository = settingsRepository, theme = theme) {
         val resultStore = rememberResultStore(configuration = resultStoreSavedStateConfiguration)
@@ -123,14 +122,6 @@ fun App(
                 entryDecorators = entryDecorators,
                 entryProvider = entryProvider,
             )
-
-        if (setWindowBackground != null) {
-            MaterialTheme.colorScheme.surface.let { color ->
-                LaunchedEffect(setWindowBackground, color) {
-                    setWindowBackground(color)
-                }
-            }
-        }
 
         // Override the defaults so that the supporting pane can be dismissed by pressing back.
         // See b/445826749
@@ -188,6 +179,7 @@ fun App(
                         },
                     )
                 }
+                overlayContent?.invoke()
             }
         }
         // Todo
@@ -213,7 +205,6 @@ private val navBackStackSavedStateConfiguration =
                     subclass(SwitchTrackingRoute::class, SwitchTrackingRoute.serializer())
                     subclass(HistoryRoute::class, HistoryRoute.serializer())
                     subclass(SettingsRoute::class, SettingsRoute.serializer())
-                    subclass(WindowResizerRoute::class, WindowResizerRoute.serializer())
                 }
             }
     }
