@@ -71,10 +71,7 @@ class Navigator(
     ) {
         route ?: return
         if (fromBackStack.size == 1) return
-        val removed = fromBackStack.asReversed().remove(route)
-        if (!removed) return
         state.backStacks.forEach { backStack ->
-            if (backStack == fromBackStack) return@forEach
             val index = backStack.asReversed().indexOf(route)
             if (index == -1 || index == backStack.lastIndex) return@forEach
             (backStack.lastIndex downTo (backStack.lastIndex - index)).forEach {
