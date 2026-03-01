@@ -1,8 +1,10 @@
 package com.youniqx.time.presentation.windowsize
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Crop169
 import androidx.compose.material.icons.filled.CropSquare
+import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
@@ -18,7 +20,7 @@ import com.youniqx.time.presentation.theme.AppTheme
 fun WindowResizeShortcuts(
     modifier: Modifier = Modifier,
     onLandscape: () -> Unit,
-    onSquare: () -> Unit,
+    onUndo: () -> Unit,
     onPortrait: () -> Unit,
 ) {
     SingleChoiceSegmentedButtonRow(modifier = modifier) {
@@ -45,9 +47,9 @@ fun WindowResizeShortcuts(
                     count = 3,
                 ),
             colors = colors,
-            onClick = onSquare,
+            onClick = onUndo,
             selected = false,
-            label = { Icon(Icons.Default.CropSquare, "Square") },
+            label = { Icon(Icons.AutoMirrored.Default.Undo, "Undo") },
         )
         SegmentedButton(
             shape =
@@ -75,7 +77,7 @@ fun WindowResizeShortcutsPreview() {
     AppTheme {
         WindowResizeShortcuts(
             onLandscape = {},
-            onSquare = {},
+            onUndo = {},
             onPortrait = {},
         )
     }
