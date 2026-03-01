@@ -1,27 +1,27 @@
 package com.youniqx.time.presentation.onboarding
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.Button
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -31,9 +31,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.LocalSpacing
-import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
+import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 object WelcomeRoute : NavKey
@@ -62,14 +63,26 @@ fun WelcomeScreen(
 ) {
     val spacing = LocalSpacing.current
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
-                .padding(spacing.screenPadding),
-        horizontalAlignment = Alignment.CenterHorizontally,
+    var delayedLoading by remember { mutableStateOf(true) }
+    LaunchedEffect(true) {
+        delay(1.seconds)
+        delayedLoading = loading
+    }
+
+    val animatedAlpha by animateFloatAsState(
+        targetValue = if (delayedLoading) 0f else 1f,
+        label = "alphaAnimation",
+    )
+
+    OverlayCard(
+        modifier = modifier.fillMaxWidth(),
+        colors =
+            CardDefaults.cardColors().run {
+                copy(containerColor = containerColor.copy(alpha = animatedAlpha))
+            },
+        elevation = CardDefaults.cardElevation(),
         verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // App icon
         Icon(
@@ -100,13 +113,16 @@ fun WelcomeScreen(
 
         Spacer(modifier = Modifier.height(spacing.xxxl))
 
-        if (loading) {
+        if (delayedLoading) {
             CircularProgressIndicator()
         } else {
             // Get Started button
             Button(
                 onClick = onNext,
-                modifier = Modifier.fillMaxWidth(0.6f),
+                modifier =
+                    Modifier
+                        .widthIn(max = spacing.maxButtonWidth)
+                        .fillMaxWidth(),
             ) {
                 Text("Get Started")
             }

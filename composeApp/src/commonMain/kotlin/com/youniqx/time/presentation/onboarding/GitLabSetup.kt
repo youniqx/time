@@ -1,28 +1,17 @@
 package com.youniqx.time.presentation.onboarding
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,7 +23,6 @@ import com.youniqx.time.presentation.settings.TokenInput
 import com.youniqx.time.presentation.settings.createTokenUrl
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.LocalSpacing
-import com.youniqx.time.systemBarsForVisualComponents
 import dev.zacsweers.metrox.viewmodel.metroViewModel
 import kotlinx.serialization.Serializable
 
@@ -73,17 +61,25 @@ fun GitLabSetupScreen(
     val spacing = LocalSpacing.current
     val uriHandler = LocalUriHandler.current
 
-    Column(
-        modifier =
-            modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
-                .padding(spacing.screenPadding),
-    ) {
-        OnboardingProgressIndicator(stepCount)
+    OverlayCard(
+        modifier = modifier,
+        header = {
+            OnboardingProgressIndicator(stepCount)
+        },
+        footer = {
+            TextButton(onClick = onSkip) {
+                Text("Skip for now")
+            }
 
-        Spacer(modifier = Modifier.height(spacing.xxl))
+            Button(
+                onClick = onComplete,
+                enabled = !instanceUrl.isNullOrBlank() && !token.isNullOrBlank(),
+            ) {
+                Text("Continue")
+            }
+        },
+    ) {
+        Spacer(modifier = Modifier.height(spacing.xxl * 1.5f))
 
         // Title
         Text(
@@ -134,26 +130,6 @@ fun GitLabSetupScreen(
                     modifier = Modifier.padding(end = spacing.sm),
                 )
                 Text("Create a new access token")
-            }
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // Bottom buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            TextButton(onClick = onSkip) {
-                Text("Skip for now")
-            }
-
-            Button(
-                onClick = onComplete,
-                enabled = !instanceUrl.isNullOrBlank() && !token.isNullOrBlank(),
-            ) {
-                Text("Continue")
             }
         }
     }

@@ -3,8 +3,6 @@ package com.youniqx.time.presentation.windowsize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.Crop169
-import androidx.compose.material.icons.filled.CropSquare
-import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
