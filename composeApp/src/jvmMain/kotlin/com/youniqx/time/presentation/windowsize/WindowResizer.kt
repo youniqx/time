@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.coerceAtLeast
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.FrameWindowScope
+import androidx.compose.ui.window.WindowPlacement
+import androidx.compose.ui.window.WindowPosition
 import androidx.compose.ui.window.WindowState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -39,37 +41,47 @@ import kotlin.time.Duration.Companion.seconds
 fun FrameWindowScope.WindowResizer(windowState: WindowState) {
     var location by remember { mutableStateOf<Point?>(null) }
     var isHovered by remember { mutableStateOf(false) }
-    LaunchedEffect(windowState, isHovered) {
+    LaunchedEffect(true) {
         snapshotFlow { windowState.size }
             .debounce(16.milliseconds)
             .drop(1)
             .transformLatest {
                 withTimeoutOrNull(500) {
-                    while (!isHovered) {
+                    while (!isHovered && windowState.placement == WindowPlacement.Floating) {
                         val loc = MouseInfo.getPointerInfo().location
                         SwingUtilities.convertPointFromScreen(loc, window)
                         emit(loc)
                         delay(16.milliseconds)
+                    }
+                    if (windowState.placement != WindowPlacement.Floating) {
+                        isHovered = false
+                        location = null
                     }
                 }
             }.onEach {
                 location = it
             }.launchIn(this)
     }
-    var undoState by remember { mutableStateOf(windowState.size to windowState.position) }
-    LaunchedEffect(windowState) {
+    var undoState by remember { mutableStateOf(windowState.toUndoState()) }
+    LaunchedEffect(true) {
         val threshold = 30.dp.value
-        snapshotFlow { windowState.size }.combine(snapshotFlow { windowState.position }, ::Pair)
-            .debounce(1.seconds)
-            .runningFold(windowState.size to windowState.position) { prev, new ->
-                val diff = prev.first - new.first
-                val xDiff = prev.second.x - new.second.x
-                val yDiff = prev.second.y - new.second.y
+        combine(
+            snapshotFlow { windowState.size },
+            snapshotFlow { windowState.position },
+            snapshotFlow { windowState.placement },
+        ) { size, position, placement ->
+            UndoState(size = size, position = position, placement = placement)
+        }.debounce(1.seconds)
+            .runningFold(windowState.toUndoState()) { prev, new ->
+                val diff = prev.size - new.size
+                val xDiff = prev.position.x - new.position.x
+                val yDiff = prev.position.y - new.position.y
                 if (
                     abs(diff.width.value) < threshold &&
                     abs(diff.height.value) < threshold &&
                     abs(xDiff.value) < threshold &&
-                    abs(yDiff.value) < threshold
+                    abs(yDiff.value) < threshold &&
+                    prev.placement == new.placement
                 ) {
                     prev
                 } else {
@@ -131,8 +143,9 @@ fun FrameWindowScope.WindowResizer(windowState: WindowState) {
             windowState.size = windowState.size.run { copy(width = height * 2).forceMinWidth() }
         },
         onUndo = {
-            windowState.size = undoState.first
-            windowState.position = undoState.second
+            windowState.placement = undoState.placement
+            windowState.size = undoState.size
+            windowState.position = undoState.position
         },
         onPortrait = {
             windowState.size = windowState.size.run { copy(width = height / 2).forceMinWidth() }
@@ -141,3 +154,11 @@ fun FrameWindowScope.WindowResizer(windowState: WindowState) {
 }
 
 private fun DpSize.forceMinWidth() = copy(width = width.coerceAtLeast(400.dp))
+
+private data class UndoState(
+    val size: DpSize,
+    val position: WindowPosition,
+    val placement: WindowPlacement,
+)
+
+private fun WindowState.toUndoState() = UndoState(size = size, position = position, placement = placement)
