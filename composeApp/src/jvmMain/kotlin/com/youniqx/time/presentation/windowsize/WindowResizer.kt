@@ -43,8 +43,8 @@ fun FrameWindowScope.WindowResizer(windowState: WindowState) {
     var isHovered by remember { mutableStateOf(false) }
     LaunchedEffect(true) {
         snapshotFlow { windowState.size }
+            .drop(2) // initial render and resize on macOS caused by making the title bar transparent
             .debounce(16.milliseconds)
-            .drop(1)
             .transformLatest {
                 withTimeoutOrNull(500) {
                     while (!isHovered && windowState.placement == WindowPlacement.Floating) {
