@@ -102,10 +102,9 @@ fun OverlayCard(
                                         ).background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = alpha))
                                         .windowInsetsPadding(
                                             WindowInsets.systemBarsForVisualComponents.only(
-                                                WindowInsetsSides.Top + WindowInsetsSides.Horizontal
-                                            )
-                                        )
-                                        .padding(spacing.screenPadding),
+                                                WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
+                                            ),
+                                        ).padding(spacing.screenPadding),
                             ) {
                                 header()
                             }
@@ -132,10 +131,9 @@ fun OverlayCard(
                                     ).background(MaterialTheme.colorScheme.surfaceContainerHigh)
                                     .windowInsetsPadding(
                                         WindowInsets.systemBarsForVisualComponents.only(
-                                            WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
-                                        )
-                                    )
-                                    .padding(horizontal = spacing.screenPadding, vertical = spacing.screenPadding / 2)
+                                            WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal,
+                                        ),
+                                    ).padding(horizontal = spacing.screenPadding, vertical = spacing.screenPadding / 2)
                                     .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
