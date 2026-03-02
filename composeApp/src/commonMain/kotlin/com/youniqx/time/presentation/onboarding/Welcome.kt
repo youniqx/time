@@ -63,14 +63,8 @@ fun WelcomeScreen(
 ) {
     val spacing = LocalSpacing.current
 
-    var delayedLoading by remember { mutableStateOf(true) }
-    LaunchedEffect(true) {
-        delay(1.seconds)
-        delayedLoading = loading
-    }
-
     val animatedAlpha by animateFloatAsState(
-        targetValue = if (delayedLoading) 0f else 1f,
+        targetValue = if (loading) 0f else 1f,
         label = "alphaAnimation",
     )
 
@@ -113,7 +107,7 @@ fun WelcomeScreen(
 
         Spacer(modifier = Modifier.height(spacing.xxxl))
 
-        if (delayedLoading) {
+        if (loading) {
             CircularProgressIndicator()
         } else {
             // Get Started button
