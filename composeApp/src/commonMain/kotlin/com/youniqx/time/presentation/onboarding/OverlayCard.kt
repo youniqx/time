@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -98,7 +100,11 @@ fun OverlayCard(
                                                 Modifier
                                             },
                                         ).background(MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = alpha))
-                                        .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents)
+                                        .windowInsetsPadding(
+                                            WindowInsets.systemBarsForVisualComponents.only(
+                                                WindowInsetsSides.Top + WindowInsetsSides.Horizontal
+                                            )
+                                        )
                                         .padding(spacing.screenPadding),
                             ) {
                                 header()
@@ -124,6 +130,11 @@ fun OverlayCard(
                                             Modifier
                                         },
                                     ).background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                                    .windowInsetsPadding(
+                                        WindowInsets.systemBarsForVisualComponents.only(
+                                            WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal
+                                        )
+                                    )
                                     .padding(horizontal = spacing.screenPadding, vertical = spacing.screenPadding / 2)
                                     .fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
