@@ -47,6 +47,7 @@ fragment groupWithIterationCadences on Group {
     first: $iterationCadencesFirst,
     before: $iterationCadencesBefore,
     after: $iterationCadencesAfter,
+    active: true,
   ) {
     nodes {
       title @include(if: $initial)
