@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CornerSize
@@ -151,13 +151,15 @@ fun OverlayCard(
                     modifier
                         .fillMaxSize()
                         .windowInsetsPadding(WindowInsets.systemBarsForVisualComponents),
-                contentAlignment = Alignment.TopCenter,
+                contentAlignment = Alignment.Center,
             ) {
                 Card(
                     modifier =
                         Modifier
-                            .widthIn(max = WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND.dp)
-                            .fillMaxSize()
+                            .sizeIn(
+                                maxWidth = WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND.dp,
+                                maxHeight = WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND.dp,
+                            ).fillMaxSize()
                             .padding(spacing.screenPadding),
                     colors = colors,
                     elevation = elevation,
