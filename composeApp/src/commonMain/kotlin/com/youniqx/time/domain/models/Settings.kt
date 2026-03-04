@@ -1,7 +1,5 @@
 package com.youniqx.time.domain.models
 
-import androidx.compose.ui.unit.DpSize
-
 data class Settings(
     val instanceUrl: String?,
     val token: String?,
@@ -15,5 +13,4 @@ data class Settings(
     val showMenuBarTimer: Boolean,
     val pinnedWorkItems: List<String>,
     val openTracking: OpenTracking?,
-    val windowSize: DpSize?,
 )

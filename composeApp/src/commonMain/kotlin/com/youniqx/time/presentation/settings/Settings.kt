@@ -16,10 +16,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.Crop169
-import androidx.compose.material.icons.filled.CropLandscape
-import androidx.compose.material.icons.filled.CropPortrait
-import androidx.compose.material.icons.filled.CropSquare
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.outlined.DarkMode
@@ -40,13 +36,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavKey
@@ -279,65 +273,6 @@ fun SettingsScreen(
                 )
             }
         }
-        FlowRow(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        onClickLabel = if (settings.showLabelsByDefault) "Hide labels" else "Show labels",
-                        role = Role.Switch,
-                        onClick = updater::toggleShowLabelsByDefault,
-                    ).padding(horizontal = 12.dp)
-                    .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
-            Text("Size")
-            SingleChoiceSegmentedButtonRow {
-                SegmentedButton(
-                    shape =
-                        SegmentedButtonDefaults.itemShape(
-                            index = 0,
-                            count = 3,
-                        ),
-                    onClick = { if (settings.showLabelsByDefault) updater.toggleShowLabelsByDefault() },
-                    selected = !settings.showLabelsByDefault,
-                    label = { Icon(Icons.Default.Crop169, "Landscape") },
-                )
-                SegmentedButton(
-                    shape =
-                        SegmentedButtonDefaults.itemShape(
-                            index = 1,
-                            count = 3,
-                        ),
-                    onClick = {
-                        if (!settings.showLabelsByDefault) updater.toggleShowLabelsByDefault()
-                        if (settings.useLabelColors) updater.toggleUseLabelColors()
-                    },
-                    selected = settings.showLabelsByDefault && !settings.useLabelColors,
-                    label = { Icon(Icons.Default.CropSquare, "Square") },
-                )
-                SegmentedButton(
-                    shape =
-                        SegmentedButtonDefaults.itemShape(
-                            index = 2,
-                            count = 3,
-                        ),
-                    onClick = {
-                        if (!settings.showLabelsByDefault) updater.toggleShowLabelsByDefault()
-                        if (!settings.useLabelColors) updater.toggleUseLabelColors()
-                    },
-                    selected = settings.showLabelsByDefault && settings.useLabelColors,
-                    label = {
-                        Icon(
-                            modifier = Modifier.rotate(90.0f),
-                            imageVector = Icons.Default.Crop169,
-                            contentDescription = "Portrait",
-                        )
-                    },
-                )
-            }
-        }
         if (additionalTimerSupport.isSupported) {
             Row(
                 modifier =
@@ -437,7 +372,6 @@ fun SettingsPreview() {
                         iterationCadence = null,
                         pinnedWorkItems = emptyList(),
                         openTracking = null,
-                        windowSize = null,
                     ),
                 updater =
                     object : UpdateSettingsUseCase {
@@ -464,8 +398,6 @@ fun SettingsPreview() {
                         override fun togglePinWorkItem(id: String) {}
 
                         override fun setOpenTracking(openTracking: OpenTracking?) {}
-
-                        override fun setWindowSize(size: DpSize?) {}
                     },
                 namespaceSearcher = {},
                 onBack = {},

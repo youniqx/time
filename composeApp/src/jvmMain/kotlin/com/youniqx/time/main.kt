@@ -181,36 +181,28 @@ fun main() {
     }
 }
 
-private val defaultWindowSize = DpSize(400.dp, 800.dp)
-
 private val SettingsRepository.windowState: WindowState
     @Composable
     get() {
         val t: Toolkit = Toolkit.getDefaultToolkit()
         val dimensions: Dimension? = t.screenSize
         val height = dimensions?.height?.dp?.div(1.5f) ?: 800.dp
-        // val width = height / 2 * 3
         val width = height * 2
-        // val width = height / 2
         val size = DpSize(width, height)
-        // println(t.getScreenInsets())
-        val windowSize =
-            runBlocking {
-                settings
-                    .map { it.dataIfNotFrom(DataSource.Default) }
-                    .filterNotNull()
-                    .map { it.windowSize }
-                    .firstOrNull() ?: size
-            }
+//        val windowSize =
+//            runBlocking {
+//                settings
+//                    .map { it.dataIfNotFrom(DataSource.Default) }
+//                    .filterNotNull()
+//                    .map { it.windowSize }
+//                    .firstOrNull() ?: size
+//            }
         return rememberWindowState(
             placement = WindowPlacement.Floating,
             position = WindowPosition(alignment = BiasAlignment(horizontalBias = 0f, verticalBias = -0.25f)),
-            size = windowSize,
+            size = size,
         )
     }
-
-private fun onWindowResize(size: DpSize) {
-}
 
 @Composable
 private fun ApplicationScope.Tray(
