@@ -26,7 +26,7 @@ glab release upload "${CI_COMMIT_TAG}" --assets-links='
     }
   ]'
 
-for f in time-*.*; do
+for f in time-*; do
   # path#name#type
   glab release upload "${CI_COMMIT_TAG}" "${f}#${f}#image"
 done

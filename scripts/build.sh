@@ -74,7 +74,7 @@ buildDmg() {
 buildWeb() {
   ./gradlew composeApp:wasmJsBrowserDistribution
   mkdir -p public && cp -R ./composeApp/build/dist/wasmJs/productionExecutable/* ./public
-  tar -czvf "time-web-${PKG_ORIGIN}${PKG_VERSION}.tar.gz" ./public
+  tar -czvf "time-${PKG_ORIGIN}${PKG_VERSION}-web.tar.gz" ./public
 }
 
 main() {
