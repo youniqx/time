@@ -87,6 +87,8 @@ Build Web:
     paths:
       # The folder that contains the files to be exposed at the Page URL
       - public
+      - time-*.tar.gz
+    expire_in: 24 hours
 
 
 Upload Binaries:
