@@ -20,26 +20,6 @@ variables:
   GLAB_VERSION: 1.88.0
 
 
-pages:
-  tags: [linux-unprivileged]
-  variables:
-    KUBERNETES_MEMORY_REQUEST: 20Gi
-    KUBERNETES_MEMORY_LIMIT: 20Gi
-  stage: deploy
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.14.10
-  script:
-    - gradle composeApp:wasmJsBrowserDistribution
-    - mkdir -p public && cp -R ./composeApp/build/dist/wasmJs/productionExecutable/* ./public
-  artifacts:
-    paths:
-      # The folder that contains the files to be exposed at the Page URL
-      - public
-  rules:
-    # This ensures that only pushes to the default branch will trigger
-    # a pages deploy
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
-
-
 release-test:
   extends: .release_test
 
@@ -88,6 +68,27 @@ Build Linux AppImage:
     expire_in: 24 hours
 
 
+Build Web:
+  tags: [linux-unprivileged]
+  variables:
+    KUBERNETES_MEMORY_REQUEST: 20Gi
+    KUBERNETES_MEMORY_LIMIT: 20Gi
+  stage: build
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: manual
+      allow_failure: true
+    - if: $CI_COMMIT_TAG
+  script:
+    - ./scripts/build.sh --web
+  pages: true
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.14.10
+  artifacts:
+    paths:
+      # The folder that contains the files to be exposed at the Page URL
+      - public
+
+
 Upload Binaries:
   tags: [linux-unprivileged]
   image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/infrastructure/youniqx-ubuntu:1.8.104
@@ -95,6 +96,7 @@ Upload Binaries:
   needs:
     - job: "Build Linux AppImage"
     - job: "Build Dmg"
+    - job: "Build Web"
       artifacts: true
   rules:
     - if: $CI_COMMIT_TAG

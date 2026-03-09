@@ -7,6 +7,7 @@ set -o errexit
 
 appImage=false
 dmg=false
+web=false
 
 ## get arguments from script call
 while true; do
@@ -15,6 +16,9 @@ while true; do
     shift
   elif [ "${1}" = "--dmg" ]; then
     dmg=true
+    shift
+  elif [ "${1}" = "--web" ]; then
+    web=true
     shift
   else
     break
@@ -67,6 +71,12 @@ buildDmg() {
   mv composeApp/build/compose/binaries/main/dmg/*.dmg "./time-${PKG_ORIGIN}${PKG_VERSION}.dmg"
 }
 
+buildWeb() {
+  ./gradlew composeApp:wasmJsBrowserDistribution
+  mkdir -p public && cp -R ./composeApp/build/dist/wasmJs/productionExecutable/* ./public
+  zip -r "time-web-${PKG_ORIGIN}${PKG_VERSION}.zip" ./public
+}
+
 main() {
   getVersionName
   if [ "$appImage" = true ];then
@@ -74,6 +84,9 @@ main() {
   fi
   if [ "$dmg" = true ];then
     buildDmg
+  fi
+  if [ "$web" = true ];then
+    buildWeb
   fi
 }
 
