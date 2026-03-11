@@ -107,5 +107,17 @@ Upload Binaries:
     GITLAB_TOKEN:
       vault: mobile_chapter/time/protected/semantic_release/gitlab_token@youniqx
       file: false
+    GITHUB_REPO:
+      vault: mobile_chapter/time/protected/github/repo@youniqx
+      file: false
+    GITHUB_APP_CLIENT_ID:
+      vault: mobile_chapter/time/protected/github/client_id@youniqx
+      file: false
+    GITHUB_APP_INSTALLATION_ID:
+      vault: mobile_chapter/time/protected/github/installation_id@youniqx
+      file: false
+    GITHUB_APP_PRIVATE_KEY:
+      vault: mobile_chapter/time/protected/github/private_key@youniqx
+      file: true
   script:
     - ./scripts/upload.sh
