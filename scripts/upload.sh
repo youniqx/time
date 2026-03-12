@@ -6,6 +6,7 @@ set -o errexit
 (set -o pipefail 2> /dev/null) && set -o pipefail
 
 installGlab() {
+    echo "===Install glab==="
     curl -fLo ./glab.tar.gz "https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_amd64.tar.gz"
     tar -zxf ./glab.tar.gz bin/glab
     PATH="${PATH}:${PWD}/bin"
@@ -16,12 +17,15 @@ installGlab() {
 }
 
 installGh() {
+    echo "===Install gh==="
     curl -fLo ./gh.tar.gz "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz"
     tar -zxf ./gh.tar.gz "gh_${GH_VERSION}_linux_amd64/bin/gh"
     PATH="${PATH}:${PWD}/gh_${GH_VERSION}_linux_amd64/bin"
 
+    echo "===Authenticate gh==="
     dir=$(dirname "$0")
-    eval "${dir}/github/authenticate.sh"
+    GH_TOKEN=$("${dir}/github/authenticate.sh")
+    export GH_TOKEN
 }
 
 if [ "$CI" = "true" ]; then
@@ -30,6 +34,8 @@ if [ "$CI" = "true" ]; then
     installGlab
     installGh
 fi
+
+echo "===GitLab Release==="
 
 glab release upload "${CI_COMMIT_TAG}" --assets-links='
   [
@@ -45,5 +51,7 @@ for f in time-*; do
   glab release upload "${CI_COMMIT_TAG}" "${f}#${f}#image"
 done
 
+echo "===GitHub Release==="
+
 gh repo set-default "$GITHUB_REPO"
-gh release create --notes-from-tag --title "Time ${CI_COMMIT_TAG}" "${CI_COMMIT_TAG}" time-*
+gh release create --notes-from-tag --title "${CI_COMMIT_TAG}" "${CI_COMMIT_TAG}" time-*
