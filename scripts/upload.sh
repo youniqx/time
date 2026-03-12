@@ -16,9 +16,9 @@ installGlab() {
 }
 
 installGh() {
-    curl -fLo ./glab.tar.gz "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz"
-    tar -zxf ./glab.tar.gz bin/gh
-    PATH="${PATH}:${PWD}/bin"
+    curl -fLo ./gh.tar.gz "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_amd64.tar.gz"
+    tar -zxf ./gh.tar.gz "gh_${GH_VERSION}_linux_amd64/bin/gh"
+    PATH="${PATH}:${PWD}/gh_${GH_VERSION}_linux_amd64/bin"
 
     dir=$(dirname "$0")
     eval "${dir}/github/authenticate.sh"
