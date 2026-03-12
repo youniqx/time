@@ -24,7 +24,7 @@ installGh() {
 
     echo "===Authenticate gh==="
     dir=$(dirname "$0")
-    GH_TOKEN=$("${dir}/github/authenticate.sh")
+    GH_TOKEN=$("${dir}/github/authenticate.sh" || exit 1)
     export GH_TOKEN
 }
 
@@ -53,5 +53,4 @@ done
 
 echo "===GitHub Release==="
 
-gh repo set-default "$GITHUB_REPO"
-gh release create --notes-from-tag --title "${CI_COMMIT_TAG}" "${CI_COMMIT_TAG}" time-*
+gh release create "${CI_COMMIT_TAG}" time-* --repo "${GITHUB_REPO}" --generate-notes
