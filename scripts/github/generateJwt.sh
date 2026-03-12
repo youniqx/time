@@ -36,4 +36,4 @@ signature=$(
 
 # Create JWT
 JWT="${header_payload}"."${signature}"
-echo $JWT
+echo "$JWT"

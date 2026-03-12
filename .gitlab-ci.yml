@@ -18,6 +18,8 @@ variables:
   VERSION_CODE: ${CI_PIPELINE_ID}
   # renovate: datasource=gitlab-releases depName=gitlab-org/cli extractVersion=^v(?<version>.*)$ registryUrl=https://gitlab.com
   GLAB_VERSION: 1.88.0
+  # renovate: datasource=github-releases depName=cli/cli extractVersion=^v(?<version>.*)$ registryUrl=https://github.com
+  GH_VERSION: 2.88.0
 
 
 release-test:
