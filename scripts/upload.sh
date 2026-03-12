@@ -45,4 +45,4 @@ for f in time-*; do
   glab release upload "${CI_COMMIT_TAG}" "${f}#${f}#image"
 done
 
-gh release create --repo "$GITHUB_REPO" --notes-from-tag --title "${CI_COMMIT_TAG}" "${CI_COMMIT_TAG}" time-*
+gh release create --repo "$GITHUB_REPO" --notes-from-tag --title "Time ${CI_COMMIT_TAG}" "${CI_COMMIT_TAG}" time-*
