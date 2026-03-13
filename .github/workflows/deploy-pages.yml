@@ -18,7 +18,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release download ${{ github.event.release.tag_name }} --pattern 'time*-web.tar.gz'
-          tar -zxf time*-web.tar.gz -C ./public
+          tar -zxf time*-web.tar.gz
       - name: Setup Pages
         uses: actions/configure-pages@v4
       - name: Upload artifact
