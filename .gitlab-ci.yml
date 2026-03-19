@@ -52,7 +52,7 @@ Build Dmg:
 
 Build Linux AppImage:
   tags: [linux-unprivileged]
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.14.10
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.14.11
   variables:
     KUBERNETES_MEMORY_REQUEST: 20Gi
     KUBERNETES_MEMORY_LIMIT: 20Gi
@@ -84,7 +84,7 @@ Build Web:
   script:
     - ./scripts/build.sh --web
   pages: true
-  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.14.10
+  image: harbor.youniqx.com/youniqx-cloud-infrastructure/youniqx/mia/android-build:1.14.11
   artifacts:
     paths:
       # The folder that contains the files to be exposed at the Page URL
