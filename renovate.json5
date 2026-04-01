@@ -4,4 +4,7 @@
     "local>youniqx/infrastructure/renovate-config#v1.46.3",
     "local>youniqx/mia/ci-templates//renovate/android/automerge.json5"
   ],
+  "addLabels": [
+    "product::time"
+  ],
 }
