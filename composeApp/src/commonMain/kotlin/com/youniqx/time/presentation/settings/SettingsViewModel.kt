@@ -43,6 +43,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
 data class UiState(
@@ -138,14 +139,15 @@ class SettingsViewModel(
             }
 
     private fun <Key : Any, Value : Any> Flow<Key>.asPagingData(
-        pagingSourceFactory: (searchTerm: Key) -> PagingSource<Key, Value>,
+        observePagingSourceFactory: (searchTerm: Key) -> Flow<() -> PagingSource<Key, Value>>,
     ): Flow<PagingData<Value>> =
         debounce(timeoutMillis = 300)
             .distinctUntilChanged()
-            .flatMapLatest { searchTerm ->
+            .flatMapLatest { searchTerm -> observePagingSourceFactory(searchTerm) }
+            .flatMapLatest { pagingSourceFactory ->
                 Pager(
                     config = PagingConfig(pageSize = 10),
-                    pagingSourceFactory = { pagingSourceFactory(searchTerm) },
+                    pagingSourceFactory = pagingSourceFactory,
                 ).flow
             }
 

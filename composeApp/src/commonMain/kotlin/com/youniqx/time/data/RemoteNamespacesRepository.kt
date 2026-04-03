@@ -6,7 +6,6 @@ import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.youniqx.time.domain.NamespacesRepository
-import com.youniqx.time.domain.models.IterationCadence
 import com.youniqx.time.domain.models.IterationCadenceMarker
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.gitlab.models.NamespaceQuery
@@ -19,6 +18,7 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
 
 @AssistedInject
 class NamespacesPagingSource(
@@ -151,5 +151,6 @@ class NamespacesPagingSource(
 class RemoteNamespacesRepository(
     private val namespacesPagingSourceFactory: NamespacesPagingSource.Factory,
 ) : NamespacesRepository {
-    override fun search(search: String) = namespacesPagingSourceFactory.create(query = search)
+    override fun search(search: String): Flow<() -> PagingSource<String, NamespaceEntry>> =
+        flowOf(value = { namespacesPagingSourceFactory.create(query = search) })
 }

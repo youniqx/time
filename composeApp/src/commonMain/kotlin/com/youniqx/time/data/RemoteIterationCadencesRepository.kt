@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.collections.emptyList
@@ -140,5 +141,6 @@ class IterationCadencesPagingSource(
 class RemoteIterationCadencesRepository(
     private val iterationCadencesPagingSourceFactory: IterationCadencesPagingSource.Factory,
 ) : IterationCadencesRepository {
-    override fun search(search: String) = iterationCadencesPagingSourceFactory.create(query = search)
+    override fun search(search: String) =
+        flowOf(value = { iterationCadencesPagingSourceFactory.create(query = search) })
 }

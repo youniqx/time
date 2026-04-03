@@ -127,7 +127,7 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
                     ),
             ),
         frecentGroups =
-            groups.shuffled().take(5).map {
+            groups.shuffled().take(3).map {
                 NamespaceQuery.FrecentGroup(
                     __typename = "",
                     groupWithIterationCadences = it,
