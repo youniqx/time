@@ -5,6 +5,7 @@ import androidx.paging.PagingState
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.youniqx.time.domain.NamespacesRepository
 import com.youniqx.time.domain.models.IterationCadenceMarker
+import com.youniqx.time.domain.models.Namespace
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.previewNamespaces
 import dev.zacsweers.metro.AppScope
@@ -24,70 +25,18 @@ class DemoNamespacesPagingSource(
 ) : PagingSource<String, NamespaceEntry>() {
     override suspend fun load(params: LoadParams<String>): LoadResult<String, NamespaceEntry> {
         delay(2.seconds) // artificial loading
-        return with(previewNamespaces) {
-            val namespaceEntries =
-                buildList<NamespaceEntry> {
-                    addAll(
-                        frecentGroups
-                            ?.map {
-                                it.groupWithIterationCadences.let { group ->
-                                    NamespaceEntry.FrecentGroup(
-                                        name = group.name,
-                                        fullPath = group.fullPath,
-                                        iterationCadences =
-                                            group.iterationCadences?.nodes?.map { iterationCadence ->
-                                                if (iterationCadence?.id != null) {
-                                                    IterationCadenceMarker.Filled(
-                                                        id = iterationCadence.id.toString(),
-                                                        title = iterationCadence.title.orEmpty(),
-                                                        namespaceFullPath = group.fullPath,
-                                                    )
-                                                } else {
-                                                    IterationCadenceMarker.PlaceHolder
-                                                }
-                                            },
-                                    )
-                                }
-                            }.orEmpty(),
-                    )
-                    currentUser?.namespace?.simpleNamespace?.let {
-                        add(
-                            NamespaceEntry.User(
-                                name = it.name,
-                                fullPath = it.fullPath,
-                                iterationCadences = null,
-                            ),
+        val namespaceEntries = previewNamespaces.toNamespaceEntries()
+        return if (query == null) {
+            namespaceEntries
+        } else {
+            namespaceEntries.copy(
+                data =
+                    namespaceEntries.data.filter {
+                        it is Namespace && (
+                            it.name?.contains(query, ignoreCase = true) ?: false ||
+                                it.fullPath.contains(query, ignoreCase = true)
                         )
-                    }
-                    addAll(
-                        groups
-                            ?.nodes
-                            ?.mapNotNull {
-                                it?.groupWithIterationCadences?.let { group ->
-                                    NamespaceEntry.Group(
-                                        name = group.name,
-                                        fullPath = group.fullPath,
-                                        iterationCadences =
-                                            group.iterationCadences?.nodes?.map { iterationCadence ->
-                                                if (iterationCadence?.id != null) {
-                                                    IterationCadenceMarker.Filled(
-                                                        id = iterationCadence.id.toString(),
-                                                        title = iterationCadence.title.orEmpty(),
-                                                        namespaceFullPath = group.fullPath,
-                                                    )
-                                                } else {
-                                                    IterationCadenceMarker.PlaceHolder
-                                                }
-                                            },
-                                    )
-                                }
-                            }.orEmpty(),
-                    )
-                }
-            LoadResult.Page(
-                data = namespaceEntries,
-                prevKey = groups?.pageInfo?.run { startCursor.takeIf { hasPreviousPage } },
-                nextKey = groups?.pageInfo?.run { endCursor.takeIf { hasNextPage } },
+                    },
             )
         }
     }
