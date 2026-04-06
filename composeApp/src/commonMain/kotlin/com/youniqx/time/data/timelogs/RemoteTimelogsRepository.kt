@@ -1,4 +1,4 @@
-package com.youniqx.time.data
+package com.youniqx.time.data.timelogs
 
 import com.apollographql.apollo.ApolloClient
 import com.russhwolf.settings.ExperimentalSettingsApi
