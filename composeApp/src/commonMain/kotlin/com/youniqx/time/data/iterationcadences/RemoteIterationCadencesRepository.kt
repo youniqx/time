@@ -1,4 +1,4 @@
-package com.youniqx.time.data
+package com.youniqx.time.data.iterationcadences
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
