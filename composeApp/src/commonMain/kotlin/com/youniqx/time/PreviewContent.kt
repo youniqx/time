@@ -2,6 +2,7 @@ package com.youniqx.time
 
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.gitlab.models.NamespaceQuery
+import com.youniqx.time.gitlab.models.TimelogsQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
 import com.youniqx.time.gitlab.models.fragment.GroupWithIterationCadences
@@ -9,6 +10,10 @@ import com.youniqx.time.gitlab.models.fragment.SimpleNamespace
 import com.youniqx.time.gitlab.models.type.WorkItemState
 import com.youniqx.time.presentation.Label
 import kotlin.random.Random
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.days
+import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 val previewUserId by lazy { "gid://gitlab/User/123" }
 
@@ -170,6 +175,65 @@ val previewNamespaces: NamespaceQuery.Data by lazy {
     )
 }
 
+private val timelogs by lazy {
+    listOf(
+        Triple("2025-11-17T16:45:11+01:00", "Setting up amazing feature", 17940),
+        Triple("2025-11-17T13:55:59+01:00", null, 18000),
+        Triple("2025-11-14T14:17:22+01:00", "Finishing this stuff", 16200),
+    )
+}
+
+@OptIn(ExperimentalUuidApi::class)
+val previewTimelogs: TimelogsQuery.Data by lazy {
+    val dates =
+        sequence {
+            var now = Clock.System.now()
+            while (true) {
+                yield(now)
+                now = now.minus(1.days)
+            }
+        }
+    TimelogsQuery.Data(
+        currentUser =
+            TimelogsQuery.CurrentUser(
+                __typename = "",
+                id = "123",
+                timelogs =
+                    TimelogsQuery.Timelogs(
+                        __typename = "",
+                        nodes =
+                            dates
+                                .take(90)
+                                .flatMap { instant ->
+                                    timelogs
+                                        .shuffled()
+                                        .take(Random.nextInt(1, timelogs.size + 1))
+                                        .map { (spentAt, summary, timeSpent) ->
+                                            TimelogsQuery.Node(
+                                                __typename = "",
+                                                id = Uuid.random().toString(),
+                                                spentAt = instant.toString(),
+                                                summary = summary,
+                                                timeSpent = timeSpent,
+                                                issue =
+                                                    previewIssues.random().let {
+                                                        TimelogsQuery.Issue(
+                                                            __typename = "",
+                                                            id = it.id.toString(),
+                                                            iid = it.iid,
+                                                            title = it.title,
+                                                            webUrl = it.webUrl.orEmpty(),
+                                                        )
+                                                    },
+                                                mergeRequest = null,
+                                            )
+                                        }
+                                }.toList(),
+                    ),
+            ),
+    )
+}
+
 val previewIssues: List<BareWorkItem> by lazy {
 
     val titles =
@@ -192,13 +256,6 @@ val previewIssues: List<BareWorkItem> by lazy {
             "timetracking" to "#dc143c",
             "type::story" to "#5CB85C",
             "product::time" to "#006BB6",
-        )
-
-    val timelogs =
-        listOf(
-            Triple("2025-11-17T16:45:11+01:00", "Setting up amazing feature", 17940),
-            Triple("2025-11-17T13:55:59+01:00", null, 18000),
-            Triple("2025-11-14T14:17:22+01:00", "Finishing this stuff", 16200),
         )
 
     val users =
