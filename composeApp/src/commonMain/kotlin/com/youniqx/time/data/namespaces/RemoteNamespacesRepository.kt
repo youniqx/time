@@ -9,7 +9,6 @@ import com.youniqx.time.domain.NamespacesRepository
 import com.youniqx.time.domain.models.IterationCadenceMarker
 import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.gitlab.models.NamespaceQuery
-import com.youniqx.time.gitlab.models.fragment.GroupWithIterationCadences
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -52,7 +51,7 @@ class NamespacesPagingSource(
                 }
             val response: ApolloResponse<NamespaceQuery.Data> = apolloClient.query(query).execute()
             val data = response.data ?: return LoadResult.Error(Throwable())
-            return data.toNamespaceEntries()
+            return data.toLoadResult()
         } catch (e: Exception) {
             // Handle errors in this block and return LoadResult.Error for
             // expected errors (such as a network failure).
@@ -82,7 +81,7 @@ class NamespacesPagingSource(
     }
 }
 
-fun NamespaceQuery.Data.toNamespaceEntries(): PagingSource.LoadResult.Page<String, NamespaceEntry> =
+fun NamespaceQuery.Data.toLoadResult(): PagingSource.LoadResult.Page<String, NamespaceEntry> =
     with(this) {
         val namespaceEntries =
             buildList<NamespaceEntry> {

@@ -1,6 +1,7 @@
 package com.youniqx.time.data.iterationcadences
 
 import androidx.paging.PagingSource
+import androidx.paging.PagingSource.LoadResult
 import androidx.paging.PagingState
 import com.apollographql.apollo.ApolloClient
 import com.russhwolf.settings.ExperimentalSettingsApi
@@ -8,7 +9,9 @@ import com.youniqx.time.di.IDispatchers
 import com.youniqx.time.domain.IterationCadencesRepository
 import com.youniqx.time.domain.SelectedNamespacesRepository
 import com.youniqx.time.domain.models.IterationCadenceMarker
+import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
+import com.youniqx.time.gitlab.models.NamespaceQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -26,6 +29,8 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.collections.emptyList
+import kotlin.collections.mapNotNull
+import kotlin.collections.orEmpty
 
 @AssistedInject
 class IterationCadencesPagingSource(
@@ -85,26 +90,8 @@ class IterationCadencesPagingSource(
             val response = apolloClient.query(query).execute()
             if (response.errors != null) println(response.errors)
             if (response.exception != null) println(response.exception)
-            val group = response.data?.group?.groupWithIterationCadences
-            return with(
-                group?.iterationCadences
-                    ?: return LoadResult.Error(Throwable()),
-            ) {
-                LoadResult.Page(
-                    data =
-                        nodes.orEmpty().mapNotNull {
-                            it?.run {
-                                IterationCadenceMarker.Filled(
-                                    namespaceFullPath = group.fullPath,
-                                    title = title.orEmpty(),
-                                    id = id.toString(),
-                                )
-                            }
-                        },
-                    prevKey = pageInfo.run { startCursor.takeIf { hasPreviousPage } },
-                    nextKey = pageInfo.run { endCursor.takeIf { hasNextPage } },
-                )
-            }
+            val data = response.data ?: return LoadResult.Error(Throwable())
+            return data.toLoadResult()
         } catch (e: Exception) {
             // Handle errors in this block and return LoadResult.Error for
             // expected errors (such as a network failure).
@@ -134,6 +121,29 @@ class IterationCadencesPagingSource(
         ): IterationCadencesPagingSource
     }
 }
+
+fun IterationCadencesQuery.Data.toLoadResult(): LoadResult<String, IterationCadenceMarker.Filled> =
+    group?.groupWithIterationCadences.let { group ->
+        with(
+            group?.iterationCadences
+                ?: return LoadResult.Error(Throwable()),
+        ) {
+            LoadResult.Page(
+                data =
+                    nodes.orEmpty().mapNotNull {
+                        it?.run {
+                            IterationCadenceMarker.Filled(
+                                namespaceFullPath = group.fullPath,
+                                title = title.orEmpty(),
+                                id = id.toString(),
+                            )
+                        }
+                    },
+                prevKey = pageInfo.run { startCursor.takeIf { hasPreviousPage } },
+                nextKey = pageInfo.run { endCursor.takeIf { hasNextPage } },
+            )
+        }
+    }
 
 @OptIn(ExperimentalSettingsApi::class)
 @ContributesBinding(AppScope::class)

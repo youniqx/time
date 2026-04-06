@@ -1,12 +1,12 @@
-package com.youniqx.time.data.namespaces
+package com.youniqx.time.data.iterationcadences
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import com.russhwolf.settings.ExperimentalSettingsApi
-import com.youniqx.time.domain.NamespacesRepository
-import com.youniqx.time.domain.models.Namespace
-import com.youniqx.time.domain.models.NamespaceEntry
-import com.youniqx.time.previewNamespaces
+import com.youniqx.time.domain.IterationCadencesRepository
+import com.youniqx.time.domain.models.IterationCadenceMarker
+import com.youniqx.time.domain.models.IterationCadenceMarker.Filled
+import com.youniqx.time.previewIterationCadences
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -19,28 +19,26 @@ import kotlinx.coroutines.flow.flowOf
 import kotlin.time.Duration.Companion.seconds
 
 @AssistedInject
-class DemoNamespacesPagingSource(
+class DemoIterationCadencesPagingSource(
     @Assisted val query: String?,
-) : PagingSource<String, NamespaceEntry>() {
-    override suspend fun load(params: LoadParams<String>): LoadResult<String, NamespaceEntry> {
+) : PagingSource<String, Filled>() {
+    override suspend fun load(params: LoadParams<String>): LoadResult<String, Filled> {
         delay(2.seconds) // artificial loading
-        val loadResult = previewNamespaces.toLoadResult()
-        return if (query == null) {
-            loadResult
-        } else {
+        val loadResult = previewIterationCadences.toLoadResult()
+        return if (query != null && loadResult is LoadResult.Page) {
             loadResult.copy(
                 data =
                     loadResult.data.filter {
-                        it is Namespace && (
-                            it.name?.contains(query, ignoreCase = true) ?: false ||
-                                it.fullPath.contains(query, ignoreCase = true)
-                        )
+                        it.title.contains(query, ignoreCase = true) ||
+                            it.namespaceFullPath.contains(query, ignoreCase = true)
                     },
             )
+        } else {
+            loadResult
         }
     }
 
-    override fun getRefreshKey(state: PagingState<String, NamespaceEntry>): String? {
+    override fun getRefreshKey(state: PagingState<String, IterationCadenceMarker.Filled>): String? {
         // Try to find the page key of the closest page to anchorPosition from
         // either the prevKey or the nextKey; you need to handle nullability
         // here.
@@ -58,16 +56,16 @@ class DemoNamespacesPagingSource(
     fun interface Factory {
         fun create(
             @Assisted query: String?,
-        ): DemoNamespacesPagingSource
+        ): DemoIterationCadencesPagingSource
     }
 }
 
 @OptIn(ExperimentalSettingsApi::class)
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
-class DemoNamespacesRepository(
-    private val namespacesPagingSourceFactory: DemoNamespacesPagingSource.Factory,
-) : NamespacesRepository {
-    override fun search(search: String): Flow<() -> PagingSource<String, NamespaceEntry>> =
-        flowOf(value = { namespacesPagingSourceFactory.create(query = search) })
+class DemoIterationCadencesRepository(
+    private val iterationCadencesPagingSourceFactory: DemoIterationCadencesPagingSource.Factory,
+) : IterationCadencesRepository {
+    override fun search(search: String): Flow<() -> PagingSource<String, Filled>> =
+        flowOf(value = { iterationCadencesPagingSourceFactory.create(query = search) })
 }

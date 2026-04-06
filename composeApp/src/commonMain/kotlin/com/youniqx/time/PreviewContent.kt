@@ -1,5 +1,6 @@
 package com.youniqx.time
 
+import com.youniqx.time.gitlab.models.IterationCadencesQuery
 import com.youniqx.time.gitlab.models.NamespaceQuery
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
 import com.youniqx.time.gitlab.models.fragment.BareWorkItemWidgets
@@ -20,42 +21,56 @@ val emptyPageInfo =
         endCursor = null,
     )
 
+val previewLovelyGroup by lazy {
+    GroupWithIterationCadences(
+        __typename = "",
+        id = "834",
+        name = "Lovely Group",
+        archived = false,
+        fullPath = "lovely-group",
+        iterationCadences =
+            GroupWithIterationCadences.IterationCadences(
+                __typename = "",
+                nodes =
+                    listOf(
+                        GroupWithIterationCadences.Node(
+                            __typename = "",
+                            title = "Awesome Team Sprint",
+                            id = "123",
+                        ),
+                        GroupWithIterationCadences.Node(
+                            __typename = "",
+                            title = "Performing Team Sprint",
+                            id = "435",
+                        ),
+                    ),
+                pageInfo =
+                    GroupWithIterationCadences.PageInfo(
+                        __typename = "",
+                        hasPreviousPage = true,
+                        hasNextPage = true,
+                        startCursor = null,
+                        endCursor = null,
+                    ),
+            ),
+    )
+}
+
+val previewIterationCadences: IterationCadencesQuery.Data by lazy {
+    IterationCadencesQuery.Data(
+        group =
+            IterationCadencesQuery.Group(
+                __typename = "",
+                groupWithIterationCadences = previewLovelyGroup,
+            ),
+    )
+}
+
 val previewNamespaces: NamespaceQuery.Data by lazy {
 
     val groups =
         listOf(
-            GroupWithIterationCadences(
-                __typename = "",
-                id = "834",
-                name = "Lovely Group",
-                archived = false,
-                fullPath = "lovely-group",
-                iterationCadences =
-                    GroupWithIterationCadences.IterationCadences(
-                        __typename = "",
-                        nodes =
-                            listOf(
-                                GroupWithIterationCadences.Node(
-                                    __typename = "",
-                                    title = "Awesome Team Sprint",
-                                    id = "123",
-                                ),
-                                GroupWithIterationCadences.Node(
-                                    __typename = "",
-                                    title = "Performing Team Sprint",
-                                    id = "435",
-                                ),
-                            ),
-                        pageInfo =
-                            GroupWithIterationCadences.PageInfo(
-                                __typename = "",
-                                hasPreviousPage = true,
-                                hasNextPage = true,
-                                startCursor = null,
-                                endCursor = null,
-                            ),
-                    ),
-            ),
+            previewLovelyGroup,
             GroupWithIterationCadences(
                 __typename = "",
                 id = "368",
