@@ -49,12 +49,21 @@ class DemoWorkItemsRepository(
                 delay(300)
                 if (setSyncing) _workItemsFromCurrentUser.update { it?.copy(isSyncing = true) }
                 delay(2.seconds)
+                val workItems =
+                    if (search.isEmpty()) {
+                        previewIssues
+                    } else {
+                        previewIssues.filter {
+                            it.title.contains(search, true) ||
+                                it.iid.contains(search, true)
+                        }
+                    }
                 _workItemsFromCurrentUser.update {
                     SourceAware(
                         data =
                             WorkItemsFromCurrentUser(
                                 currentUserId = previewUserId,
-                                workItems = previewIssues,
+                                workItems = workItems,
                                 lastUpdated = Clock.System.now(),
                             ),
                         source = DataSource.Remote,
