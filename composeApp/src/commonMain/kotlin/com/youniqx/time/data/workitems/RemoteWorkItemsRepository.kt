@@ -1,4 +1,4 @@
-package com.youniqx.time.data
+package com.youniqx.time.data.workitems
 
 import com.apollographql.apollo.ApolloClient
 import com.apollographql.apollo.api.ApolloResponse
