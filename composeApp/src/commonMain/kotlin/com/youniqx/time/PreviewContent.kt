@@ -295,7 +295,7 @@ val previewIssues: List<BareWorkItem> by lazy {
                                                         nodes =
                                                             labels
                                                                 .shuffled()
-                                                                .take(Random.nextInt(1, labels.size))
+                                                                .take(Random.nextInt(1, labels.size + 1))
                                                                 .map { (title, color) ->
                                                                     Label(
                                                                         __typename = "",
