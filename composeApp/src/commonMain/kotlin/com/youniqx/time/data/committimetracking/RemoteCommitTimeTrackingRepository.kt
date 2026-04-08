@@ -1,11 +1,11 @@
-package com.youniqx.time.data
+package com.youniqx.time.data.committimetracking
 
 import com.apollographql.apollo.ApolloClient
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.youniqx.time.di.IDispatchers
+import com.youniqx.time.domain.CommitTimeTrackingRepository
 import com.youniqx.time.domain.SettingsRepository
 import com.youniqx.time.domain.models.currentTimeSpentString
-import com.youniqx.time.domain.usecases.CommitTimeTrackingUseCase
 import com.youniqx.time.gitlab.models.RefreshWorkItemsQuery
 import com.youniqx.time.gitlab.models.TimelogCreateMutation
 import com.youniqx.time.gitlab.models.type.TimelogCreateInput
@@ -23,11 +23,11 @@ import kotlin.time.Duration.Companion.seconds
 @OptIn(ExperimentalSettingsApi::class)
 @ContributesBinding(AppScope::class)
 @SingleIn(AppScope::class)
-class CommitTimeTrackingRepository(
+class RemoteCommitTimeTrackingRepository(
     private val apolloClientFlow: Flow<ApolloClient?>,
     private val settingsRepository: SettingsRepository,
     dispatchers: IDispatchers,
-) : CommitTimeTrackingUseCase {
+) : CommitTimeTrackingRepository {
     private var job: Job? = null
     private val scope = CoroutineScope(dispatchers.Default)
 

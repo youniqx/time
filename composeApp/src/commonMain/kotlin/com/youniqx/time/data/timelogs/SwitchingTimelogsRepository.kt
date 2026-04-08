@@ -5,21 +5,16 @@ import com.youniqx.time.data.LocalSettingsRepository
 import com.youniqx.time.di.IDispatchers
 import com.youniqx.time.domain.TimelogsRepository
 import com.youniqx.time.domain.demoModeIsActive
-import com.youniqx.time.domain.models.SourceAware
-import com.youniqx.time.gitlab.models.TimelogsQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.WhileSubscribed
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalSettingsApi::class, ExperimentalCoroutinesApi::class)
@@ -29,41 +24,30 @@ import kotlin.time.Duration.Companion.seconds
 )
 @SingleIn(AppScope::class)
 class SwitchingTimelogsRepository(
-    localSettingsRepository: LocalSettingsRepository,
+    private val localSettingsRepository: LocalSettingsRepository,
     private val remoteTimelogsRepository: RemoteTimelogsRepository,
     private val demoTimelogsRepository: DemoTimelogsRepository,
     dispatchers: IDispatchers,
 ) : TimelogsRepository {
     private val scope = CoroutineScope(dispatchers.Default)
 
-    private val _timelogs: MutableStateFlow<SourceAware<TimelogsQuery.Data?>?> =
-        MutableStateFlow(null)
-
-    private val delegate =
+    override val timelogs =
         localSettingsRepository.settings
-            .mapLatest {
+            .flatMapLatest {
                 val delegate =
                     if (it.demoModeIsActive) demoTimelogsRepository else remoteTimelogsRepository
-                delegate
+                delegate.timelogs
             }.stateIn(
                 scope = scope,
                 started = SharingStarted.WhileSubscribed(5.seconds),
-                initialValue = remoteTimelogsRepository,
+                initialValue = null,
             )
 
-    override val timelogs = _timelogs.asStateFlow()
-
-    init {
-        scope.launch {
-            delegate.collectLatest {
-                it.timelogs.collectLatest { timelogs ->
-                    _timelogs.value = timelogs
-                }
-            }
-        }
-    }
-
     override fun refresh() {
-        delegate.value.refresh()
+        localSettingsRepository.settings.value.let {
+            val delegate =
+                if (it.demoModeIsActive) demoTimelogsRepository else remoteTimelogsRepository
+            delegate.refresh()
+        }
     }
 }

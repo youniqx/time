@@ -11,7 +11,6 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flatMapLatest
 
 @OptIn(ExperimentalSettingsApi::class, ExperimentalCoroutinesApi::class)
 @ContributesBinding(AppScope::class, replaces = [RemoteNamespacesRepository::class, DemoNamespacesRepository::class])
@@ -22,7 +21,7 @@ class SwitchingNamespacesRepository(
     private val demoNamespacesRepository: DemoNamespacesRepository,
 ) : NamespacesRepository {
     override fun search(search: String): Flow<() -> PagingSource<String, NamespaceEntry>> =
-        localSettingsRepository.settings.flatMapLatest {
+        localSettingsRepository.settings.value.let {
             val delegate = if (it.demoModeIsActive) demoNamespacesRepository else remoteNamespacesRepository
             delegate.search(search)
         }
