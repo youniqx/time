@@ -190,13 +190,7 @@ fun App(
                 if (entries.last().onboardingIndex == null) {
                     DemoModeCornerSash(
                         settingsRepository = settingsRepository,
-                        onClick = {
-                            if (GitLabSetupRoute in navigationState.activeBackStack) {
-                                navigator.popUntilLastInclusive(NamespacesAndIterationCadenceSetupRoute)
-                            } else {
-                                navigator.add(GitLabSetupRoute)
-                            }
-                        },
+                        onClick = { navigator.add(GitLabSetupRoute) },
                     )
                 }
                 overlayContent?.invoke()
