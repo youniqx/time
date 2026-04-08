@@ -43,6 +43,8 @@ class OnboardingNavScope {
                     }
 
                     OnboardingRoute -> {
+                        // Sometimes the Welcome route is not on the back stack
+                        popUntilLastInclusive(route = GitLabSetupRoute)
                         popUntilLastInclusive(route = WelcomeRoute)
                     }
                 }
