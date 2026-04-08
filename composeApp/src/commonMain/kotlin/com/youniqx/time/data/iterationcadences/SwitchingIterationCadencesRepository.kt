@@ -11,6 +11,7 @@ import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flatMapLatest
 
 @OptIn(ExperimentalSettingsApi::class, ExperimentalCoroutinesApi::class)
 @ContributesBinding(
@@ -24,7 +25,7 @@ class SwitchingIterationCadencesRepository(
     private val demoIterationCadencesRepository: DemoIterationCadencesRepository,
 ) : IterationCadencesRepository {
     override fun search(search: String): Flow<() -> PagingSource<String, IterationCadenceMarker.Filled>> =
-        localSettingsRepository.settings.value.let {
+        localSettingsRepository.settings.flatMapLatest {
             val delegate =
                 if (it.demoModeIsActive) demoIterationCadencesRepository else remoteIterationCadencesRepository
             delegate.search(search)
