@@ -28,7 +28,7 @@ metro = "0.11.4"
 settings = "1.3.0"
 nav3Core = "1.0.0-alpha06"
 material3AdaptiveNav3 = "1.3.0-alpha02" # not update to 1.3.0-alpha03 as it depends on a newer version of nav3
-paging = "3.4.1"
+paging = "3.4.2"
 
 [libraries]
 apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.ref = "apollo" }
