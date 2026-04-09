@@ -3,13 +3,11 @@
 package com.youniqx.time.presentation
 
 import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Settings
@@ -19,7 +17,6 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.adaptive.layout.AdaptStrategy
@@ -36,10 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
@@ -50,9 +44,8 @@ import androidx.navigation3.scene.DialogSceneStrategy
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
 import androidx.savedstate.serialization.SavedStateConfiguration
-import androidx.window.core.layout.WindowSizeClass
 import com.youniqx.time.domain.SettingsRepository
-import com.youniqx.time.domain.demoModeIsActive
+import com.youniqx.time.presentation.cornersash.DemoModeCornerSash
 import com.youniqx.time.presentation.errors.NotFoundRoute
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.navigation.LocalNavigator
@@ -73,7 +66,6 @@ import com.youniqx.time.presentation.workitems.LocalSearchFocusRequester
 import com.youniqx.time.presentation.workitems.ScrollToWorkItem
 import com.youniqx.time.presentation.workitems.SwitchTrackingRoute
 import com.youniqx.time.presentation.workitems.WorkItemsRoute
-import kotlinx.coroutines.flow.map
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import kotlin.time.ExperimentalTime
@@ -199,22 +191,6 @@ fun App(
         // Todo
         // Fake item to ignore focus requests if we have an open time tracking
         Box(modifier = Modifier.focusProperties { canFocus = false }.focusRequester(focusRequester))
-    }
-}
-
-@Composable
-fun DemoModeCornerSash(
-    settingsRepository: SettingsRepository,
-    onClick: () -> Unit,
-) {
-    val demoModeIsActive by
-        settingsRepository.settings.map { it.demoModeIsActive }.collectAsStateWithLifecycle(false)
-    if (!demoModeIsActive) return
-    val label = "Enter instance Url to get real content"
-    CornerSash(modifier = Modifier.clickable(onClickLabel = label, onClick = onClick)) {
-        SimpleTooltip(label) {
-            Text(text = "DEMO MODE", fontWeight = FontWeight.Bold)
-        }
     }
 }
 
