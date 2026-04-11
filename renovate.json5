@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "local>youniqx/infrastructure/renovate-config#v1.47.0",
+    "local>youniqx/infrastructure/renovate-config#v1.47.1",
     "local>youniqx/mia/ci-templates//renovate/android/automerge.json5"
   ],
   "addLabels": [
