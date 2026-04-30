@@ -1,11 +1,11 @@
 [versions]
 agp = "8.13.2"
 #noinspection UnusedVersionCatalogEntry
-android-compileSdk = "36"
+android-compileSdk = "37"
 #noinspection UnusedVersionCatalogEntry
 android-minSdk = "28"
 #noinspection UnusedVersionCatalogEntry
-android-targetSdk = "36"
+android-targetSdk = "37"
 androidx-activity = "1.13.0"
 androidx-lifecycle = "2.10.0"
 composeHotReload = "1.1.0"
