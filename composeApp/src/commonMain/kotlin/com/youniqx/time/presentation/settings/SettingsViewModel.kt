@@ -54,7 +54,7 @@ data class UiState(
     val selectedNamespaces: SelectedNamespaces,
 )
 
-@ViewModelKey(SettingsViewModel::class)
+@ViewModelKey
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class SettingsViewModel(
     settingsRepository: SettingsRepository,

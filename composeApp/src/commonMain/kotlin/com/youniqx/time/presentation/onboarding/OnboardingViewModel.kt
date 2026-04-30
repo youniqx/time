@@ -30,7 +30,7 @@ fun SourceAware<Settings>.toInitialUiState() =
         showOnboarding = data.instanceUrl.isNullOrEmpty() || data.token.isNullOrEmpty(),
     )
 
-@ViewModelKey(OnboardingViewModel::class)
+@ViewModelKey
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class OnboardingViewModel(
     settingsRepository: SettingsRepository,

@@ -22,7 +22,7 @@ data class UiState(
     val timelogs: List<TimelogEntry>,
 )
 
-@ViewModelKey(HistoryViewModel::class)
+@ViewModelKey
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class HistoryViewModel(
     timelogsRepository: TimelogsRepository,

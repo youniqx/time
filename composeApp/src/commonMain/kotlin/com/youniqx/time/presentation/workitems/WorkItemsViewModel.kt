@@ -15,7 +15,7 @@ import dev.zacsweers.metrox.viewmodel.ViewModelKey
 
 typealias UiState = SourceAware<WorkItemsFromCurrentUser?>?
 
-@ViewModelKey(WorkItemsViewModel::class)
+@ViewModelKey
 @ContributesIntoMap(AppScope::class, binding<ViewModel>())
 class WorkItemsViewModel(
     workItemsRepository: WorkItemsRepository,
