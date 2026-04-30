@@ -4,16 +4,20 @@ package com.youniqx.time.presentation.history
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -254,28 +258,69 @@ fun HistoryScreen(
             }
 
             // Period navigation
-            Row(
+            Box(
                 modifier =
                     Modifier
-                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min)
                         .padding(horizontal = spacing.screenPadding)
                         .padding(bottom = spacing.md),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = { periodOffset++ }) {
-                    Icon(Icons.Default.ChevronLeft, contentDescription = "Previous period")
+                val previousInteractionSource = remember { MutableInteractionSource() }
+                val nextInteractionSource = remember { MutableInteractionSource() }
+                val nextEnabled = periodOffset > 0
+                val previousClick: () -> Unit = { periodOffset++ }
+                val nextClick: () -> Unit = { if (nextEnabled) periodOffset-- }
+                val previousDescription = "Previous period"
+                val nextDescription = "Next period"
+                Row {
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable(
+                                    interactionSource = previousInteractionSource,
+                                    indication = null,
+                                    onClick = previousClick,
+                                    onClickLabel = previousDescription,
+                                ),
+                    )
+                    Box(
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .clickable(
+                                    interactionSource = nextInteractionSource,
+                                    indication = null,
+                                    onClick = nextClick,
+                                    onClickLabel = nextDescription,
+                                    enabled = nextEnabled,
+                                ),
+                    )
                 }
-                Text(
-                    text = selectedRange.getLabel(periodOffset),
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier.padding(horizontal = spacing.md),
-                )
-                IconButton(
-                    onClick = { if (periodOffset > 0) periodOffset-- },
-                    enabled = periodOffset > 0,
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Icon(Icons.Default.ChevronRight, contentDescription = "Next period")
+                    IconButton(onClick = previousClick, interactionSource = previousInteractionSource) {
+                        Icon(Icons.Default.ChevronLeft, contentDescription = previousDescription)
+                    }
+                    Text(
+                        text = selectedRange.getLabel(periodOffset),
+                        style = MaterialTheme.typography.titleSmall,
+                        modifier = Modifier.padding(horizontal = spacing.md),
+                    )
+                    IconButton(
+                        onClick = nextClick,
+                        enabled = nextEnabled,
+                        interactionSource = nextInteractionSource,
+                    ) {
+                        Icon(Icons.Default.ChevronRight, contentDescription = nextDescription)
+                    }
                 }
             }
 
