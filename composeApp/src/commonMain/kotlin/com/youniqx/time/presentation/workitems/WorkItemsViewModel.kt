@@ -1,7 +1,6 @@
 package com.youniqx.time.presentation.workitems
 
 import androidx.lifecycle.ViewModel
-import com.youniqx.time.data.committimetracking.RemoteCommitTimeTrackingRepository
 import com.youniqx.time.domain.CommitTimeTrackingRepository
 import com.youniqx.time.domain.WorkItemsRepository
 import com.youniqx.time.domain.models.SourceAware

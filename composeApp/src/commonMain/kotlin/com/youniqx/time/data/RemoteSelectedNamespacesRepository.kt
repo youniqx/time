@@ -1,10 +1,6 @@
 package com.youniqx.time.data
 
 import com.apollographql.apollo.ApolloClient
-import com.apollographql.apollo.cache.normalized.FetchPolicy
-import com.apollographql.apollo.cache.normalized.api.NormalizedCache
-import com.apollographql.apollo.cache.normalized.apolloStore
-import com.apollographql.apollo.cache.normalized.fetchPolicy
 import com.apollographql.apollo.cache.normalized.watch
 import com.russhwolf.settings.ExperimentalSettingsApi
 import com.youniqx.time.di.IDispatchers
@@ -16,7 +12,6 @@ import com.youniqx.time.domain.models.SelectedNamespaces
 import com.youniqx.time.domain.models.toNamespace
 import com.youniqx.time.domain.selectedNamespacesFullPaths
 import com.youniqx.time.gitlab.models.SelectedNamespacesQuery
-import com.youniqx.time.gitlab.models.fragment.SimpleNamespace
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesBinding
 import dev.zacsweers.metro.SingleIn

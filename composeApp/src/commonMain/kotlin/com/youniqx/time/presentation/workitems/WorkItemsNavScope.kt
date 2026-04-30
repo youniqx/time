@@ -7,8 +7,6 @@ import com.youniqx.time.presentation.LocalResultStore
 import com.youniqx.time.presentation.history.HistoryRoute
 import com.youniqx.time.presentation.navigation.LocalNavigator
 import com.youniqx.time.presentation.navigation.NavScope
-import com.youniqx.time.presentation.onboarding.OnboardingRoute
-import com.youniqx.time.presentation.settings.SettingsRoute
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.ContributesTo

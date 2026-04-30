@@ -81,11 +81,9 @@ import com.youniqx.time.presentation.opentracking.RepresentingIndicator
 import com.youniqx.time.presentation.opentracking.customTimeSpentHasErrorMessage
 import com.youniqx.time.presentation.opentracking.representingColors
 import com.youniqx.time.presentation.theme.LocalSpacing
-import com.youniqx.time.refresh
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class, ExperimentalMaterial3Api::class)

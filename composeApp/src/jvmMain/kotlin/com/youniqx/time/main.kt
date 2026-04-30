@@ -38,8 +38,6 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import com.youniqx.time.di.JvmAppGraph
 import com.youniqx.time.domain.SettingsRepository
-import com.youniqx.time.domain.models.DataSource
-import com.youniqx.time.domain.models.dataIfNotFrom
 import com.youniqx.time.domain.models.refreshKey
 import com.youniqx.time.domain.models.toDurationOrNull
 import com.youniqx.time.presentation.App
@@ -47,10 +45,6 @@ import com.youniqx.time.presentation.windowsize.WindowResizer
 import dev.zacsweers.metro.createGraph
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
 import java.awt.Desktop
 import java.awt.Dimension
 import java.awt.Font

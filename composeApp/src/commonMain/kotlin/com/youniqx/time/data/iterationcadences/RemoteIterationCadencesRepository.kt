@@ -9,9 +9,7 @@ import com.youniqx.time.di.IDispatchers
 import com.youniqx.time.domain.IterationCadencesRepository
 import com.youniqx.time.domain.SelectedNamespacesRepository
 import com.youniqx.time.domain.models.IterationCadenceMarker
-import com.youniqx.time.domain.models.NamespaceEntry
 import com.youniqx.time.gitlab.models.IterationCadencesQuery
-import com.youniqx.time.gitlab.models.NamespaceQuery
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
@@ -28,9 +26,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlin.collections.emptyList
-import kotlin.collections.mapNotNull
-import kotlin.collections.orEmpty
 
 @AssistedInject
 class IterationCadencesPagingSource(

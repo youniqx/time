@@ -1,7 +1,6 @@
 package com.youniqx.time.presentation.workitems
 
 import com.youniqx.time.gitlab.models.fragment.BareWorkItem
-import kotlin.collections.orEmpty
 
 val BareWorkItem.assignees get() =
     widgets

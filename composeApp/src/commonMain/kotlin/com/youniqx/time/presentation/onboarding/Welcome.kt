@@ -19,9 +19,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -32,9 +29,7 @@ import androidx.navigation3.runtime.NavKey
 import com.youniqx.time.presentation.theme.AppTheme
 import com.youniqx.time.presentation.theme.LocalSpacing
 import dev.zacsweers.metrox.viewmodel.metroViewModel
-import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
-import kotlin.time.Duration.Companion.seconds
 
 @Serializable
 object WelcomeRoute : NavKey
