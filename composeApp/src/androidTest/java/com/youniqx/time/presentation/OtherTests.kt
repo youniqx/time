@@ -9,6 +9,7 @@ import com.youniqx.time.presentation.onboarding.OnboardingViewModel
 import com.youniqx.time.presentation.onboarding.UiState
 import com.youniqx.time.testutils.ViewModelBindings
 import com.youniqx.time.testutils.vm
+import dev.zacsweers.metro.BindingContainer
 import dev.zacsweers.metro.createDynamicGraphFactory
 import dev.zacsweers.metrox.viewmodel.LocalMetroViewModelFactory
 import io.mockk.every
@@ -18,8 +19,11 @@ import org.junit.Rule
 import kotlin.test.Test
 
 class OtherTests {
+    @BindingContainer
+    private class TestSpecificBindings
+
     private val graph =
-        createDynamicGraphFactory<AndroidAppGraph.Factory>(ViewModelBindings())
+        createDynamicGraphFactory<AndroidAppGraph.Factory>(ViewModelBindings(), TestSpecificBindings())
             .create(getApplicationContext())
 
     @get:Rule
