@@ -51,6 +51,14 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.metrox.android)
         }
+        androidInstrumentedTest.dependencies {
+            implementation(libs.androidx.runner)
+            implementation(libs.kotlin.test)
+            implementation(libs.androidx.ui.test.junit4)
+            implementation(libs.androidx.rules)
+            implementation(libs.mockk.android)
+            implementation(libs.mockk.agent)
+        }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -101,6 +109,8 @@ android {
 
         versionCode = System.getenv("VERSION_CODE")?.toInt() ?: 1
         versionName = System.getenv("PKG_VERSION") ?: "1.0.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     packaging {
         resources {
@@ -120,6 +130,7 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }
 
 compose.desktop {
