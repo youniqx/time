@@ -7,7 +7,7 @@ android-minSdk = "28"
 #noinspection UnusedVersionCatalogEntry
 android-targetSdk = "37"
 androidx-activity = "1.13.0"
-androidx-lifecycle = "2.10.0"
+androidx-lifecycle = "2.11.0"
 composeHotReload = "1.1.0"
 composeMultiplatform = "1.11.0"
 compose-material3-adaptive = "1.2.0"
