@@ -24,7 +24,7 @@ material3 = "1.9.0"
 materialIconsExtended = "1.7.3"
 metro = "1.1.1"
 settings = "1.3.0"
-nav3Core = "1.0.0-alpha06"
+nav3Core = "1.1.2"
 material3AdaptiveNav3 = "1.3.0" # not update to 1.3.0-alpha03 as it depends on a newer version of nav3
 paging = "3.5.2"
 
