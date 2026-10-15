@@ -18,7 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.layout.AdaptStrategy
 import androidx.compose.material3.adaptive.layout.SupportingPaneScaffoldDefaults
 import androidx.compose.material3.adaptive.layout.calculatePaneScaffoldDirective
@@ -83,7 +83,7 @@ fun App(
         val resultStore = rememberResultStore(configuration = resultStoreSavedStateConfiguration)
         // Override the defaults so that there isn't a horizontal or vertical space between the panes.
         // See b/444438086
-        val windowAdaptiveInfo = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true)
+        val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
         // if (forceSinglePane) singlePaneDirective else defaultPaneDirective // Todo
         val directive =
             remember(windowAdaptiveInfo) {
@@ -173,7 +173,7 @@ fun App(
                             Modifier
                                 // .padding(innerPadding)
                                 .fillMaxSize(),
-                        sceneStrategy = dialogStrategy then supportingPaneStrategy then singlePaneStrategy,
+                        sceneStrategies = listOf(dialogStrategy, supportingPaneStrategy, singlePaneStrategy),
                         onBack = {
                             navigator.popUntilLastInclusive()
                         },

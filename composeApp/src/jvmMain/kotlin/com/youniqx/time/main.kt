@@ -314,7 +314,7 @@ class MenuBarTimerIcon(
         val maxLabelPx = (120 * scaleFactor)
         val labelText =
             if (hasLabel) {
-                truncateLabel(title!!, fontMetrics, maxLabelPx)
+                truncateLabel(title, fontMetrics, maxLabelPx)
             } else {
                 ""
             }

@@ -30,7 +30,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -157,7 +157,7 @@ fun WorkItemsScreen(
             .exclude(consumedWindowInsets)
             .asPaddingValues()
     val extraPadding =
-        if (currentWindowAdaptiveInfo().windowSizeClass.isWidthAtLeastBreakpoint(
+        if (currentWindowAdaptiveInfoV2().windowSizeClass.isWidthAtLeastBreakpoint(
                 WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
             )
         ) {
