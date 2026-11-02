@@ -2,8 +2,6 @@ plugins {
     alias(libs.plugins.androidApplication)
 }
 
-// ponytail: all Kotlin (MainActivity, Application, Metro graph) stays in composeApp's androidMain,
-// so this module needs no Kotlin/Compose/Metro plugins. Move it here if the app module ever gets own code.
 android {
     namespace = "com.youniqx.time"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
